@@ -1285,7 +1285,10 @@
 				success: function(res){
 					if( res && res.success ) {
 						if( res.data ) {
-							console.log(res);
+							console.log(`checkModel ${res}`);
+              console.log(
+                `res.data.engines ${res.data.engines} res.data.vehicles ${res.data.vehicles}`
+              );
 							if( res.data.engines && res.data.vehicles ) {
 								_this.setOptionsSubmodels(res.data.vehicles, _this.$submodel);
 								_this.setOptionsEngines(res.data.engines, _this.$engine);
@@ -1300,6 +1303,7 @@
 							} else{
 								load_catalog.html('<div class="catalog_nodata">No data available</div>');
 							}
+							load_catalog.html('<div class="catalog_nodata">No data available</div>');
 						}
 					}
 				},
