@@ -101,7 +101,7 @@ get_header() ?>
 				<div class="type__item">
 					<h2 class="type__title">DAILY DRIVER</h2>
 
-					<a href="#" class="type__link _type1 active"> </a>
+					<a href="#" class="type__link _type1"> </a>
 				</div>
 
 				<div class="type__item">
@@ -133,7 +133,7 @@ get_header() ?>
 					<a data-tippy-content="Подсказка" href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog1"></span>
 					</a>
-					<a data-tippy-content="Подсказка" href="" class="item-category__link active">
+					<a data-tippy-content="Подсказка" href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog2"></span>
 					</a>
 					<a data-tippy-content="Подсказка" href="" class="item-category__link">
@@ -160,10 +160,10 @@ get_header() ?>
 					<a href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog-car-left"></span>
 					</a>
-					<a href="" class="item-category__link active">
+					<a href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog-car-right"></span>
 					</a>
-					<a href="" class="item-category__link">
+					<a href="" class="item-category__link active">
 						<span class="item-category__icon _icon-catalog-car-all"></span>
 					</a>
 				</div>
@@ -174,7 +174,7 @@ get_header() ?>
 
 				<div class="category__items item-category" data-fillter-groups="lines">
 					<a href="" class="item-category__link"> Black </a>
-					<a href="" class="item-category__link active"> Ultralife </a>
+					<a href="" class="item-category__link"> Ultralife </a>
 					<a href="" class="item-category__link"> Speed </a>
 					<a href="" class="item-category__link"> Elite </a>
 				</div>
@@ -607,13 +607,49 @@ get_header() ?>
 jQuery(document).ready(function($) {
 	let searchParams = new URLSearchParams(window.location.search);
 	let searchdata = searchParams.get('searchdata');
+
+	let year = searchParams.get('yr'); // 2017
+    let make = searchParams.get('mk'); // Audi
+    let model = searchParams.get('md'); // A4
+    let getRegion = searchParams.get("rg"); // 1
+    let getType = searchParams.get("tp"); // пусто
+
+    // Установка значения по умолчанию для getType, если оно пустое
+    if (!getType) {
+        getType = "1"; // Присваиваем значение по умолчанию
+        searchParams.set("tp", getType); // Добавляем параметр в URL
+
+        // Перезагрузка страницы с обновленным URL
+        window.location.href = window.location.pathname + '?' + searchParams.toString();
+    }
+
+    // Проверка и установка значений в инпуты
+    if (year) {
+        $('[data-filter="year"]').val(year);
+        let year_block = $('[data-filter="year"]').parent();
+        year_block.find(".select__content").text(year);
+    }
+
+    if (make) {
+        $('[data-filter="make"]').val(make);
+        let make_block = $('[data-filter="make"]').parent();
+        make_block.find(".select__content").text(make);
+    }
+
+    if (model) {
+        $('[data-filter="model"]').val(model);
+        let model_block = $('[data-filter="model"]').parent();
+        model_block.find(".select__content").text(model);
+    }
+
 	if(searchdata)
 	{
 		$("#catalog_search").find(".tabs__title:nth-child(2)").trigger("click");
 		$("#searchdata").val(searchdata);
-		console.log($("#searchdata").val())
+		let fff = $("#searchdata").val();
+		console.log(fff)
 	}
-	
+
 	$("#catalog_search").find(".tabs__title").click(function(){
 		if(!$(this).hasClass("_tab-active"))
 		{
@@ -705,18 +741,23 @@ jQuery(document).ready(function($) {
 		
 		window.history.pushState({}, '', url.toString());
 	});
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+	$('[data-filter="region"]').on("change", function(){
+		let url = new URL(document.location);
+		let searchParams = url.searchParams;
+		
+		searchParams.set("rg", $(this).val());
+		
+		window.history.pushState({}, '', url.toString());
+	});
+
+	$('[data-filter="type"]').on("change", function(){
+		let url = new URL(document.location);
+		let searchParams = url.searchParams;
+		
+		searchParams.set("tp", $(this).val());
+		
+		window.history.pushState({}, '', url.toString());
+	});
 });
 </script>

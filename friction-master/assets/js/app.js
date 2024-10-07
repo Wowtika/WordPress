@@ -1207,6 +1207,7 @@
     $year = null;
     $make = null;
     $model = null;
+    $type = null;
 
     constructor(block, Select) {
       super(block, Select);
@@ -1223,6 +1224,14 @@
         this.$region
           .on("change", function () {
             _this.clearSelects("region");
+            _this.loadYears();
+          })
+          .trigger("change")
+          .attr("disabled", false);
+
+        this.$type
+          .on("change", function () {
+            _this.clearSelects("type");
             _this.loadYears();
           })
           .trigger("change")
@@ -1246,12 +1255,14 @@
           let make = _this.$make.val();
           let model = _this.$model.val();
           let region = _this.getRegionId();
+          let type = _this.getTypeId();
 
           let params = $.param({
             yr: year,
             mk: make,
             md: model,
             rg: region,
+            tp: type,
           });
           window.location.href = "/catalog/?" + params;
         });
@@ -1444,7 +1455,9 @@
       super(block, Select);
 
       let _this = this;
-      _this.filterProductsAllGroups(); // общий подфильтр продуктов а именно тип применимости(Product lines), категории (Category), сторона(Side), линейки(Lines)
+      if (this.$block.length) {
+        _this.filterProductsAllGroups(); // общий подфильтр продуктов а именно тип применимости(Product lines), категории (Category), сторона(Side), линейки(Lines)
+      }
       if (this.$block.length) {
         this.$region = this.$block.find('[data-filter="region"]');
         this.$type = this.$block.find('[data-filter="type"]');
@@ -1544,12 +1557,17 @@
           _this.checkModel(getYear, getMake, getModel);
         }
         // для работы фильтра
-        document.querySelector('.page_catalog').addEventListener("click", function (event) {
-          if (event.target.closest(".type__link") || event.target.closest(".item-category__link")) {
-            _this.filterProductsAllGroups();
-            _this.create_parts(_this.$currentData);
-          }
-        });
+        document
+          .querySelector(".page_catalog")
+          .addEventListener("click", function (event) {
+            if (
+              event.target.closest(".type__link") ||
+              event.target.closest(".item-category__link")
+            ) {
+              _this.filterProductsAllGroups();
+              _this.create_parts(_this.$currentData);
+            }
+          });
       }
     }
 
@@ -1725,14 +1743,14 @@
               _this.$currentData = res.data;
               catalog_auto_title.html(
                 make +
-                " " +
-                model +
-                " " +
-                (submodel || "") +
-                " " +
-                (engine || "") +
-                " " +
-                year
+                  " " +
+                  model +
+                  " " +
+                  (submodel || "") +
+                  " " +
+                  (engine || "") +
+                  " " +
+                  year
               );
               catalog_auto_title.fadeIn().css("display", "flex");
               _this.create_parts(res.data.part_applications);
@@ -1761,82 +1779,108 @@
 
       // Очищаем контейнер перед рендером новых компонентов
       catalog__wrapper.html("");
+      //filteredData
+      console.log("Отфильтрованные товары для рендера", filteredData);
       if (filteredData && filteredData.length > 0) {
-        let categoryName = filteredData[0] ? filteredData[0].product_group : '' ;
+        console.log(filteredData.length);
 
-        // Создаем контейнер для категории
-        let partContainer = document.createElement("div");
-        partContainer.classList.add("container-catalog");
+        const addBlockProduct = function (dataForFender) {
+          let categoryName = dataForFender[0]
+            ? dataForFender[0].product_group
+            : "";
 
-        partContainer.setAttribute("category_name", categoryName);
+          // Создаем контейнер для категории
+          let partContainer = document.createElement("div");
+          partContainer.classList.add("container-catalog");
 
-        let partHeaderContainer = document.createElement("div");
-        partHeaderContainer.classList.add("catalog__header");
-        partHeaderContainer.classList.add("header-catalog");
+          partContainer.setAttribute("category_name", categoryName);
 
-        let partHeaderSpan = document.createElement("span");
-        partHeaderSpan.classList.add("header-catalog__icon");
-        partHeaderSpan.classList.add("_icon-catalog1");
+          let partHeaderContainer = document.createElement("div");
+          partHeaderContainer.classList.add("catalog__header");
+          partHeaderContainer.classList.add("header-catalog");
 
-        partHeaderContainer.append(partHeaderSpan);
+          let partHeaderSpan = document.createElement("span");
+          partHeaderSpan.classList.add("header-catalog__icon");
+          partHeaderSpan.classList.add("_icon-catalog1");
 
-        let partHeaderTitle = document.createElement("h2");
-        partHeaderTitle.classList.add("header-catalog__heading");
-        partHeaderTitle.textContent = categoryName;
+          partHeaderContainer.append(partHeaderSpan);
 
-        partHeaderContainer.append(partHeaderTitle);
-        partContainer.append(partHeaderContainer);
+          let partHeaderTitle = document.createElement("h2");
+          partHeaderTitle.classList.add("header-catalog__heading");
+          partHeaderTitle.textContent = categoryName;
 
-        let partContainerBasic = document.createElement("div");
-        partContainerBasic.classList.add("container-catalog");
-        partContainerBasic.classList.add("catalog__row");
-        // Обрабатываем каждую часть в категории
-        filteredData.forEach((part) => {
+          partHeaderContainer.append(partHeaderTitle);
+          partContainer.append(partHeaderContainer);
 
-          // Создаем элемент для части
-          let partElement = document.createElement("div");
-          partElement.classList.add("item-catalog");
-          partElement.setAttribute("data-part_id", part.part_id);
+          let partContainerBasic = document.createElement("div");
+          partContainerBasic.classList.add("container-catalog");
+          partContainerBasic.classList.add("catalog__row");
+          // Обрабатываем каждую часть в категории
+          dataForFender.forEach((part) => {
+            // Создаем элемент для части
+            let partElement = document.createElement("div");
+            partElement.classList.add("item-catalog");
+            partElement.setAttribute("data-part_id", part.part_id);
 
-          let part_icon = document.createElement("div");
-          part_icon.classList.add("item-catalog__header-icons");
-          part_icon.innerHTML =
-            '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card1.svg" alt="" /></a>' +
-            '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card2.svg" alt="" /></a>' +
-            '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card3.svg" alt="" /></a>';
+            let part_icon = document.createElement("div");
+            part_icon.classList.add("item-catalog__header-icons");
+            part_icon.innerHTML =
+              '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card1.svg" alt="" /></a>' +
+              '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card2.svg" alt="" /></a>' +
+              '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card3.svg" alt="" /></a>';
 
-          let part_heading = document.createElement("div");
-          part_heading.classList.add("item-catalog__header-heading");
-          part_heading.textContent = part.part_number;
+            let part_heading = document.createElement("div");
+            part_heading.classList.add("item-catalog__header-heading");
+            part_heading.textContent = part.part_number;
 
-          let part_header = document.createElement("div");
-          part_header.classList.add("item-catalog__header");
-          part_header.append(part_icon);
-          part_header.append(part_heading);
+            let part_header = document.createElement("div");
+            part_header.classList.add("item-catalog__header");
+            part_header.append(part_icon);
+            part_header.append(part_heading);
 
-          let part_img = document.createElement("div");
-          part_img.classList.add("item-catalog__image");
-          part_img.innerHTML =
-            '<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />';
+            let part_img = document.createElement("div");
+            part_img.classList.add("item-catalog__image");
+            part_img.innerHTML =
+              '<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />';
 
-          let part_footer = document.createElement("div");
-          part_footer.classList.add("item-catalog__footer");
-          part_footer.innerHTML =
-            '<a href="/product?part_id=' +
-            part.part_id +
-            '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
+            let part_footer = document.createElement("div");
+            part_footer.classList.add("item-catalog__footer");
+            part_footer.innerHTML =
+              '<a href="/product?part_id=' +
+              part.part_id +
+              '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
 
-          partElement.append(part_header);
-          partElement.append(part_img);
-          partElement.append(part_footer);
+            partElement.append(part_header);
+            partElement.append(part_img);
+            partElement.append(part_footer);
 
-          partContainerBasic.append(partElement);
-          // Добавляем элемент в контейнер
-        });
-        partContainer.append(partContainerBasic);
+            partContainerBasic.append(partElement);
+            // Добавляем элемент в контейнер
+          });
+          partContainer.append(partContainerBasic);
 
-        // Добавляем контейнер категории в обертку каталога
-        catalog__wrapper.append(partContainer);
+          // Добавляем контейнер категории в обертку каталога
+          catalog__wrapper.append(partContainer);
+        };
+        if (filteredData.length === 1) {
+          console.log("filteredData[0]", filteredData[0]);
+          const dynamicKey = Object.keys(filteredData[0]).find(
+            (key) => key !== "fitment_type"
+          );
+          const dynamicValue = filteredData[0][dynamicKey]; // Значение под динамическим ключом
+          addBlockProduct(dynamicValue);
+
+        } else if (filteredData.length > 1) {
+          filteredData.forEach((obj) => {
+            if (obj) {
+              const dynamicKey = Object.keys(obj).find(
+                (key) => key !== "fitment_type"
+              );
+              const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
+              addBlockProduct(dynamicValue);
+            }
+          });
+        }
       }
     }
 
@@ -1889,128 +1933,177 @@
     needToSortProduct(data) {
       let _this = this;
 
-      let dataAll = _this.$currentData ? _this.$currentData.part_applications : null;
-
+      let dataAll = _this.$currentData
+        ? _this.$currentData.part_applications
+        : null;
+      console.log("dataAll", dataAll);
       const objValueProductLines = {
-          'DAILY DRIVER': 'OE Replacement',
-          'UPGRADE': 'up',
-          'HIGH PERFORMANCE': 'High Performance',
-          'RACE': 'race'
+        "DAILY DRIVER": "OE Replacement",
+        UPGRADE: "up",
+        "HIGH PERFORMANCE": "High Performance",
+        RACE: "race",
       };
 
       const objValueSideGroup = {
-        'left': 'Front',
-        'right': 'Rear',
-        'all': '', // не видела значение другого
-      }
+        left: "Front",
+        right: "Rear",
+        all: "", // не видела значение другого
+      };
       const objFilter = this.filterProductsAllGroups();
-  
+
       // Получаем активный элемент из группы продуктовых линий
       const activeProductLine = objFilter.productLines;
       const activeCategory = objFilter.categoryGroup;
       const activeSide = objFilter.sideGroup;
 
+      // if (dataAll) {
+      const filterValue = objValueProductLines[activeProductLine];
+
+      let filteredData = null;
       if (dataAll) {
-          const filterValue = objValueProductLines[activeProductLine];
-          if (_this.$currentData) {
-              let filteredData = _this.$currentData.part_applications.filter(item => item.fitment_type === filterValue);
-              let resultParts = null;
+        if (!activeProductLine) {
+          filteredData = dataAll;
+        } else if (activeProductLine) {
+          filteredData = dataAll.filter(
+            (item) => item.fitment_type === filterValue
+          );
+        }
+        let resultParts = null;
 
-              filteredData.forEach((item) => {
-                  if (item[activeCategory]) {
-                      resultParts = item[activeCategory]; // Сохраняем найденные части
-                  }
-              });
+        if (activeCategory) {
 
-            // Фильтруем данные
-            let dataOnCategoryandSide = resultParts;
-
-            const positionValue = objValueSideGroup[activeSide];
-
-            if (activeSide !== 'all') {
-                // Получаем значение позиции для фильтрации
-              if (dataOnCategoryandSide) {
-                dataOnCategoryandSide = dataOnCategoryandSide.filter((item) => {
-                    return item.position === positionValue;
-                });
+          // Создаем новый массив для результатов
+          resultParts = filteredData
+            .map((item) => {
+              // Проверяем, есть ли активная категория в текущем объекте
+              if (item[activeCategory]) {
+                return {
+                  fitment_type: item.fitment_type, // Сохраняем fitment_type
+                  [activeCategory]: item[activeCategory], // Сохраняем найденные части
+                };
               }
-            }
-            // Теперь dataOnCategoryandSide содержит только те элементы, которые совпадают с activeSide
-              return dataOnCategoryandSide; // Возвращаем отфильтрованные данные
+              return null; // Возвращаем null, если категория не найдена
+            })
+            .filter((obj) => obj !== null); // Убираем null значения
+        } else {
+          resultParts = filteredData; // Если activeCategory нет, возвращаем все данные
+        }
+
+        // Фильтруем данные
+        let dataOnCategoryandSide = resultParts;
+
+        const positionValue = objValueSideGroup[activeSide];
+
+        if (activeSide !== "all") {
+          // Получаем значение позиции для фильтрации
+          if (dataOnCategoryandSide.length === 1) {
+            let namefitmentType = dataOnCategoryandSide[0].fitment_type;
+            const dynamicKey = Object.keys(dataOnCategoryandSide[0]).find(
+              (key) => key !== "fitment_type"
+            );
+            const dynamicValue = dataOnCategoryandSide[0][dynamicKey]; // Значение под динамическим ключом
+            console.log("dynamicValue", dynamicValue);
+            const arr = dynamicValue.filter(
+              (item) => item.position === positionValue
+            );
+            dataOnCategoryandSide = [
+              {
+                fitment_type: namefitmentType,
+                [dynamicKey]: arr,
+              },
+            ];
+
+          } else if (dataOnCategoryandSide.length > 1) {
+
+            const filteredData = dataOnCategoryandSide
+              .map((obj) => {
+                // Найти динамический ключ, который не равен "fitment_type"
+                const dynamicKey = Object.keys(obj).find(
+                  (key) => key !== "fitment_type"
+                );
+                const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
+
+                // Фильтруем массив внутри объекта
+                const filteredItems = dynamicValue.filter(
+                  (item) => item.position === positionValue
+                );
+
+                // Возвращаем новый объект с отфильтрованными элементами, если есть совпадения
+                if (filteredItems.length > 0) {
+                  return {
+                    ...obj, // Остальные свойства объекта
+                    [dynamicKey]: filteredItems, // Обновляем только массив под динамическим ключом
+                  };
+                }
+                return null; // Вернуть null, если нет совпадений
+              })
+              .filter((obj) => obj !== null); // Удаляем null значения
+
+            dataOnCategoryandSide = filteredData;
+
           }
+        }
+        return dataOnCategoryandSide; // Возвращаем отфильтрованные данные
       }
       return null; // Возвращаем null, если ничего не найдено
-  }
+    }
 
     setupGroupProductLines() {
       let groupBlock = document.querySelector(".type__body");
       let groupBlockAll = document.querySelectorAll(".type__link");
       let currentTitle = ""; // Переменная для хранения заголовка
 
-      // Функция для обновления заголовка
-      const updateTitle = (title) => {
-          currentTitle = title;
-      };
-
-      // Изначально устанавливаем заголовок для элемента с классом active
-      const initialActive = groupBlock.querySelector(".type__link.active");
-      if (initialActive) {
-          const initialTitle = initialActive
-              .closest(".type__item")
-              .querySelector(".type__title").textContent;
-          updateTitle(initialTitle); // Устанавливаем начальный заголовок
-      }
-
-      // Обработчик клика
-      groupBlock.addEventListener("click", (event) => {
-          event.preventDefault();
-          let clicked = event.target;
-
-          // Проверяем, был ли клик на ссылке или заголовке
-          if (
-              clicked.classList.contains("type__link") ||
-              clicked.classList.contains("type__title")
-          ) {
-              // Если кликнули по заголовку, получаем родительскую ссылку
-              if (clicked.classList.contains("type__title")) {
-                  clicked = clicked
-                      .closest(".type__item")
-                      .querySelector(".type__link");
-              }
-
-              // Убираем класс active у всех ссылок
-              groupBlockAll.forEach((button) => {
-                  button.classList.remove("active");
-              });
-
-              // Добавляем класс active к нажатой ссылке
-              clicked.classList.add("active");
-
-              // Получаем заголовок
-              const title = clicked
-                  .closest(".type__item")
-                  .querySelector(".type__title").textContent;
-              updateTitle(title); // Обновляем заголовок
-          }
+      let activeBtn = null;
+      groupBlockAll.forEach((item) => {
+        if (item.classList.contains("active")) {
+          activeBtn = item;
+          let titleParent = activeBtn.closest(".type__item");
+          currentTitle = titleParent.querySelector(".type__title").textContent;
+        }
       });
-      // Возвращаем заголовок активного элемента
+
+      groupBlock.addEventListener("click", (event) => {
+        event.preventDefault();
+        let clicked = event.target;
+
+        if (clicked.closest(".type__item")) {
+          groupBlockAll.forEach((item) => item.classList.remove("active"));
+
+          let titleParent = clicked.closest(".type__item");
+          let title = titleParent.querySelector(".type__title").textContent;
+          currentTitle = titleParent.querySelector(".type__title").textContent;
+
+          clicked.classList.add("active");
+
+          if (clicked === activeBtn) {
+            groupBlockAll.forEach((item) => item.classList.remove("active"));
+          }
+        }
+      });
+
       return currentTitle; // Возвращаем текущее значение заголовка
-  }
+    }
 
     setupGroupCategory() {
-      const categoryGroupBlock = document.querySelector('.category__items.item-category[data-fillter-groups="category"]');
-      const categoryLinks = categoryGroupBlock.querySelectorAll(".item-category__link");
+      const categoryGroupBlock = document.querySelector(
+        '.category__items.item-category[data-fillter-groups="category"]'
+      );
+      const categoryLinks = categoryGroupBlock.querySelectorAll(
+        ".item-category__link"
+      );
 
       // Функция для получения номера активной иконки
       const getActiveIconNumber = () => {
-          const activeLink = categoryGroupBlock.querySelector(".item-category__link.active");
-          if (activeLink) {
-              const iconElement = activeLink.querySelector(".item-category__icon");
-              const iconClass = iconElement.className;
-              const match = iconClass.match(/_icon-catalog(\d+)/);
-              return match ? parseInt(match[1], 10) : null; // Возвращаем номер или null
-          }
-          return null; // Если активного элемента нет, возвращаем null
+        const activeLink = categoryGroupBlock.querySelector(
+          ".item-category__link.active"
+        );
+        if (activeLink) {
+          const iconElement = activeLink.querySelector(".item-category__icon");
+          const iconClass = iconElement.className;
+          const match = iconClass.match(/_icon-catalog(\d+)/);
+          return match ? parseInt(match[1], 10) : null; // Возвращаем номер или null
+        }
+        return null; // Если активного элемента нет, возвращаем null
       };
 
       // Установка начального значения
@@ -2018,41 +2111,61 @@
 
       // Обработчик клика для каждой ссылки
       categoryLinks.forEach((link) => {
-          link.addEventListener("click", (event) => {
-              event.preventDefault();
-
-              // Убираем класс active у всех ссылок
-              categoryLinks.forEach((item) => item.classList.remove("active"));
-
-              // Добавляем класс active к нажатой ссылке
-              link.classList.add("active");
-          });
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          if (link.closest(".active")) {
+            link.classList.remove("active");
+          }
+          if (!link.closest(".active")) {
+            categoryLinks.forEach((item) => item.classList.remove("active"));
+            link.classList.add("active");
+          }
+        });
       });
-      const objValueCategoryGroup = ['Brake Pads', 'Brake Rotors', 'Brake Kits', 'Wheel Hubs', 'Brake Shoes', 'Brake Hardware'];
+
+      const objValueCategoryGroup = [
+        "Brake Pads",
+        "Brake Rotors",
+        "Brake Kits",
+        "Wheel Hubs",
+        "Brake Shoes",
+        "Brake Hardware",
+      ];
+
       // Возвращаем начальный номер активной иконки
       return objValueCategoryGroup[initialActiveNumber]; // Возвращаем значение, которое было установлено изначально
-  }
+    }
 
     setupGroupSide() {
-      const categoryGroupBlockSide = document.querySelector('.category__items.item-category[data-fillter-groups="side"]');
-      const categoryLinksSide = categoryGroupBlockSide.querySelectorAll(".item-category__link");
+      const categoryGroupBlockSide = document.querySelector(
+        '.category__items.item-category[data-fillter-groups="side"]'
+      );
+      const categoryLinksSide = categoryGroupBlockSide.querySelectorAll(
+        ".item-category__link"
+      );
 
       // Функция для получения номера активной иконки
       const getActiveIconPosition = () => {
-        const activeLinkSide = categoryGroupBlockSide.querySelector(".item-category__link.active");
+        const activeLinkSide = categoryGroupBlockSide.querySelector(
+          ".item-category__link.active"
+        );
 
         if (activeLinkSide) {
-            const iconElementSide = activeLinkSide.querySelector(".item-category__icon");
-            const iconClassSide = iconElementSide.className;
+          const iconElementSide = activeLinkSide.querySelector(
+            ".item-category__icon"
+          );
+          const iconClassSide = iconElementSide.className;
 
-            // Регулярное выражение для поиска 'left', 'right' или 'all' в конце строки
-            const matchSide = iconClassSide.match(/_icon-catalog-car-(left|right|all)$/);
+          // Регулярное выражение для поиска 'left', 'right' или 'all' в конце строки
+          const matchSide = iconClassSide.match(
+            /_icon-catalog-car-(left|right|all)$/
+          );
 
-            return matchSide ? matchSide[1] : null; // Возвращаем найденное значение или null
+          return matchSide ? matchSide[1] : null; // Возвращаем найденное значение или null
         }
 
         return null; // Если активного элемента нет, возвращаем null
-    };
+      };
 
       // Установка начального значения
       const initialActivePosition = getActiveIconPosition();
@@ -2073,22 +2186,33 @@
     }
 
     setupGroupLines() {
-      const categoryGroupBlockLines = document.querySelector('.category__items.item-category[data-fillter-groups="lines"]');
-      const categoryLinksLines = categoryGroupBlockLines.querySelectorAll(".item-category__link");
+      const categoryGroupBlockLines = document.querySelector(
+        '.category__items.item-category[data-fillter-groups="lines"]'
+      );
+      const categoryLinksLines = categoryGroupBlockLines.querySelectorAll(
+        ".item-category__link"
+      );
 
       // Обработчик клика для каждой ссылки
       categoryLinksLines.forEach((linkLines) => {
         linkLines.addEventListener("click", (event) => {
           event.preventDefault();
 
-          // Убираем класс active у всех ссылок
-          categoryLinksLines.forEach((item) => item.classList.remove("active"));
-
-          // Добавляем класс active к нажатой ссылке
-          linkLines.classList.add("active");
+          if (!linkLines.closest(".active")) {
+            linkLines.classList.add("active");
+          } else if (linkLines.closest(".active")) {
+            categoryLinksLines.forEach((item) =>
+              item.classList.remove("active")
+            );
+          }
         });
       });
-      return categoryGroupBlockLines.querySelector(".item-category__link.active").textContent;
+      return categoryGroupBlockLines.querySelector(
+        ".item-category__link.active"
+      )
+        ? categoryGroupBlockLines.querySelector(".item-category__link.active")
+            .textContent
+        : null;
     }
 
     filterProductsAllGroups() {
@@ -2098,13 +2222,8 @@
         productLines: _this.setupGroupProductLines(),
         categoryGroup: _this.setupGroupCategory(),
         sideGroup: _this.setupGroupSide(),
-        linesGroup:  _this.setupGroupLines()
+        linesGroup: _this.setupGroupLines(),
       };
-      // let groupType = _this.setupGroupProductLines();
-      // _this.setupGroupSide();
-      // _this.setupGroupLines();
-      // console.log('setupGroupLines', _this.setupGroupLines())
-      // console.log('AAAA  filteredSettings', filteredSettings)
       return filteredSettings;
     }
   }
