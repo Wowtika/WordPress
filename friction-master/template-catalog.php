@@ -23,7 +23,7 @@ get_header() ?>
 
 						<div class="tabs__catalog">
 							<div class="tabs__catalog-wrapper">
-								<select data-filter="type" name="region" data-class-modif="transparent">
+								<select data-filter="type" name="type" data-class-modif="transparent">
 									<option value="1" selected>Passenger cars</option>
 									<option value="2">Commercial</option>
 									<option value="3">Motorcycles</option>
@@ -129,7 +129,7 @@ get_header() ?>
 			<div class="category__wrapper">
 				<div class="category__heading">Category</div>
 
-				<div class="category__items item-category">
+				<div class="category__items item-category" data-fillter-groups="category">
 					<a data-tippy-content="Подсказка" href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog1"></span>
 					</a>
@@ -145,13 +145,18 @@ get_header() ?>
 					<a data-tippy-content="Подсказка" href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog3"></span>
 					</a>
+					<!-- Этих параметров вроде как 6 штук, но нет иконки Brake Hardware
+					<a data-tippy-content="Подсказка" href="" class="item-category__link">
+						<span class="item-category__icon _icon-catalog6">А</span>
+					</a>
+					-->
 				</div>
 			</div>
 
 			<div class="category__wrapper">
 				<div class="category__heading">Side</div>
 
-				<div class="category__items item-category">
+				<div class="category__items item-category" data-fillter-groups="side">
 					<a href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog-car-left"></span>
 					</a>
@@ -167,7 +172,7 @@ get_header() ?>
 			<div class="category__wrapper">
 				<div class="category__heading">Lines</div>
 
-				<div class="category__items item-category">
+				<div class="category__items item-category" data-fillter-groups="lines">
 					<a href="" class="item-category__link"> Black </a>
 					<a href="" class="item-category__link active"> Ultralife </a>
 					<a href="" class="item-category__link"> Speed </a>
@@ -602,11 +607,11 @@ get_header() ?>
 jQuery(document).ready(function($) {
 	let searchParams = new URLSearchParams(window.location.search);
 	let searchdata = searchParams.get('searchdata');
-	
 	if(searchdata)
 	{
 		$("#catalog_search").find(".tabs__title:nth-child(2)").trigger("click");
 		$("#searchdata").val(searchdata);
+		console.log($("#searchdata").val())
 	}
 	
 	$("#catalog_search").find(".tabs__title").click(function(){
