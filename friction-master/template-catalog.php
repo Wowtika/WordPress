@@ -646,8 +646,6 @@ jQuery(document).ready(function($) {
 	{
 		$("#catalog_search").find(".tabs__title:nth-child(2)").trigger("click");
 		$("#searchdata").val(searchdata);
-		let fff = $("#searchdata").val();
-		console.log(fff)
 	}
 
 	$("#catalog_search").find(".tabs__title").click(function(){
