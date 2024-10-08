@@ -18,8 +18,8 @@ jobs:
             --header 'Authorization: Bearer ${{ secrets.YOUGILE_API_KEY }}' \
             --header 'Content-Type: application/json' \
             --data '{
-              "title": "${{ github.event.issue.title }}",
-              "columnId": "${{ secrets.YOUGILE_COLUMN_ID }}",
+              "title": ${{ toJson(github.event.issue.title) }},
+              "columnId": ${{ toJson(secrets.YOUGILE_COLUMN_ID) }},
               "description": "<a href=\"https://github.com/${{ github.repository }}/issues/${{ github.event.issue.number }}\">Показать в Github</a>"
             }' | jq -r '.id'
           )"
@@ -72,5 +72,5 @@ jobs:
             --header 'Authorization: Bearer ${{ secrets.YOUGILE_API_KEY }}' \
             --header 'Content-Type: application/json' \
             --data '{
-              "title": "${{ github.event.issue.title }}"
+              "title": ${{ toJson(github.event.issue.title) }}
             }'
