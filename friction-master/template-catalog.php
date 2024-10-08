@@ -130,20 +130,20 @@ get_header() ?>
 				<div class="category__heading">Category</div>
 
 				<div class="category__items item-category" data-fillter-groups="category">
-					<a data-tippy-content="Подсказка" href="" class="item-category__link">
+					<a data-tippy-content="Brake Kits" href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog1"></span>
 					</a>
-					<a data-tippy-content="Подсказка" href="" class="item-category__link">
+					<a data-tippy-content="Brake Pads" href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog2"></span>
 					</a>
-					<a data-tippy-content="Подсказка" href="" class="item-category__link">
-						<span class="item-category__icon _icon-catalog5"></span>
+					<a data-tippy-content="Brake Rotors" href="" class="item-category__link">
+						<span class="item-category__icon _icon-catalog3"></span>
 					</a>
-					<a data-tippy-content="Подсказка" href="" class="item-category__link">
+					<a data-tippy-content="Brake Hardware" href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog4"></span>
 					</a>
-					<a data-tippy-content="Подсказка" href="" class="item-category__link">
-						<span class="item-category__icon _icon-catalog3"></span>
+					<a data-tippy-content="Wheel Hubs" href="" class="item-category__link">
+						<span class="item-category__icon _icon-catalog5"></span>
 					</a>
 					<!-- Этих параметров вроде как 6 штук, но нет иконки Brake Hardware
 					<a data-tippy-content="Подсказка" href="" class="item-category__link">
