@@ -1102,7 +1102,20 @@
         $select.append(opt);
       }
 
-      $select.attr("disabled", false);
+      if (data.length === 1) {
+        // Устанавливаем селект как disabled
+        // тут показывается одна субмодель и блокируется блок чтобы не было выбора
+        let selectOptionButtonAll = $select[0].querySelectorAll("option");
+        let selectOption = selectOptionButtonAll[0];
+        let selectOptionButton = selectOptionButtonAll[1];
+        let dataValue = selectOptionButton.textContent;
+        selectOption.textContent = dataValue;
+        $select.trigger("change");
+        $select.attr("disabled", true);
+      } else if (data.length > 1) {
+        // Если больше одного элемента, разрешаем выбор
+        $select.attr("disabled", false);
+      }
 
       this.rebuildSelect($select);
     }
@@ -1123,7 +1136,20 @@
         $select.append(opt);
       }
 
-      $select.attr("disabled", false);
+      if (data.length === 1) {
+        // Устанавливаем селект как disabled
+        $select.attr("disabled", true);
+        // тут показывается один двигатель и блокируется блок чтобы не было выбора
+        let selectOptionButtonAll = $select[0].querySelectorAll("option");
+        let selectOption = selectOptionButtonAll[0];
+        let selectOptionButton = selectOptionButtonAll[1];
+        let dataValue = selectOptionButton.textContent;
+        selectOption.textContent = dataValue;
+        $select.trigger("change");
+      } else if (data.length > 1) {
+        // Если больше одного элемента, разрешаем выбор
+        $select.attr("disabled", false);
+      }
 
       this.rebuildSelect($select);
     }
@@ -1576,12 +1602,21 @@
 
       let _this = this;
       switch (type) {
+        case "type":
+          _this.$year.html(
+            '<option value="" data-loading selected>Year</option>'
+          );
+          _this.$year.attr("disabled", true);
+          _this.rebuildSelect(_this.$year);
+          _this.hideInfotitle();
+
         case "region":
           _this.$year.html(
             '<option value="" data-loading selected>Year</option>'
           );
           _this.$year.attr("disabled", true);
           _this.rebuildSelect(_this.$year);
+          _this.hideInfotitle();
 
         case "year":
           _this.$make.html(
@@ -1589,6 +1624,7 @@
           );
           _this.$make.attr("disabled", true);
           _this.rebuildSelect(_this.$make);
+          _this.hideInfotitle();
 
         case "make":
           _this.$model.html(
@@ -1596,9 +1632,22 @@
           );
           _this.$model.attr("disabled", true);
           _this.rebuildSelect(_this.$model);
+          _this.hideInfotitle();
 
         case "model":
           break;
+      }
+    }
+
+    // Удаление блоков строк зачение поиковых запросов при переключении параметров
+    hideInfotitle() {
+      let catalogAutoTitle = $("#catalog_auto_title")[0];
+      if (catalogAutoTitle) {
+        catalogAutoTitle.style.display = "none";
+      }
+      let catalogNodata = $(".catalog_nodata")[0];
+      if (catalogNodata) {
+        catalogNodata.style.display = "none";
       }
     }
 
@@ -1609,7 +1658,7 @@
     }
     loadMakes(year, selected = false) {
       let _this = this;
-
+      // let catalogAutoTitle = $("#catalog_auto_title")[0];
       this.getList(
         "makes",
         {
@@ -1637,6 +1686,8 @@
       let _this = this;
       let load_catalog = $("#load_catalog");
       let catalog = $("#catalog");
+
+      _this.hideInfotitle();
 
       _this.$submodel.html('<option value="" selected>Submodel</option>');
       _this.rebuildSelect(_this.$submodel);
@@ -1673,13 +1724,21 @@
               } else if (res.data.engines || res.data.vehicles) {
                 if (res.data.engines) {
                   _this.setOptionsEngines(res.data.engines, _this.$engine);
+                } else if (res.data.engines.length === 1) {
+                  _this.partsSearch(year, make, model, engine);
                 } else {
-                  console.log("нет engine");
+                  const engineElement = $('.select[data-id="7"]');
+                  if (engineElement) {
+                    engineElement[0].style.display = "none"; // Скрыть элемент
+                  }
                 }
                 if (res.data.vehicles) {
                   _this.setOptionsSubmodels(res.data.vehicles, _this.$submodel);
                 } else {
-                  console.log("нет Submodel");
+                  const submodelElement = $('.select[data-id="6"]');
+                  if (submodelElement) {
+                    submodelElement[0].style.display = "none"; // Скрыть элемент
+                  }
                 }
 
                 load_catalog.html("");
@@ -1782,8 +1841,6 @@
       //filteredData
       console.log("Отфильтрованные товары для рендера", filteredData);
       if (filteredData && filteredData.length > 0) {
-        console.log(filteredData.length);
-
         const addBlockProduct = function (dataForFender) {
           let categoryName = dataForFender[0]
             ? dataForFender[0].product_group
@@ -1801,7 +1858,21 @@
 
           let partHeaderSpan = document.createElement("span");
           partHeaderSpan.classList.add("header-catalog__icon");
-          partHeaderSpan.classList.add("_icon-catalog1");
+          // переменная для получения иконки категории
+          const objValueCategoryGroup = [
+            "Brake Shoes",
+            "Brake Kits",
+            "Brake Pads",
+            "Brake Rotors",
+            "Brake Hardware",
+            "Wheel Hubs",
+          ];
+          let numberIcon = objValueCategoryGroup.indexOf(categoryName);
+          // let numberIcon = objValueCategoryGroup.findIndex(categoryName);
+          let numberOnIconCategory =
+            "_icon-catalog" + (numberIcon > 0 ? numberIcon : 3);
+
+          partHeaderSpan.classList.add(numberOnIconCategory);
 
           partHeaderContainer.append(partHeaderSpan);
 
@@ -1863,13 +1934,11 @@
           catalog__wrapper.append(partContainer);
         };
         if (filteredData.length === 1) {
-          console.log("filteredData[0]", filteredData[0]);
           const dynamicKey = Object.keys(filteredData[0]).find(
             (key) => key !== "fitment_type"
           );
           const dynamicValue = filteredData[0][dynamicKey]; // Значение под динамическим ключом
           addBlockProduct(dynamicValue);
-
         } else if (filteredData.length > 1) {
           filteredData.forEach((obj) => {
             if (obj) {
@@ -1915,6 +1984,7 @@
 
       if (engine != "") {
         _this.partsSearch(year, make, model, engine);
+        console.log("GJgfddfd");
       }
     }
 
@@ -1971,7 +2041,6 @@
         let resultParts = null;
 
         if (activeCategory) {
-
           // Создаем новый массив для результатов
           resultParts = filteredData
             .map((item) => {
@@ -2012,9 +2081,7 @@
                 [dynamicKey]: arr,
               },
             ];
-
           } else if (dataOnCategoryandSide.length > 1) {
-
             const filteredData = dataOnCategoryandSide
               .map((obj) => {
                 // Найти динамический ключ, который не равен "fitment_type"
@@ -2040,7 +2107,6 @@
               .filter((obj) => obj !== null); // Удаляем null значения
 
             dataOnCategoryandSide = filteredData;
-
           }
         }
         return dataOnCategoryandSide; // Возвращаем отфильтрованные данные
@@ -2124,12 +2190,12 @@
       });
 
       const objValueCategoryGroup = [
+        "Brake Shoes",
+        "Brake Kits",
         "Brake Pads",
         "Brake Rotors",
-        "Brake Kits",
-        "Wheel Hubs",
-        "Brake Shoes",
         "Brake Hardware",
+        "Wheel Hubs",
       ];
 
       // Возвращаем начальный номер активной иконки
