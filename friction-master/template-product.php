@@ -227,7 +227,7 @@ get_header() ?>
 				<div class="card__content content-card">
 
 					<div class="content-card__header header-card">
-						<span class="header-card__icon _icon-arrow-down"></span>Fits Porche Cayenne 2006
+						<span class="header-card__icon _icon-arrow-down"></span>Fits <?php echo $_GET['car'] ?>
 					</div>
 
 					<div class="content-card__body body-card">

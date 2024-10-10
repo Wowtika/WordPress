@@ -1919,6 +1919,8 @@
             part_footer.innerHTML =
               '<a href="/product?part_id=' +
               part.part_id +
+              '&car=' +
+              `${_this.$make.val()} ${_this.$model.val()} ${_this.$year.val()}` +
               '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
 
             partElement.append(part_header);
