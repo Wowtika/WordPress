@@ -3822,6 +3822,65 @@ p {
 	border: 1px solid #a9a9a9;
 }
 
+.options-qualifier {
+	position: relative;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: column;
+	flex-direction: column;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+	padding: 0.625rem;
+	gap: 0.4375rem;
+	border: 1px solid #a9a9a9;
+	flex-basis: 25%;
+	min-width: 200px;
+	max-width: 240px;
+}
+
+.category-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: flex-start;
+	padding: 0.625rem;
+	gap: 2.4375rem;
+	margin: 10px;
+	border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+.products-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+	padding: 0.625rem;
+	gap: 2.4375rem;
+	flex-wrap: wrap;
+}
+
 .item-catalog__header {
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -3850,6 +3909,14 @@ p {
 	font-weight: 500;
 	font-size: 1.125rem;
 	font-weight: 500;
+}
+
+.item-options-heading {
+	text-align: center;
+	word-wrap: break-word; /* Для переноса длинных слов */
+    overflow-wrap: break-word; /* Поддержка для современных браузеров */
+    white-space: normal; /* Позволяет тексту переноситься */
+    width: 100%; /* Убедитесь, что заголовок занимает всю ширину родительского контейнера */
 }
 
 .item-catalog__image {

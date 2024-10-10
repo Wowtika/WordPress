@@ -1103,15 +1103,16 @@
       }
 
       if (data.length === 1) {
-        // Устанавливаем селект как disabled
-        // тут показывается одна субмодель и блокируется блок чтобы не было выбора
-        let selectOptionButtonAll = $select[0].querySelectorAll("option");
-        let selectOption = selectOptionButtonAll[0];
-        let selectOptionButton = selectOptionButtonAll[1];
-        let dataValue = selectOptionButton.textContent;
-        selectOption.textContent = dataValue;
-        $select.trigger("change");
-        $select.attr("disabled", true);
+        // // Устанавливаем селект как disabled
+        // // тут показывается одна субмодель и блокируется блок чтобы не было выбора
+        // let selectOptionButtonAll = $select[0].querySelectorAll("option");
+        // let selectOption = selectOptionButtonAll[0];
+        // let selectOptionButton = selectOptionButtonAll[1];
+        // let dataValue = selectOptionButton.textContent;
+        // selectOption.textContent = dataValue;
+        // $select.trigger("change");
+        // $select.attr("disabled", true);
+        $select.attr("disabled", false);
       } else if (data.length > 1) {
         // Если больше одного элемента, разрешаем выбор
         $select.attr("disabled", false);
@@ -1122,6 +1123,7 @@
 
     setOptionsEngines(data, $select, selected = false) {
       $select = $($select);
+      let _this = this;
 
       for (let i = 0; i < data.length; i++) {
         let val = data[i];
@@ -1146,6 +1148,22 @@
         let dataValue = selectOptionButton.textContent;
         selectOption.textContent = dataValue;
         $select.trigger("change");
+        this.$model.on("change", function () {
+          let year = _this.$year.val();
+          let make = _this.$make.val();
+          let model = _this.$model.val();
+          let region = _this.getRegionId();
+          let type = _this.getTypeId();
+
+          let params = $.param({
+            yr: year,
+            mk: make,
+            md: model,
+            rg: region,
+            tp: type,
+          });
+          window.location.href = "/catalog/?" + params;
+        });
       } else if (data.length > 1) {
         // Если больше одного элемента, разрешаем выбор
         $select.attr("disabled", false);
@@ -1609,6 +1627,7 @@
           _this.$year.attr("disabled", true);
           _this.rebuildSelect(_this.$year);
           _this.hideInfotitle();
+          _this.hideProductBlock();
 
         case "region":
           _this.$year.html(
@@ -1617,6 +1636,7 @@
           _this.$year.attr("disabled", true);
           _this.rebuildSelect(_this.$year);
           _this.hideInfotitle();
+          _this.hideProductBlock();
 
         case "year":
           _this.$make.html(
@@ -1625,6 +1645,7 @@
           _this.$make.attr("disabled", true);
           _this.rebuildSelect(_this.$make);
           _this.hideInfotitle();
+          _this.hideProductBlock();
 
         case "make":
           _this.$model.html(
@@ -1633,6 +1654,7 @@
           _this.$model.attr("disabled", true);
           _this.rebuildSelect(_this.$model);
           _this.hideInfotitle();
+          _this.hideProductBlock();
 
         case "model":
           break;
@@ -1648,6 +1670,13 @@
       let catalogNodata = $(".catalog_nodata")[0];
       if (catalogNodata) {
         catalogNodata.style.display = "none";
+      }
+    }
+
+    hideProductBlock() {
+      let catalogContainer = $("#catalog")[0];
+      if (catalogContainer) {
+        catalogContainer.style.display = "none";
       }
     }
 
@@ -1724,16 +1753,40 @@
               } else if (res.data.engines || res.data.vehicles) {
                 if (res.data.engines) {
                   _this.setOptionsEngines(res.data.engines, _this.$engine);
-                } else if (res.data.engines.length === 1) {
-                  _this.partsSearch(year, make, model, engine);
+                  if (res.data.engines.length === 1) {
+                    _this.$engine.val(res.data.engines[0].engine_short);
+                    _this.partsSearch(
+                      year,
+                      make,
+                      model,
+                      res.data.engines[0].engine_short
+                    );
+                  } else if (res.data.engines.length > 1) {
+                    _this.setOptionsEngines(res.data.engines, _this.$engine);
+                  }
                 } else {
                   const engineElement = $('.select[data-id="7"]');
                   if (engineElement) {
                     engineElement[0].style.display = "none"; // Скрыть элемент
                   }
                 }
+
                 if (res.data.vehicles) {
                   _this.setOptionsSubmodels(res.data.vehicles, _this.$submodel);
+                  if (res.data.vehicles.length === 1) {
+                    _this.$submodel.val(res.data.vehicles[0].submodel);
+                    _this.partsSearch(
+                      year,
+                      make,
+                      model,
+                      res.data.vehicles[0].submodel
+                    );
+                  } else if (res.data.vehicles.length > 1) {
+                    _this.setOptionsSubmodels(
+                      res.data.vehicles,
+                      _this.$submodel
+                    );
+                  }
                 } else {
                   const submodelElement = $('.select[data-id="6"]');
                   if (submodelElement) {
@@ -1741,17 +1794,27 @@
                   }
                 }
 
-                load_catalog.html("");
-                $("#catalog_row").html("");
-                $("#inner1").fadeIn().css("display", "grid");
+                if (res.data.part_applications.length === 0) {
+                  load_catalog.html(
+                    '<div class="catalog_nodata">No data available</div>'
+                  );
+                } else if (res.data.part_applications.length > 0) {
+                  load_catalog.html("");
+                  $("#catalog_row").html("");
+                  $("#inner1").fadeIn().css("display", "grid");
+                }
               }
-              if (res.data.part_applications.length) {
-                _this.partsSearch(year, make, model);
-              } else {
-                load_catalog.html(
-                  '<div class="catalog_nodata">No data available</div>'
-                );
-              }
+            }
+            if (res.data.part_applications.length === 0) {
+              load_catalog.html(
+                '<div class="catalog_nodata">No data available</div>'
+              );
+            } else if (
+              res.data.part_applications.length &&
+              !res.data.engines &&
+              !res.data.vehicles
+            ) {
+              _this.partsSearch(year, make, model);
             }
           }
         },
@@ -1838,8 +1901,9 @@
 
       // Очищаем контейнер перед рендером новых компонентов
       catalog__wrapper.html("");
-      //filteredData
+
       console.log("Отфильтрованные товары для рендера", filteredData);
+
       if (filteredData && filteredData.length > 0) {
         const addBlockProduct = function (dataForFender) {
           let categoryName = dataForFender[0]
@@ -1868,7 +1932,6 @@
             "Wheel Hubs",
           ];
           let numberIcon = objValueCategoryGroup.indexOf(categoryName);
-          // let numberIcon = objValueCategoryGroup.findIndex(categoryName);
           let numberOnIconCategory =
             "_icon-catalog" + (numberIcon > 0 ? numberIcon : 3);
 
@@ -1885,47 +1948,93 @@
 
           let partContainerBasic = document.createElement("div");
           partContainerBasic.classList.add("container-catalog");
-          partContainerBasic.classList.add("catalog__row");
+
+          const productSorder = _this.sortByqualifierProduct(dataForFender);
+          console.log("productSorder", productSorder);
+
           // Обрабатываем каждую часть в категории
-          dataForFender.forEach((part) => {
+          const keysArr = Object.keys(productSorder);
+          let productCategoryName = null;
+          let productCategoryData = null;
+          keysArr.forEach((key) => {
+            productCategoryName = key;
+            productCategoryData = productSorder[key];
+            let OptionBlock = _this.renderBlockOptionsContainer(
+              productCategoryName,
+              categoryName
+            );
+
             // Создаем элемент для части
-            let partElement = document.createElement("div");
-            partElement.classList.add("item-catalog");
-            partElement.setAttribute("data-part_id", part.part_id);
+            let categoryContainer = document.createElement("div");
+            categoryContainer.classList.add("category-container");
 
-            let part_icon = document.createElement("div");
-            part_icon.classList.add("item-catalog__header-icons");
-            part_icon.innerHTML =
-              '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card1.svg" alt="" /></a>' +
-              '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card2.svg" alt="" /></a>' +
-              '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card3.svg" alt="" /></a>';
+            let optionsContainer = document.createElement("div");
+            optionsContainer.classList.add("option-catalog-container");
 
-            let part_heading = document.createElement("div");
-            part_heading.classList.add("item-catalog__header-heading");
-            part_heading.textContent = part.part_number;
+            let productsContainer = document.createElement("div");
+            productsContainer.classList.add("products-container");
 
-            let part_header = document.createElement("div");
-            part_header.classList.add("item-catalog__header");
-            part_header.append(part_icon);
-            part_header.append(part_heading);
+            categoryContainer.append(OptionBlock);
+            categoryContainer.append(productsContainer);
 
-            let part_img = document.createElement("div");
-            part_img.classList.add("item-catalog__image");
-            part_img.innerHTML =
-              '<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />';
+            productCategoryData.forEach((part) => {
+              // Создаем элемент для части
+              let partElement = document.createElement("div");
+              partElement.classList.add("item-catalog");
+              partElement.setAttribute("data-part_id", part.part_id);
 
-            let part_footer = document.createElement("div");
-            part_footer.classList.add("item-catalog__footer");
-            part_footer.innerHTML =
-              '<a href="/product?part_id=' +
-              part.part_id +
-              '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
+              let part_icon = document.createElement("div");
+              part_icon.classList.add("item-catalog__header-icons");
+              part_icon.innerHTML =
+                '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card1.svg" alt="" /></a>' +
+                '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card2.svg" alt="" /></a>' +
+                '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card3.svg" alt="" /></a>';
 
-            partElement.append(part_header);
-            partElement.append(part_img);
-            partElement.append(part_footer);
+              let part_heading = document.createElement("div");
+              part_heading.classList.add("item-catalog__header-heading");
+              part_heading.textContent = part.part_number;
 
-            partContainerBasic.append(partElement);
+              let part_header = document.createElement("div");
+              part_header.classList.add("item-catalog__header");
+              part_header.append(part_icon);
+              part_header.append(part_heading);
+
+              let part_img = document.createElement("div");
+              part_img.classList.add("item-catalog__image");
+
+              async function getImage() {
+                let imgStringProduct = await _this.getImagesForProduct(
+                  part.part_id
+                );
+                if (
+                  imgStringProduct &&
+                  imgStringProduct[0] &&
+                  imgStringProduct[0].images &&
+                  imgStringProduct[0].images[0]
+                ) {
+                  part_img.innerHTML = `<img src="${imgStringProduct[0].images[0]}" alt="Sxema" />`;
+                } else {
+                  part_img.innerHTML =
+                    '<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />';
+                }
+              }
+              getImage();
+
+              let part_footer = document.createElement("div");
+              part_footer.classList.add("item-catalog__footer");
+              part_footer.innerHTML =
+                '<a href="/product?part_id=' +
+                part.part_id +
+                '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
+
+              partElement.append(part_header);
+              partElement.append(part_img);
+              partElement.append(part_footer);
+
+              productsContainer.append(partElement);
+              // partElement
+            });
+            partContainerBasic.append(categoryContainer);
             // Добавляем элемент в контейнер
           });
           partContainer.append(partContainerBasic);
@@ -1951,6 +2060,127 @@
           });
         }
       }
+    }
+
+    renderBlockOptionsContainer(nameCategory, productCategory) {
+      let _this = this;
+      // Создаем элемент для части
+      let partOptions = document.createElement("div");
+      partOptions.classList.add("options-qualifier");
+      partOptions.setAttribute("data-options", productCategory);
+
+      // Проверяем, содержит ли строка 'w/'
+      if (nameCategory.includes("w/")) {
+        // Удаляем 'w/' и возможный пробел после него
+        nameCategory = nameCategory.replace(/w\/\s*/, "");
+      }
+
+      let partOptionsHeading = document.createElement("h2");
+      partOptionsHeading.classList.add("item-catalog__header-heading");
+      partOptionsHeading.classList.add("item-options-heading");
+      partOptionsHeading.textContent = nameCategory;
+
+      partOptions.append(partOptionsHeading);
+
+      let partOptionsSide = document.createElement("div");
+      partOptionsSide.classList.add("item-catalog__image");
+      if (nameCategory.match(/(Front)/)) {
+        partOptionsSide.innerHTML =
+          '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-right.svg" alt="Side" />';
+      } else if (nameCategory.match(/(Rear)/)) {
+        partOptionsSide.innerHTML =
+          '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-left.svg" alt="Side" />';
+      } else {
+        partOptionsSide.innerHTML =
+          '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-all.svg" alt="Side" />';
+      }
+      partOptions.append(partOptionsSide);
+
+      let partOptionsSxema = document.createElement("div");
+      // item-catalog__header-icons
+      partOptionsSxema.classList.add("item-catalog__image");
+
+      let indexSxema = "catalog-sxem.jpg"; // Значение по умолчанию
+      if (productCategory === "Brake Kits") {
+        indexSxema = "catalog-sxem1.jpg"; // Для категории "Brake kits"
+      } else if (productCategory === "Brake Pads") {
+        indexSxema = "catalog-sxem2.jpg"; // Для категории "Brake Pads"
+      }
+
+      // Создаём элемент <img> и устанавливаем его атрибуты
+      const imgElement = document.createElement("img");
+      imgElement.src = `/wp-content/themes/friction-master/assets/img/catalog/${indexSxema}`;
+      imgElement.alt = "Sxema";
+
+      // Добавляем <img> в div
+      partOptionsSxema.appendChild(imgElement);
+
+      // Добавляем div в родительский элемент
+      partOptions.append(partOptionsSxema);
+
+      //  inner-catalog-car-right.svg картинка которая соответсвует правой стороне
+      //  inner-catalog-car-all.svg картинка которая соответсвует all
+      //  inner-catalog-car-left.svg картинка которая соответсвует левой стороне
+
+      let part_footer = document.createElement("p");
+      part_footer.classList.add("item-catalog__footer");
+      part_footer.style.textAlign = "center";
+      part_footer.innerHTML =
+        '<a href="/product?part_id=' + nameCategory + '">Сравнить линейки</a>';
+      // part_footer.innerHTML = "Сравнить линейки";
+      partOptions.append(part_footer);
+      return partOptions;
+    }
+
+    sortByqualifierProduct(dataProducts) {
+      let _this = this;
+      const objQualifier = {};
+
+      dataProducts.forEach((product) => {
+        // Проверяем наличие значения qualifier
+        if (
+          product.qualifier &&
+          product.qualifier !== "" &&
+          product.qualifier !== null
+        ) {
+          const diameterMatch = product.qualifier.match(/(\d+mm)/);
+          const sideMatch = product.qualifier.match(/(Front|Rear)/);
+
+          if (diameterMatch && sideMatch) {
+            // Если есть значение диаметра и стороны
+            const categoryKey = `${product.qualifier}`; // Полное значение qualifier
+            if (!objQualifier.hasOwnProperty(categoryKey)) {
+              objQualifier[categoryKey] = [];
+            }
+            objQualifier[categoryKey].push(product);
+          } else if (
+            product.qualifier === "Standard Brakes" ||
+            product.qualifier === "Except Off-Road Suspension" ||
+            product.qualifier === "Off-Road Suspension"
+          ) {
+            // Обрабатываем стандартные значения
+            const standardKey = product.qualifier;
+            if (!objQualifier.hasOwnProperty(standardKey)) {
+              objQualifier[standardKey] = [];
+            }
+            objQualifier[standardKey].push(product);
+          } else {
+            // Если не попадает в стандартные категории
+            const nameCategory = product.qualifier;
+            if (!objQualifier.hasOwnProperty(nameCategory)) {
+              objQualifier[nameCategory] = [];
+            }
+            objQualifier[nameCategory].push(product);
+          }
+        } else {
+          // Если qualifier пустой или null
+          if (!objQualifier.hasOwnProperty("Dont have qualifier")) {
+            objQualifier["Dont have qualifier"] = [];
+          }
+          objQualifier["Dont have qualifier"].push(product);
+        }
+      });
+      return objQualifier; // Возврат собранных данных
     }
 
     checkSubModel() {
@@ -1984,7 +2214,6 @@
 
       if (engine != "") {
         _this.partsSearch(year, make, model, engine);
-        console.log("GJgfddfd");
       }
     }
 
@@ -2017,9 +2246,10 @@
       const objValueSideGroup = {
         left: "Front",
         right: "Rear",
-        all: "", // не видела значение другого
+        all: "Both",
       };
       const objFilter = this.filterProductsAllGroups();
+      console.log("objFilter", objFilter);
 
       // Получаем активный элемент из группы продуктовых линий
       const activeProductLine = objFilter.productLines;
@@ -2063,7 +2293,7 @@
 
         const positionValue = objValueSideGroup[activeSide];
 
-        if (activeSide !== "all") {
+        if (activeSide != null) {
           // Получаем значение позиции для фильтрации
           if (dataOnCategoryandSide.length === 1) {
             let namefitmentType = dataOnCategoryandSide[0].fitment_type;
@@ -2071,7 +2301,6 @@
               (key) => key !== "fitment_type"
             );
             const dynamicValue = dataOnCategoryandSide[0][dynamicKey]; // Значение под динамическим ключом
-            console.log("dynamicValue", dynamicValue);
             const arr = dynamicValue.filter(
               (item) => item.position === positionValue
             );
@@ -2175,18 +2404,17 @@
       // Установка начального значения
       const initialActiveNumber = getActiveIconNumber();
 
-      // Обработчик клика для каждой ссылки
-      categoryLinks.forEach((link) => {
-        link.addEventListener("click", (event) => {
-          event.preventDefault();
-          if (link.closest(".active")) {
-            link.classList.remove("active");
-          }
-          if (!link.closest(".active")) {
-            categoryLinks.forEach((item) => item.classList.remove("active"));
-            link.classList.add("active");
-          }
-        });
+      categoryGroupBlock.addEventListener("click", (event) => {
+        event.preventDefault();
+        const linkCategory = event.target.closest(".item-category__link");
+
+        if (linkCategory.classList.contains("active")) {
+          linkCategory.classList.remove("active");
+        } else if (linkCategory) {
+          // добавили проверку на null
+          categoryLinks.forEach((item) => item.classList.remove("active"));
+          linkCategory.classList.add("active");
+        }
       });
 
       const objValueCategoryGroup = [
@@ -2209,48 +2437,37 @@
       const categoryLinksSide = categoryGroupBlockSide.querySelectorAll(
         ".item-category__link"
       );
+      // item-category__link active
+      const activeLink = categoryGroupBlockSide.querySelector(
+        ".item-category__link.active"
+      );
 
-      // Функция для получения номера активной иконки
-      const getActiveIconPosition = () => {
-        const activeLinkSide = categoryGroupBlockSide.querySelector(
-          ".item-category__link.active"
-        );
+      categoryGroupBlockSide.addEventListener("click", (event) => {
+        event.preventDefault();
+        const linkSide = event.target.closest(".item-category__link");
 
-        if (activeLinkSide) {
-          const iconElementSide = activeLinkSide.querySelector(
-            ".item-category__icon"
-          );
-          const iconClassSide = iconElementSide.className;
-
-          // Регулярное выражение для поиска 'left', 'right' или 'all' в конце строки
-          const matchSide = iconClassSide.match(
-            /_icon-catalog-car-(left|right|all)$/
-          );
-
-          return matchSide ? matchSide[1] : null; // Возвращаем найденное значение или null
-        }
-
-        return null; // Если активного элемента нет, возвращаем null
-      };
-
-      // Установка начального значения
-      const initialActivePosition = getActiveIconPosition();
-
-      // Обработчик клика для каждой ссылки
-      categoryLinksSide.forEach((linkSide) => {
-        linkSide.addEventListener("click", (event) => {
-          event.preventDefault();
-
-          // Убираем класс active у всех ссылок
+        if (linkSide && linkSide.classList.contains("active")) {
+          linkSide.classList.remove("active");
+        } else {
           categoryLinksSide.forEach((item) => item.classList.remove("active"));
-
-          // Добавляем класс active к нажатой ссылке
           linkSide.classList.add("active");
-        });
+        }
       });
-      return getActiveIconPosition();
-    }
 
+      if (activeLink) {
+        const iconElementSide = activeLink.querySelector(
+          ".item-category__icon"
+        );
+        const iconClassSide = iconElementSide.className;
+        const matchSide = iconClassSide.match(
+          /_icon-catalog-car-(left|right|all)$/
+        );
+        return matchSide ? matchSide[1] : null;
+      } else {
+        return null;
+      }
+      // }
+    }
     setupGroupLines() {
       const categoryGroupBlockLines = document.querySelector(
         '.category__items.item-category[data-fillter-groups="lines"]'
@@ -2259,7 +2476,6 @@
         ".item-category__link"
       );
 
-      // Обработчик клика для каждой ссылки
       categoryLinksLines.forEach((linkLines) => {
         linkLines.addEventListener("click", (event) => {
           event.preventDefault();
@@ -2273,6 +2489,7 @@
           }
         });
       });
+
       return categoryGroupBlockLines.querySelector(
         ".item-category__link.active"
       )
@@ -2291,6 +2508,31 @@
         linesGroup: _this.setupGroupLines(),
       };
       return filteredSettings;
+    }
+
+    getImagesForProduct(productId) {
+      let _this = this;
+
+      return $.ajax({
+        url: "https://catalog.loopautomotive.com/catalog/part-images",
+        type: "GET",
+        data: {
+          part_ids: productId,
+          // region_id: _this.getRegionId(),
+          action: "apicatalog:getImages",
+          nonce: ApiCatalog.nonce,
+        },
+        success: function (res) {
+          if (res && res.success) {
+            let images = res.data;
+            return images;
+          }
+        },
+        error: function (xhr) {
+          let json = xhr.responseJSON || {};
+          _this.showError(json.msg || "Unknown");
+        },
+      });
     }
   }
 

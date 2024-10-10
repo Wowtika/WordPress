@@ -163,7 +163,7 @@ get_header() ?>
 					<a href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog-car-right"></span>
 					</a>
-					<a href="" class="item-category__link active">
+					<a href="" class="item-category__link">
 						<span class="item-category__icon _icon-catalog-car-all"></span>
 					</a>
 				</div>
