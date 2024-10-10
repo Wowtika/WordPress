@@ -178,12 +178,12 @@ get_header() ?>
 						<div class="card-slider__wrapper swiper-wrapper">
 
 							<?php 
-								foreach ($partImagesI as $itemI) {
-									if (is_array($itemI) && isset($itemI['images'])) {
-										foreach ($itemI['images'] as $imageI) {
+								foreach ($partImages as $item) {
+									if (is_array($item) && isset($item['images'])) {
+										foreach ($item['images'] as $image) {
 							?>
 							<div class="card-slider__cont swiper-slide">
-								<img class="card-slider__image" src="<?php echo $imageI; ?>" alt="">
+								<img class="card-slider__image" src="<?php echo $image; ?>" alt="">
 							</div>
 							<?php } } } ?>
 
@@ -201,6 +201,15 @@ get_header() ?>
 
 					<div class="card-thumbs swiper">
 						<div class="card-thumbs__wrapper swiper-wrapper">
+						<?php 
+								foreach ($partImages as $item) {
+									if (is_array($item) && isset($item['images'])) {
+										foreach ($item['images'] as $image) {
+							?>
+							<div class="card-thumbs__cont swiper-slide">
+								<img class="card-thumbs__image" src="<?php echo $image; ?>" alt="">
+							</div>
+							<?php } } } ?>
 							<?php 
 								foreach ($partImages as $item) {
 									if (is_array($item) && isset($item['tech_drawings'])) {
