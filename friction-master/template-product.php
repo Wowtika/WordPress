@@ -120,6 +120,47 @@ get_header() ?>
 
 <?php //} ?>
 
+<?php
+	foreach ($partImages as $car) {
+		$number = $car['number'];
+		$group = $car['product_group_name'];
+	}
+	$numberType = preg_replace('/[^a-zA-Z]/', '', $number);
+	switch ($numberType) {
+		case "D":
+		case "MKD":
+			$type = "BLACK";
+			break;
+		case "CMX":
+			$type = "ULTRALIFE";
+			break;
+		case "HPS":
+			$type = "SPEED";
+			break;
+		case "ELT":
+			$type = "ELITE";
+			break;
+		default:
+			$type = "BLACK";
+	}
+	$query = new WP_Query( array(
+		'post_type' => 'product-lines',
+		'order' => 'ASC',
+		'orderby' => 'ID',
+	));
+	if ( $query->have_posts() ) { 
+		$counter = 0;
+		while ( $query->have_posts() ) { 
+			$query->the_post(); 
+			$title = get_the_title();
+			if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+				break;
+			};
+		} 
+	}
+	wp_reset_postdata(); 
+?>
+
 <div class="card-header">
 	<img src="<?=get_template_directory_uri();?>/assets/img/home/product-fon.jpg" class="product-bg">
 
@@ -140,9 +181,9 @@ get_header() ?>
 
 <main class="page page_card">
 
-	<!-- <div class="card-category__container">
+	<div class="card-category__container">
 
-		<div class="card-category">
+		<!-- <div class="card-category">
 			<?php
 				$query = new WP_Query( array(
 					'post_type' => 'product-lines',
@@ -150,24 +191,51 @@ get_header() ?>
 					'orderby' => 'ID',
 				));
 			?>
-			<?php if ( $query->have_posts() ) { ?>
-				<?php while ( $query->have_posts() ) { ?>
-					<?php $query->the_post(); ?>
-					<a href="<?=get_permalink();?>" class="card-category__link">
-						<span><?php the_title() ?></span>
-					</a>
-				<?php } ?>
-				<?php wp_reset_postdata(); ?>
-			<?php } ?>
-		</div>
+			<?php if ( $query->have_posts() ) {
+				while ( $query->have_posts() ) {
+					$query->the_post();
+					$title = get_the_title();
+					if (stripos($title, "Black") !== false) {
+						$bgColor = "#000000";
+					}
+					if (stripos($title, "Ultralife") !== false) {
+						$bgColor = "#0275B7";
+					}
+					if (stripos($title, "SPEED") !== false) {
+						$bgColor = "#D4200F";
+					}
+					if (stripos($title, "Circuit Spec") !== false) {
+						$bgColor = "#FFD40F";
+					}
+					if (stripos($title, $group) !== false) {
+						echo '<a href="<?=get_permalink();?>" class="card-category__link" style="background:' . $bgColor . '; color: white;">';
+							echo '<span>' . the_title() . '</span>';
+						echo '</a>';
+					}
+				}
+			}?>
+		</div> -->
 
-	</div> -->
+		<?php
+			if ( $query->have_posts() ) { 
+				$counter = 0;
+				while ( $query->have_posts() ) { 
+					$query->the_post(); 
+					$title = get_the_title();
+					if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+						break;
+					};
+				} 
+			}
+		?>
+
+	</div>
 
 	<section class="page__card card" id="part_card">
 		<div class="card__container">
 
 			<div class="card__header">
-				<h2 class="card__heading"><?php echo $partAttribute[0]["name"] . ' ' . $partAttribute[0]["value"] ?></h2>
+				<h2 class="card__heading"><?php echo $number?></h2>
 			</div>
 
 			<div class="card__body">
@@ -233,7 +301,7 @@ get_header() ?>
 					<div class="content-card__body body-card">
 
 						<div class="body-card__item-heading"><?php the_field('part','option');?></div>
-						<div class="body-card__item-text"><?php echo $partAttribute[0]["name"] . ' ' . $partAttribute[0]["value"] ?></div>
+						<div class="body-card__item-text"><?php echo $number ?></div>
 						<div class="body-card__item-heading"><?php the_field('position','option');?></div>
 						<div class="body-card__item-icons">
 
@@ -261,18 +329,7 @@ get_header() ?>
 							<?php the_field('About this part','option');?>
 						</div>
 
-						<ul class="footer-card__list card-list">
-							<li class="card-list__item">
-								Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-								Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-							</li>
-							<li class="card-list__item">
-								Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-							</li>
-							<li class="card-list__item">
-								Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-							</li>
-						</ul>
+						<?php the_content(); ?>
 
 						<a class="footer-card__link" href="#"><?php the_field('see_more_part_details','option');?></a>
 
@@ -593,37 +650,30 @@ get_header() ?>
 	</section>
 
 	<section class="page__card-work-circles">
+		<?php wp_reset_postdata() ?>
 		<?php get_template_part('template_part/how_it_works') ?>
+		<?php
+			$query = new WP_Query( array(
+				'post_type' => 'product-lines',
+				'order' => 'ASC',
+				'orderby' => 'ID',
+			));
+			if ( $query->have_posts() ) { 
+				$counter = 0;
+				while ( $query->have_posts() ) { 
+					$query->the_post(); 
+					$title = get_the_title();
+					echo $title . "\n";
+					if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+						break;
+					};
+				} 
+			}
+		?>
 	</section>
 
 	<section class="page__card-benefit benefit">
-		<div class="benefit__container">
-			<div class="benefit__text">
-
-				<div class="benefit__heading">
-					<h3 class="small-header-white">Get More Benefits!<br>
-						Friction Master BK1591 Brake Kit</h3>
-				</div>
-
-				<div class="benefit__list card-list">
-					<p>By purchasing this item as a set, you will receive:</p>
-					<li class="card-list__item">
-						Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-					</li>
-					<li class="card-list__item">
-						Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-					</li>
-					<li class="card-list__item">
-						Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-					</li>
-				</div>
-
-			</div>
-			<div class="benefit__image">
-				<img src="<?=get_template_directory_uri();?>/assets/img/card/benefit1.jpg" alt="">
-				<button type="submit" class="benefit__button buy-button"><?php the_field('buy','option');?></button>
-			</div>
-		</div>
+		<?php get_template_part('template_part/benefit') ?>
 	</section>
 
 	<section class="page__card-catalog catalog">

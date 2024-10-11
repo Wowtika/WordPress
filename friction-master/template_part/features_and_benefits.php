@@ -4,16 +4,16 @@
 			Features and benefits
 		</h1>
 		<div class="card-prefs__wrapper">
-			<?php if( have_rows('features_and_benefits', 'options') ){ ?>
-				<?php while ( have_rows('features_and_benefits', 'options') ) { the_row(); ?>
+			<?php if( have_rows('items_featured_and_benefits') ){ ?>
+				<?php while ( have_rows('items_featured_and_benefits') ) { the_row(); ?>
 					<div class="card-prefs__item">
 						<div class="card-prefs__icon">
-							<img src="<?php the_sub_field('img'); ?>" class="card-prefs__icon" alt="" />
+							<img src="<?php the_sub_field('icon'); ?>" class="card-prefs__icon" alt="" />
 						</div>
 						<div class="card-prefs__text">
 							<h3 class="header3"><?php the_sub_field('title'); ?></h3>
 							<p>
-								<?php the_sub_field('text'); ?>
+								<?php the_sub_field('description'); ?>
 							</p>
 						</div>
 					</div>
