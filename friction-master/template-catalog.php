@@ -173,10 +173,10 @@ get_header() ?>
 				<div class="category__heading">Lines</div>
 
 				<div class="category__items item-category" data-fillter-groups="lines">
-					<a href="" class="item-category__link"> Black </a>
-					<a href="" class="item-category__link"> Ultralife </a>
-					<a href="" class="item-category__link"> Speed </a>
-					<a href="" class="item-category__link"> Elite </a>
+					<a href="" class="item-category__link">Black</a>
+					<a href="" class="item-category__link">Ultralife</a>
+					<a href="" class="item-category__link">Speed</a>
+					<a href="" class="item-category__link">Elite</a>
 				</div>
 			</div>
 		</div>

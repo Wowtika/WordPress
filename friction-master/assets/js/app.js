@@ -1102,21 +1102,7 @@
         $select.append(opt);
       }
 
-      if (data.length === 1) {
-        // // Устанавливаем селект как disabled
-        // // тут показывается одна субмодель и блокируется блок чтобы не было выбора
-        // let selectOptionButtonAll = $select[0].querySelectorAll("option");
-        // let selectOption = selectOptionButtonAll[0];
-        // let selectOptionButton = selectOptionButtonAll[1];
-        // let dataValue = selectOptionButton.textContent;
-        // selectOption.textContent = dataValue;
-        // $select.trigger("change");
-        // $select.attr("disabled", true);
-        $select.attr("disabled", false);
-      } else if (data.length > 1) {
-        // Если больше одного элемента, разрешаем выбор
-        $select.attr("disabled", false);
-      }
+      $select.attr("disabled", false);
 
       this.rebuildSelect($select);
     }
@@ -1611,6 +1597,23 @@
               _this.filterProductsAllGroups();
               _this.create_parts(_this.$currentData);
             }
+
+            if (event.target.closest(".clear")) {
+              let allButtonCategory = document.querySelectorAll(
+                ".item-category__link"
+              );
+              let allButtonCategoryProdLines =
+                document.querySelectorAll(".type__link");
+              allButtonCategory.forEach((item) =>
+                item.classList.remove("active")
+              );
+              allButtonCategoryProdLines.forEach((item) =>
+                item.classList.remove("active")
+              );
+
+              _this.filterProductsAllGroups();
+              _this.create_parts(_this.$currentData);
+            }
           });
       }
     }
@@ -1950,7 +1953,6 @@
           partContainerBasic.classList.add("container-catalog");
 
           const productSorder = _this.sortByqualifierProduct(dataForFender);
-          console.log("productSorder", productSorder);
 
           // Обрабатываем каждую часть в категории
           const keysArr = Object.keys(productSorder);
@@ -2249,12 +2251,12 @@
         all: "Both",
       };
       const objFilter = this.filterProductsAllGroups();
-      console.log("objFilter", objFilter);
 
       // Получаем активный элемент из группы продуктовых линий
       const activeProductLine = objFilter.productLines;
       const activeCategory = objFilter.categoryGroup;
       const activeSide = objFilter.sideGroup;
+      const activeLinesPads = objFilter.linesGroup;
 
       // if (dataAll) {
       const filterValue = objValueProductLines[activeProductLine];
@@ -2338,6 +2340,70 @@
             dataOnCategoryandSide = filteredData;
           }
         }
+
+        if (activeLinesPads) {
+          if (dataOnCategoryandSide) {
+            dataOnCategoryandSide = filteredData;
+          } else if (resultParts) {
+            dataOnCategoryandSide = resultParts;
+          }
+
+          const buttonBrakePads = document.querySelector(
+            '[data-tippy-content="Brake Pads"]'
+          );
+          buttonBrakePads.click();
+
+          let brakePadsObject = [];
+
+          // Проходим по каждому объекту в массиве dataOnCategoryandSide
+          dataOnCategoryandSide.forEach((obj) => {
+            if (obj["Brake Pads"]) {
+              brakePadsObject.push(obj);
+            }
+          });
+
+          // Если нет объектов с "Brake Pads", обнуляем dataOnCategoryandSide
+          if (brakePadsObject.length === 0) {
+            dataOnCategoryandSide = null;
+          } else {
+            dataOnCategoryandSide = brakePadsObject;
+          }
+
+          const filterOnBrakePads = {
+            Black: /(?:d|mkd)/i, // /d | mkd/i   "d | mkd",
+            Ultralife: /Cmx/i, // "Cmx",
+            Speed: /hps/i, // "hps",
+            Elite: /elt/i, // "elt",
+          };
+
+          // Объект для хранения отфильтрованных данных
+          const filteredDataLines = [];
+
+          // Проверка соответствия регулярному выражению
+          brakePadsObject.forEach((obj) => {
+            const filteredBrakePads = obj["Brake Pads"].filter((item) => {
+              // Проверяем, соответствует ли part_number регулярному выражению
+              return filterOnBrakePads[activeLinesPads].test(item.part_number);
+            });
+
+            // Если есть отфильтрованные элементы, добавляем объект в результат
+            if (filteredBrakePads.length > 0) {
+              filteredDataLines.push({
+                fitment_type: obj.fitment_type,
+                "Brake Pads": filteredBrakePads,
+              });
+            }
+          });
+
+          // Если нет совпадений, можно вернуть null или пустой массив
+          if (filteredDataLines.length === 0) {
+            return null; // или return [];
+          }
+
+          // Выводим отфильтрованные данные
+          return filteredDataLines;
+        }
+
         return dataOnCategoryandSide; // Возвращаем отфильтрованные данные
       }
       return null; // Возвращаем null, если ничего не найдено
@@ -2404,16 +2470,23 @@
       // Установка начального значения
       const initialActiveNumber = getActiveIconNumber();
 
+      let activeBtn = null;
+      categoryLinks.forEach((item) => {
+        if (item.classList.contains("active")) {
+          activeBtn = item;
+        }
+      });
+
       categoryGroupBlock.addEventListener("click", (event) => {
         event.preventDefault();
         const linkCategory = event.target.closest(".item-category__link");
 
-        if (linkCategory.classList.contains("active")) {
+        if (activeBtn === linkCategory) {
           linkCategory.classList.remove("active");
         } else if (linkCategory) {
-          // добавили проверку на null
           categoryLinks.forEach((item) => item.classList.remove("active"));
           linkCategory.classList.add("active");
+          activeBtn = linkCategory;
         }
       });
 
@@ -2437,20 +2510,24 @@
       const categoryLinksSide = categoryGroupBlockSide.querySelectorAll(
         ".item-category__link"
       );
-      // item-category__link active
-      const activeLink = categoryGroupBlockSide.querySelector(
-        ".item-category__link.active"
-      );
+
+      let activeLink = null;
+      categoryLinksSide.forEach((item) => {
+        if (item.classList.contains("active")) {
+          activeLink = item;
+        }
+      });
 
       categoryGroupBlockSide.addEventListener("click", (event) => {
         event.preventDefault();
-        const linkSide = event.target.closest(".item-category__link");
+        const linkCategory = event.target.closest(".item-category__link");
 
-        if (linkSide && linkSide.classList.contains("active")) {
-          linkSide.classList.remove("active");
-        } else {
+        if (activeLink === linkCategory) {
+          linkCategory.classList.remove("active");
+        } else if (linkCategory) {
           categoryLinksSide.forEach((item) => item.classList.remove("active"));
-          linkSide.classList.add("active");
+          linkCategory.classList.add("active");
+          activeLink = linkCategory;
         }
       });
 
@@ -2466,7 +2543,6 @@
       } else {
         return null;
       }
-      // }
     }
     setupGroupLines() {
       const categoryGroupBlockLines = document.querySelector(
@@ -2476,18 +2552,24 @@
         ".item-category__link"
       );
 
-      categoryLinksLines.forEach((linkLines) => {
-        linkLines.addEventListener("click", (event) => {
-          event.preventDefault();
+      let activeBtn = null;
+      categoryLinksLines.forEach((item) => {
+        if (item.classList.contains("active")) {
+          activeBtn = item;
+        }
+      });
 
-          if (!linkLines.closest(".active")) {
-            linkLines.classList.add("active");
-          } else if (linkLines.closest(".active")) {
-            categoryLinksLines.forEach((item) =>
-              item.classList.remove("active")
-            );
-          }
-        });
+      categoryGroupBlockLines.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        const linkCategory = event.target.closest(".item-category__link");
+        if (activeBtn === linkCategory) {
+          linkCategory.classList.remove("active");
+        } else if (linkCategory) {
+          categoryLinksLines.forEach((item) => item.classList.remove("active"));
+          linkCategory.classList.add("active");
+          activeBtn = linkCategory;
+        }
       });
 
       return categoryGroupBlockLines.querySelector(
