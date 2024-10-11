@@ -172,6 +172,7 @@ get_header() ?>
 					в зависимости от категории (Black, Ultralife, Speed, Elite) тут должна менятся картинка
 				*/
 			?>
+			<a href="http://frictionmaster.test/catalog/" class="item-category__link" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: #000000">Вернуться в каталог</a>
 			<img class="card-header__image" src="<?=get_template_directory_uri();?>/assets/img/card/card-bg.svg" alt="">
 			<!-- <img class="card-header__image-mobile" src="<?=get_template_directory_uri();?>/assets/img/catalog/header-bg-mobile.svg" alt=""> -->
 		</div>
