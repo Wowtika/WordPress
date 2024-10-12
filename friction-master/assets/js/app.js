@@ -1865,7 +1865,10 @@
         success: function (res) {
           if (res && res.success) {
             if (res.data) {
-              _this.$currentData = res.data;
+              _this.$currentData = _this.exactMatchFilterData(
+                res.data.part_applications
+              );
+              // _this.$currentData = res.data
               catalog_auto_title.html(
                 make +
                   " " +
@@ -1895,12 +1898,64 @@
       });
     }
 
+    exactMatchFilterData(dataAll) {
+      // Проверяем, что dataAll существует и является массивом
+      // if (data) {
+      //   if (data.)
+      // }
+      if (Array.isArray(dataAll)) {
+        // Фильтруем данные
+        const filteredData = dataAll
+          .map((obj) => {
+            // Найти динамический ключ, который не равен "fitment_type"
+            const dynamicKey = Object.keys(obj).find(
+              (key) => key !== "fitment_type"
+            );
+
+            // Проверка на случай, если dynamicKey не найден
+            if (!dynamicKey) {
+              console.warn("No dynamic key found in obj:", obj);
+              return null; // Вернуть null, если ключ не найден
+            }
+
+            const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
+
+            // Фильтруем массив внутри объекта
+            const filteredItems = dynamicValue.filter(
+              (item) => item.exact_match === true
+            );
+
+            // Возвращаем новый объект с отфильтрованными элементами, если есть совпадения
+            if (filteredItems.length > 0) {
+              return {
+                ...obj, // Остальные свойства объекта
+                [dynamicKey]: filteredItems, // Обновляем только массив под динамическим ключом
+              };
+            }
+            console.warn(
+              "No exact matches found in dynamicValue for key:",
+              dynamicKey
+            );
+            return null; // Вернуть null, если нет совпадений
+          })
+          .filter((obj) => obj !== null); // Удаляем null значения
+
+        // Сохраняем отфильтрованные данные
+        this.$currentData = filteredData;
+
+        return filteredData.length > 0 ? filteredData : null; // Возвращаем отфильтрованные данные или null
+      } else {
+        console.error("dataAll is not a valid array:", dataAll);
+        return null; // Возвращаем null, если dataAll не массив
+      }
+    }
+
     create_parts(data) {
       let _this = this;
       let catalog = $("#catalog"); // Контейнер всех продуктов
       let catalog__wrapper = catalog.find(".catalog__wrapper");
-
-      let filteredData = _this.needToSortProduct(data);
+      let withoutFilterData = _this.exactMatchFilterData(data);
+      let filteredData = _this.needToSortProduct(withoutFilterData);
 
       // Очищаем контейнер перед рендером новых компонентов
       catalog__wrapper.html("");
@@ -1958,12 +2013,15 @@
           const keysArr = Object.keys(productSorder);
           let productCategoryName = null;
           let productCategoryData = null;
+          let productCategorySide = null;
           keysArr.forEach((key) => {
             productCategoryName = key;
             productCategoryData = productSorder[key];
+            productCategorySide = productCategoryData[0].position;
             let OptionBlock = _this.renderBlockOptionsContainer(
               productCategoryName,
-              categoryName
+              categoryName,
+              productCategorySide
             );
 
             // Создаем элемент для части
@@ -2064,7 +2122,11 @@
       }
     }
 
-    renderBlockOptionsContainer(nameCategory, productCategory) {
+    renderBlockOptionsContainer(
+      nameCategory,
+      productCategory,
+      productCategorySide
+    ) {
       let _this = this;
       // Создаем элемент для части
       let partOptions = document.createElement("div");
@@ -2076,6 +2138,7 @@
         // Удаляем 'w/' и возможный пробел после него
         nameCategory = nameCategory.replace(/w\/\s*/, "");
       }
+      nameCategory = nameCategory.replace(/^(Front\s*\|\s*|Rear\s*\|\s*)/, "");
 
       let partOptionsHeading = document.createElement("h2");
       partOptionsHeading.classList.add("item-catalog__header-heading");
@@ -2086,10 +2149,11 @@
 
       let partOptionsSide = document.createElement("div");
       partOptionsSide.classList.add("item-catalog__image");
-      if (nameCategory.match(/(Front)/)) {
+
+      if (productCategorySide === "Front") {
         partOptionsSide.innerHTML =
           '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-right.svg" alt="Side" />';
-      } else if (nameCategory.match(/(Rear)/)) {
+      } else if (productCategorySide === "Rear") {
         partOptionsSide.innerHTML =
           '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-left.svg" alt="Side" />';
       } else {
@@ -2135,9 +2199,7 @@
     }
 
     sortByqualifierProduct(dataProducts) {
-      let _this = this;
       const objQualifier = {};
-
       dataProducts.forEach((product) => {
         // Проверяем наличие значения qualifier
         if (
@@ -2145,35 +2207,14 @@
           product.qualifier !== "" &&
           product.qualifier !== null
         ) {
-          const diameterMatch = product.qualifier.match(/(\d+mm)/);
-          const sideMatch = product.qualifier.match(/(Front|Rear)/);
+          const categoryKey = `${product.position} | ${product.qualifier}`; // Создаем ключ для группировки
 
-          if (diameterMatch && sideMatch) {
-            // Если есть значение диаметра и стороны
-            const categoryKey = `${product.qualifier}`; // Полное значение qualifier
-            if (!objQualifier.hasOwnProperty(categoryKey)) {
-              objQualifier[categoryKey] = [];
-            }
-            objQualifier[categoryKey].push(product);
-          } else if (
-            product.qualifier === "Standard Brakes" ||
-            product.qualifier === "Except Off-Road Suspension" ||
-            product.qualifier === "Off-Road Suspension"
-          ) {
-            // Обрабатываем стандартные значения
-            const standardKey = product.qualifier;
-            if (!objQualifier.hasOwnProperty(standardKey)) {
-              objQualifier[standardKey] = [];
-            }
-            objQualifier[standardKey].push(product);
-          } else {
-            // Если не попадает в стандартные категории
-            const nameCategory = product.qualifier;
-            if (!objQualifier.hasOwnProperty(nameCategory)) {
-              objQualifier[nameCategory] = [];
-            }
-            objQualifier[nameCategory].push(product);
+          if (!objQualifier.hasOwnProperty(categoryKey)) {
+            objQualifier[categoryKey] = [];
           }
+
+          // Добавляем продукт в группу
+          objQualifier[categoryKey].push(product);
         } else {
           // Если qualifier пустой или null
           if (!objQualifier.hasOwnProperty("Dont have qualifier")) {
@@ -2182,7 +2223,26 @@
           objQualifier["Dont have qualifier"].push(product);
         }
       });
-      return objQualifier; // Возврат собранных данных
+
+      // Сортируем группы по position и qualifier
+      const sortedKeys = Object.keys(objQualifier).sort((a, b) => {
+        const [positionA, qualifierA] = a.split(" | ");
+        const [positionB, qualifierB] = b.split(" | ");
+
+        // Сортируем по position, затем по qualifier
+        return (
+          positionA.localeCompare(positionB) ||
+          qualifierA.localeCompare(qualifierB)
+        );
+      });
+
+      // Создаем новый объект с отсортированными группами
+      const sortedObjQualifier = {};
+      sortedKeys.forEach((key) => {
+        sortedObjQualifier[key] = objQualifier[key];
+      });
+      console.log("после сортировки objQualifier", objQualifier);
+      return sortedObjQualifier; // Возврат собранных данных
     }
 
     checkSubModel() {
@@ -2212,9 +2272,7 @@
 
       if (engine != "" && submodel != "") {
         _this.partsSearch(year, make, model, engine, submodel);
-      }
-
-      if (engine != "") {
+      } else if (engine != "") {
         _this.partsSearch(year, make, model, engine);
       }
     }
@@ -2234,9 +2292,10 @@
     needToSortProduct(data) {
       let _this = this;
 
-      let dataAll = _this.$currentData
-        ? _this.$currentData.part_applications
-        : null;
+      let dataAll = _this.$currentData ? _this.$currentData : null;
+      // let dataAll = _this.$currentData
+      // ? _this.$currentData.part_applications
+      // : null;
       console.log("dataAll", dataAll);
       const objValueProductLines = {
         "DAILY DRIVER": "OE Replacement",
@@ -2348,10 +2407,10 @@
             dataOnCategoryandSide = resultParts;
           }
 
-          const buttonBrakePads = document.querySelector(
-            '[data-tippy-content="Brake Pads"]'
-          );
-          buttonBrakePads.click();
+          // const buttonBrakePads = document.querySelector(
+          //   '[data-tippy-content="Brake Pads"]'
+          // );
+          // buttonBrakePads.click();
 
           let brakePadsObject = [];
 
@@ -2477,9 +2536,20 @@
         }
       });
 
+      const categoryGroupBlockLines = document.querySelector(
+        '.category__items.item-category[data-fillter-groups="lines"]'
+      );
+      const categoryLinksLines = categoryGroupBlockLines.querySelectorAll(
+        ".item-category__link"
+      );
+      const LinesActive = categoryGroupBlockLines.closest(".active");
+
       categoryGroupBlock.addEventListener("click", (event) => {
         event.preventDefault();
+
         const linkCategory = event.target.closest(".item-category__link");
+        // if ()
+        categoryLinksLines.forEach((item) => item.classList.remove("active"));
 
         if (activeBtn === linkCategory) {
           linkCategory.classList.remove("active");
@@ -2552,6 +2622,13 @@
         ".item-category__link"
       );
 
+      const categoryGroupBlock = document.querySelector(
+        '.category__items.item-category[data-fillter-groups="category"]'
+      );
+      const categoryLinks = categoryGroupBlock.querySelectorAll(
+        ".item-category__link"
+      );
+
       let activeBtn = null;
       categoryLinksLines.forEach((item) => {
         if (item.classList.contains("active")) {
@@ -2559,8 +2636,32 @@
         }
       });
 
+      const buttonBrakePads = document.querySelector(
+        '[data-tippy-content="Brake Pads"]'
+      );
+
+      const selestedButtonBrakePads =
+        buttonBrakePads.classList.contains("active");
+
       categoryGroupBlockLines.addEventListener("click", (event) => {
         event.preventDefault();
+
+        let activeBtnCategory = null;
+        categoryLinks.forEach((item) => {
+          if (item.classList.contains("active")) {
+            activeBtnCategory = item;
+          }
+        });
+
+        if (buttonBrakePads.classList.contains("active") || !activeBtn) {
+          categoryLinks.forEach((item) => item.classList.remove("active"));
+          buttonBrakePads.classList.add("active");
+        } else {
+          categoryLinksLines.forEach((item) => item.classList.remove("active"));
+          alert("Select Brake Pads and Lines");
+          event.stopPropagation(); // Остановить всплытие события
+          return; // Прекратить выполнение функции
+        }
 
         const linkCategory = event.target.closest(".item-category__link");
         if (activeBtn === linkCategory) {
