@@ -125,23 +125,7 @@ get_header() ?>
 	$number = $numberData['number'];
 	$group = $numberData['product_group_name'];
 	$numberType = preg_replace('/[^a-zA-Z]/', '', $number);
-	switch ($numberType) {
-		case "D":
-		case "MKD":
-			$type = "BLACK";
-			break;
-		case "CMX":
-			$type = "ULTRALIFE";
-			break;
-		case "HPS":
-			$type = "SPEED";
-			break;
-		case "ELT":
-			$type = "ELITE";
-			break;
-		default:
-			$type = "BLACK";
-	}
+	$onlyNumber = preg_replace('/\D/', '', $number);
 ?>
 
 <?php
@@ -256,7 +240,8 @@ get_header() ?>
 
 	<div class="card-category__container">
 
-		<!-- <div class="card-category">
+		<div class="card-category">
+
 			<?php
 				$query = new WP_Query( array(
 					'post_type' => 'product-lines',
@@ -265,29 +250,73 @@ get_header() ?>
 				));
 			?>
 			<?php if ( $query->have_posts() ) {
+				$isTypeFound = false;
 				while ( $query->have_posts() ) {
 					$query->the_post();
 					$title = get_the_title();
-					if (stripos($title, "Black") !== false) {
-						$bgColor = "#000000";
-					}
-					if (stripos($title, "Ultralife") !== false) {
-						$bgColor = "#0275B7";
-					}
-					if (stripos($title, "SPEED") !== false) {
-						$bgColor = "#D4200F";
-					}
-					if (stripos($title, "Circuit Spec") !== false) {
-						$bgColor = "#FFD40F";
-					}
 					if (stripos($title, $group) !== false) {
-						echo '<a href="<?=get_permalink();?>" class="card-category__link" style="background:' . $bgColor . '; color: white;">';
-							echo '<span>' . the_title() . '</span>';
-						echo '</a>';
+						$labels = get_field('labeling');
+						$opacity = "";
+						$link = "";
+						if (stripos($title, "Black") !== false) $bgColor = "#000000"; 
+						else 
+						if (stripos($title, "Ultralife") !== false) $bgColor = "#0275B7"; 
+						else
+						if (stripos($title, "SPEED") !== false) $bgColor = "#D4200F"; 
+						else
+						if (stripos($title, "Elite") !== false) $bgColor = "#FFD40F"; 
+						else
+						$bgColor = "#0CFF7D";
+
+						if (have_rows('labeling')) {
+							while (have_rows('labeling')) {
+								the_row();
+								if ($link == "") {
+									$label = get_sub_field('label');
+									foreach ($allItems as $item) {
+										if ($item['part_number'] == $label . $onlyNumber) {
+											$link = setLink($url, $item['part_id']);
+											break;
+										}
+									}
+								}
+								if ($label == $numberType && !$isTypeFound) {
+									$type = get_field('name_product_line');
+									$isTypeFound = true;
+									$opacity = "opacity: 1;";
+									break;
+								}
+							}
+							foreach ($labels as $label) {
+								if ($link == "") {
+									foreach ($allItems as $item) {
+										if ($item['part_number'] == $label['label'] . $onlyNumber) {
+											$link = setLink($url, $item['part_id']);
+											break;
+										}
+									}
+								}
+								if ($label['label'] == $numberType && !$isTypeFound) {
+									$type = get_field('name_product_line');
+									$isTypeFound = true;
+									$opacity = "opacity: 1;";
+									break;
+								}
+							}
+						}
+						if ($link != "") {
+							echo '<a href="' . $link . '" class="card-category__link" style="background:' . $bgColor . '; color: white;' . $opacity . '">';
+								echo '<span>' . the_title() . '</span>';
+							echo '</a>';
+						}
+
 					}
 				}
+				if (!isset($type)) {
+					$type = 'Black';
+				}
 			}?>
-		</div> -->
+		</div>
 	</div>
 
 	<section class="page__card card" id="part_card">
@@ -532,13 +561,13 @@ get_header() ?>
 	<?php } ?>
 
 	<?php
+		wp_reset_postdata();
 		$query = new WP_Query( array(
 			'post_type' => 'product-lines',
 			'order' => 'ASC',
 			'orderby' => 'ID',
 		));
 		if ( $query->have_posts() ) { 
-			$counter = 0;
 			while ( $query->have_posts() ) { 
 				$query->the_post(); 
 				$title = get_the_title();
