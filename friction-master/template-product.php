@@ -121,10 +121,9 @@ get_header() ?>
 <?php //} ?>
 
 <?php
-	foreach ($partImages as $car) {
-		$number = $car['number'];
-		$group = $car['product_group_name'];
-	}
+	$numberData = current($partImages);
+	$number = $numberData['number'];
+	$group = $numberData['product_group_name'];
 	$numberType = preg_replace('/[^a-zA-Z]/', '', $number);
 	switch ($numberType) {
 		case "D":
@@ -143,23 +142,96 @@ get_header() ?>
 		default:
 			$type = "BLACK";
 	}
-	$query = new WP_Query( array(
-		'post_type' => 'product-lines',
-		'order' => 'ASC',
-		'orderby' => 'ID',
-	));
-	if ( $query->have_posts() ) { 
-		$counter = 0;
-		while ( $query->have_posts() ) { 
-			$query->the_post(); 
-			$title = get_the_title();
-			if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
-				break;
-			};
-		} 
-	}
-	wp_reset_postdata(); 
 ?>
+
+<?php
+	// 12. Детали по номеру..
+	// URL вашего API
+
+	$url = ((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+
+	$parsed_url = parse_url($url);
+	parse_str($parsed_url['query'], $query_params);
+	$car = explode(' ', $query_params['car']);
+	$make = $car[0];
+	$model = $car[1];
+	$year = $car[2];
+	$urlToSearch = 'https://catalog.loopautomotive.com/catalog/search?filter=' . urlencode(json_encode([
+		'make' => $make,
+		'model' => $model,
+		'year' => $year
+	])) . '&region_id=' . $_GET['region_id'];
+
+
+	$headers = array(
+		'Content-Type: application/json',
+	);
+	$ch = curl_init($urlToSearch);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+	$response = curl_exec($ch);
+	if (curl_errno($ch)) {
+		echo 'Ошибка cURL: ' . curl_error($ch);
+	} else {
+		$data = json_decode($response, true);
+		$partApplications = $data['part_applications'];
+		$filtered = array_filter($partApplications, function($item) use ($group) {
+			return array_key_exists($group, $item);
+		});
+		$allItems = [];
+		foreach ($filtered as $item) {
+			if (isset($item[$group])) {
+				$allItems = array_merge($allItems, $item[$group]);
+			}
+		}
+		$isFrontLink = false;
+		$isRearLink = false;
+		$isAllLink = false;
+		function setLink($baseUrl, $newId) {
+			$parsed_url = parse_url($baseUrl);
+			parse_str($parsed_url['query'], $query_params);
+			$query_params['part_id'] = $newId;
+			$new_query_string = http_build_query($query_params);
+			return $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $new_query_string;
+		}
+		foreach ($allItems as $part) {
+			if (isset($part['exact_match'])) {
+				if ($number == $part['part_number']) {
+					$position = $part['position'];
+				}
+				if (!$isFrontLink && $part['position'] === "Front") {
+					$frontLink = setLink($url, $part['part_id']);
+					$isFrontLink = true;
+				}
+				if (!$isRearLink && $part['position'] === "Rear") {
+					$rearLink = setLink($url, $part['part_id']);
+					$isRearLink = true;
+				}
+				if (!$isAllLink && $part['position'] !== "Front" && $part['position'] !== "Rear") {
+					$allLink = setLink($url, $part['part_id']);
+					$isAllLink = true;
+				}
+			}
+		}
+		switch ($position) {
+			case 'Front':
+				$isFrontLink = true;
+				$frontLink = $url;
+				break;
+			case 'Rear':
+				$isRearLink = true;
+				$rearLink = $url;
+				break;
+			default:
+				$isAllLink = true;
+				$allLink = $url;
+				break;
+		}
+	}
+	curl_close($ch);
+?>
+
+<!-- </section> -->
 
 <div class="card-header">
 	<img src="<?=get_template_directory_uri();?>/assets/img/home/product-fon.jpg" class="product-bg">
@@ -216,20 +288,6 @@ get_header() ?>
 				}
 			}?>
 		</div> -->
-
-		<?php
-			if ( $query->have_posts() ) { 
-				$counter = 0;
-				while ( $query->have_posts() ) { 
-					$query->the_post(); 
-					$title = get_the_title();
-					if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
-						break;
-					};
-				} 
-			}
-		?>
-
 	</div>
 
 	<section class="page__card card" id="part_card">
@@ -245,7 +303,7 @@ get_header() ?>
 
 					<div class="card-slider swiper">
 						<div class="card-slider__wrapper swiper-wrapper">
-
+								
 							<?php 
 								foreach ($partImages as $item) {
 									if (is_array($item) && isset($item['images'])) {
@@ -307,15 +365,27 @@ get_header() ?>
 						<div class="body-card__item-icons">
 
 							<div class="item-category">
-								<a href="" class="item-category__link">
+								<?php if ($isFrontLink) { ?>
+									<a href="<?= $frontLink ?>" class="item-category__link <?php if ($position === 'Front') echo 'active' ?>">
+										<span class="item-category__icon _icon-catalog-car-left"></span>
+									</a>
+								<?php } else {?>
 									<span class="item-category__icon _icon-catalog-car-left"></span>
-								</a>
-								<a href="" class="item-category__link active">
+								<?php } ?>
+								<?php if ($isRearLink) { ?>
+									<a href="<?= $rearLink ?>" class="item-category__link <?php if ($position === 'Rear') echo 'active' ?>">
+										<span class="item-category__icon _icon-catalog-car-right"></span>
+									</a>
+								<?php } else {?>
 									<span class="item-category__icon _icon-catalog-car-right"></span>
-								</a>
-								<a href="" class="item-category__link">
+								<?php } ?>
+								<?php if ($isAllLink) { ?>
+									<a href="<?= $allLink ?>" class="item-category__link" <?php if ($position !== 'Front' && $position !== 'Rear') echo 'active' ?>>
+										<span class="item-category__icon _icon-catalog-car-all"></span>
+									</a>
+								<?php } else {?>
 									<span class="item-category__icon _icon-catalog-car-all"></span>
-								</a>
+								<?php } ?>
 							</div>
 
 						</div>
@@ -460,6 +530,24 @@ get_header() ?>
 			});
 		</script>
 	<?php } ?>
+
+	<?php
+		$query = new WP_Query( array(
+			'post_type' => 'product-lines',
+			'order' => 'ASC',
+			'orderby' => 'ID',
+		));
+		if ( $query->have_posts() ) { 
+			$counter = 0;
+			while ( $query->have_posts() ) { 
+				$query->the_post(); 
+				$title = get_the_title();
+				if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+					break;
+				};
+			} 
+		}
+	?>
 
 	<?php get_template_part('template_part/features_and_benefits') ?>
 
@@ -664,7 +752,6 @@ get_header() ?>
 				while ( $query->have_posts() ) { 
 					$query->the_post(); 
 					$title = get_the_title();
-					echo $title . "\n";
 					if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
 						break;
 					};

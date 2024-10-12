@@ -1,7 +1,7 @@
 <section class="page__card-prefs card-prefs">
 	<div class="card-prefs__container">
 		<h1 class="card-prefs__heading small-header-gray">
-			Features and benefits
+			<?php the_field('title_section_featured_and_benefits') ?>
 		</h1>
 		<div class="card-prefs__wrapper">
 			<?php if( have_rows('items_featured_and_benefits') ){ ?>

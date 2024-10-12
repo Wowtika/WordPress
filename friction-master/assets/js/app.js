@@ -1921,6 +1921,8 @@
               part.part_id +
               '&car=' +
               `${_this.$make.val()} ${_this.$model.val()} ${_this.$year.val()}` +
+              '&region_id=' +
+              `${_this.$region.val()}` +
               '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
 
             partElement.append(part_header);
