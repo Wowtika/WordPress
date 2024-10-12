@@ -2064,9 +2064,13 @@
               let part_footer = document.createElement("div");
               part_footer.classList.add("item-catalog__footer");
               part_footer.innerHTML =
-                '<a href="/product?part_id=' +
-                part.part_id +
-                '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
+              '<a href="/product?part_id=' +
+              part.part_id +
+              '&car=' +
+              `${_this.$make.val()} ${_this.$model.val()} ${_this.$year.val()}` +
+              '&region_id=' +
+              `${_this.$region.val()}` +
+              '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
 
               partElement.append(part_header);
               partElement.append(part_img);

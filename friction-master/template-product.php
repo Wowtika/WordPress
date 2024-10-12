@@ -120,6 +120,112 @@ get_header() ?>
 
 <?php //} ?>
 
+<?php
+	$numberData = current($partImages);
+	$number = $numberData['number'];
+	$group = $numberData['product_group_name'];
+	$numberType = preg_replace('/[^a-zA-Z]/', '', $number);
+	$onlyNumber = preg_replace('/\D/', '', $number);
+?>
+
+<?php
+	// 12. Детали по номеру..
+	// URL вашего API
+
+	$url = ((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+
+	$parsed_url = parse_url($url);
+	parse_str($parsed_url['query'], $query_params);
+	$car = explode(' ', $query_params['car']);
+	$make = $car[0];
+	$model = $car[1];
+	$year = $car[2];
+	$urlToSearch = 'https://catalog.loopautomotive.com/catalog/search?filter=' . urlencode(json_encode([
+		'make' => $make,
+		'model' => $model,
+		'year' => $year
+	])) . '&region_id=' . $_GET['region_id'];
+
+
+	$headers = array(
+		'Content-Type: application/json',
+	);
+	$ch = curl_init($urlToSearch);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+	$response = curl_exec($ch);
+	if (curl_errno($ch)) {
+		echo 'Ошибка cURL: ' . curl_error($ch);
+	} else {
+		$data = json_decode($response, true);
+		$partApplications = $data['part_applications'];
+		$filtered = array_filter($partApplications, function($item) use ($group) {
+			return array_key_exists($group, $item);
+		});
+		$related = [];
+		foreach ($partApplications as $part) {
+			foreach ($part as $key => $value) {
+				if ($key !== $group && $key !== array_key_first($part)) {
+					$related[] = $value;
+				}
+			}
+		}
+		$allItems = [];
+		foreach ($filtered as $item) {
+			if (isset($item[$group])) {
+				$allItems = array_merge($allItems, $item[$group]);
+			}
+		}
+		$isFrontLink = false;
+		$isRearLink = false;
+		$isAllLink = false;
+		function setLink($newId) {
+			$baseUrl = ((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+			$parsed_url = parse_url($baseUrl);
+			parse_str($parsed_url['query'], $query_params);
+			$query_params['part_id'] = $newId;
+			$new_query_string = http_build_query($query_params);
+			return $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $new_query_string;
+		}
+		foreach ($allItems as $part) {
+			if (isset($part['exact_match'])) {
+				if ($number == $part['part_number']) {
+					$position = $part['position'];
+				}
+				if (!$isFrontLink && $part['position'] === "Front") {
+					$frontLink = setLink($part['part_id']);
+					$isFrontLink = true;
+				}
+				if (!$isRearLink && $part['position'] === "Rear") {
+					$rearLink = setLink($part['part_id']);
+					$isRearLink = true;
+				}
+				if (!$isAllLink && $part['position'] !== "Front" && $part['position'] !== "Rear") {
+					$allLink = setLink($part['part_id']);
+					$isAllLink = true;
+				}
+			}
+		}
+		switch ($position) {
+			case 'Front':
+				$isFrontLink = true;
+				$frontLink = $url;
+				break;
+			case 'Rear':
+				$isRearLink = true;
+				$rearLink = $url;
+				break;
+			default:
+				$isAllLink = true;
+				$allLink = $url;
+				break;
+		}
+	}
+	curl_close($ch);
+?>
+
+<!-- </section> -->
+
 <div class="card-header">
 	<img src="<?=get_template_directory_uri();?>/assets/img/home/product-fon.jpg" class="product-bg">
 
@@ -131,6 +237,7 @@ get_header() ?>
 					в зависимости от категории (Black, Ultralife, Speed, Elite) тут должна менятся картинка
 				*/
 			?>
+			<a href=<?php echo home_url('/catalog/') ?> class="item-category__link" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: #000000"><?php the_field('back_to_catalog') ?></a>
 			<img class="card-header__image" src="<?=get_template_directory_uri();?>/assets/img/card/card-bg.svg" alt="">
 			<!-- <img class="card-header__image-mobile" src="<?=get_template_directory_uri();?>/assets/img/catalog/header-bg-mobile.svg" alt=""> -->
 		</div>
@@ -140,9 +247,10 @@ get_header() ?>
 
 <main class="page page_card">
 
-	<!-- <div class="card-category__container">
+	<div class="card-category__container">
 
 		<div class="card-category">
+
 			<?php
 				$query = new WP_Query( array(
 					'post_type' => 'product-lines',
@@ -150,24 +258,81 @@ get_header() ?>
 					'orderby' => 'ID',
 				));
 			?>
-			<?php if ( $query->have_posts() ) { ?>
-				<?php while ( $query->have_posts() ) { ?>
-					<?php $query->the_post(); ?>
-					<a href="<?=get_permalink();?>" class="card-category__link">
-						<span><?php the_title() ?></span>
-					</a>
-				<?php } ?>
-				<?php wp_reset_postdata(); ?>
-			<?php } ?>
-		</div>
+			<?php if ( $query->have_posts() ) {
+				$isTypeFound = false;
+				while ( $query->have_posts() ) {
+					$query->the_post();
+					$title = get_the_title();
+					if (stripos($title, $group) !== false) {
+						$labels = get_field('labeling');
+						$opacity = "";
+						$link = "";
+						if (stripos($title, "Black") !== false) $bgColor = "#000000"; 
+						else 
+						if (stripos($title, "Ultralife") !== false) $bgColor = "#0275B7"; 
+						else
+						if (stripos($title, "SPEED") !== false) $bgColor = "#D4200F"; 
+						else
+						if (stripos($title, "Elite") !== false) $bgColor = "#FFD40F"; 
+						else
+						$bgColor = "#0CFF7D";
 
-	</div> -->
+						if (have_rows('labeling')) {
+							while (have_rows('labeling')) {
+								the_row();
+								if ($link == "") {
+									$label = get_sub_field('label');
+									foreach ($allItems as $item) {
+										if ($item['part_number'] == $label . $onlyNumber) {
+											$link = setLink($item['part_id']);
+											break;
+										}
+									}
+								}
+								if ($label == $numberType && !$isTypeFound) {
+									$type = get_field('name_product_line');
+									$isTypeFound = true;
+									$opacity = "opacity: 1;";
+									break;
+								}
+							}
+							foreach ($labels as $label) {
+								if ($link == "") {
+									foreach ($allItems as $item) {
+										if ($item['part_number'] == $label['label'] . $onlyNumber) {
+											$link = setLink($item['part_id']);
+											break;
+										}
+									}
+								}
+								if ($label['label'] == $numberType && !$isTypeFound) {
+									$type = get_field('name_product_line');
+									$isTypeFound = true;
+									$opacity = "opacity: 1;";
+									break;
+								}
+							}
+						}
+						if ($link != "") {
+							echo '<a href="' . $link . '" class="card-category__link" style="background:' . $bgColor . '; color: white;' . $opacity . '">';
+								echo '<span>' . the_title() . '</span>';
+							echo '</a>';
+						}
+
+					}
+				}
+				if (!isset($type)) {
+					$type = 'Black';
+				}
+			}?>
+		</div>
+	</div>
 
 	<section class="page__card card" id="part_card">
 		<div class="card__container">
 
 			<div class="card__header">
-				<h2 class="card__heading"><?php echo $partAttribute[0]["name"] . ' ' . $partAttribute[0]["value"] ?></h2>
+				<h2 class="card__heading"><?php echo $number?></h2>
 			</div>
 
 			<div class="card__body">
@@ -176,14 +341,14 @@ get_header() ?>
 
 					<div class="card-slider swiper">
 						<div class="card-slider__wrapper swiper-wrapper">
-
+								
 							<?php 
-								foreach ($partImagesI as $itemI) {
-									if (is_array($itemI) && isset($itemI['images'])) {
-										foreach ($itemI['images'] as $imageI) {
+								foreach ($partImages as $item) {
+									if (is_array($item) && isset($item['images'])) {
+										foreach ($item['images'] as $image) {
 							?>
 							<div class="card-slider__cont swiper-slide">
-								<img class="card-slider__image" src="<?php echo $imageI; ?>" alt="">
+								<img class="card-slider__image" src="<?php echo $image; ?>" alt="">
 							</div>
 							<?php } } } ?>
 
@@ -201,6 +366,15 @@ get_header() ?>
 
 					<div class="card-thumbs swiper">
 						<div class="card-thumbs__wrapper swiper-wrapper">
+						<?php 
+								foreach ($partImages as $item) {
+									if (is_array($item) && isset($item['images'])) {
+										foreach ($item['images'] as $image) {
+							?>
+							<div class="card-thumbs__cont swiper-slide">
+								<img class="card-thumbs__image" src="<?php echo $image; ?>" alt="">
+							</div>
+							<?php } } } ?>
 							<?php 
 								foreach ($partImages as $item) {
 									if (is_array($item) && isset($item['tech_drawings'])) {
@@ -218,26 +392,38 @@ get_header() ?>
 				<div class="card__content content-card">
 
 					<div class="content-card__header header-card">
-						<span class="header-card__icon _icon-arrow-down"></span>Fits Porche Cayenne 2006
+						<span class="header-card__icon _icon-arrow-down"></span>Fits <?php echo $_GET['car'] ?>
 					</div>
 
 					<div class="content-card__body body-card">
 
 						<div class="body-card__item-heading"><?php the_field('part','option');?></div>
-						<div class="body-card__item-text"><?php echo $partAttribute[0]["name"] . ' ' . $partAttribute[0]["value"] ?></div>
+						<div class="body-card__item-text"><?php echo $number ?></div>
 						<div class="body-card__item-heading"><?php the_field('position','option');?></div>
 						<div class="body-card__item-icons">
 
 							<div class="item-category">
-								<a href="" class="item-category__link">
+								<?php if ($isFrontLink) { ?>
+									<a href="<?= $frontLink ?>" class="item-category__link <?php if ($position === 'Front') echo 'active' ?>">
+										<span class="item-category__icon _icon-catalog-car-left"></span>
+									</a>
+								<?php } else {?>
 									<span class="item-category__icon _icon-catalog-car-left"></span>
-								</a>
-								<a href="" class="item-category__link active">
+								<?php } ?>
+								<?php if ($isRearLink) { ?>
+									<a href="<?= $rearLink ?>" class="item-category__link <?php if ($position === 'Rear') echo 'active' ?>">
+										<span class="item-category__icon _icon-catalog-car-right"></span>
+									</a>
+								<?php } else {?>
 									<span class="item-category__icon _icon-catalog-car-right"></span>
-								</a>
-								<a href="" class="item-category__link">
+								<?php } ?>
+								<?php if ($isAllLink) { ?>
+									<a href="<?= $allLink ?>" class="item-category__link" <?php if ($position !== 'Front' && $position !== 'Rear') echo 'active' ?>>
+										<span class="item-category__icon _icon-catalog-car-all"></span>
+									</a>
+								<?php } else {?>
 									<span class="item-category__icon _icon-catalog-car-all"></span>
-								</a>
+								<?php } ?>
 							</div>
 
 						</div>
@@ -251,19 +437,22 @@ get_header() ?>
 						<div class="footer-card__heading">
 							<?php the_field('About this part','option');?>
 						</div>
+						
+						<?php
+							wp_reset_postdata();
+							$query->rewind_posts();
+							if ( $query->have_posts() ) { 
+								while ( $query->have_posts() ) { 
+									$query->the_post(); 
+									$title = get_the_title();
+									if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+										break;
+									};
+								} 
+							}
+						?>
 
-						<ul class="footer-card__list card-list">
-							<li class="card-list__item">
-								Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-								Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-							</li>
-							<li class="card-list__item">
-								Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-							</li>
-							<li class="card-list__item">
-								Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-							</li>
-						</ul>
+						<?php the_content(); ?>
 
 						<a class="footer-card__link" href="#"><?php the_field('see_more_part_details','option');?></a>
 
@@ -280,14 +469,62 @@ get_header() ?>
 					</div>
 
 					<div class="markets-card__logos">
-						<a href="#" class="markets-card__logo">
-							<img src="<?=get_template_directory_uri();?>/assets/img/gallery/ebay.jpg" alt="">
-						</a>
-						<a href="#" class="markets-card__logo">
-							<img src="<?=get_template_directory_uri();?>/assets/img/gallery/wallmart.jpg" alt="">
-						</a>
-					</div>
+					<!-- <?php
+						$url = 'https://catalog.loopautomotive.com/catalog/part-attributes?part_id=' . $_GET['part_id']; // Замените на фактический URL вашего API
 
+						// Заголовки запроса
+						$headers = array(
+							'Content-Type: application/json',
+						);
+					
+						// Создаем новый cURL ресурс
+						$ch = curl_init($url);
+					
+						// Устанавливаем опции cURL
+						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+						//curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params)); // Преобразуем параметры в JSON и передаем их в теле запроса
+					
+						// Выполняем запрос
+						$response = curl_exec($ch);
+					
+						// Проверяем наличие ошибок
+						if (curl_errno($ch)) {
+							echo 'Ошибка cURL: ' . curl_error($ch);
+						} else {
+							$data = json_decode($response, true);
+							
+							// Печатаем данные
+							//print_r($data);
+							$partAttribute = $data;
+							//var_dump($data);
+						}
+						curl_close($ch);
+					?> -->
+					<!-- api -->
+						<?php 
+							wp_reset_postdata();
+							if (have_rows('online_retailers')) {
+								while (have_rows('online_retailers')) {
+									the_row();
+									$linkToMarket = "https://www.amazon.com/dp/B000CHB5SM"; //Получить из api
+									echo '<a href="' . $linkToMarket . '" class="markets-card__logo">';
+										echo '<img src="' . get_sub_field('logo') . '">';
+									echo '</a>';
+								}
+							}
+							$query->rewind_posts();
+							if ( $query->have_posts() ) { 
+								while ( $query->have_posts() ) { 
+									$query->the_post(); 
+									$title = get_the_title();
+									if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+										break;
+									};
+								} 
+							}
+						?>
+					</div>
 					<div class="markets-card__footer">
 
 						<a href="#" class="markets-card__link"><?php the_field('more_buying_options','option');?></a>
@@ -394,6 +631,20 @@ get_header() ?>
 		</script>
 	<?php } ?>
 
+	<?php
+		wp_reset_postdata();
+		$query->rewind_posts();
+		if ( $query->have_posts() ) { 
+			while ( $query->have_posts() ) { 
+				$query->the_post(); 
+				$title = get_the_title();
+				if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+					break;
+				};
+			} 
+		}
+	?>
+
 	<?php get_template_part('template_part/features_and_benefits') ?>
 
 	<?php get_template_part('template_part/card_video') ?>
@@ -412,12 +663,56 @@ get_header() ?>
 					<!-- <img src="<?=get_template_directory_uri();?>/assets/img/home/arrow-left.png" alt="" class="partners-left-arrow__img" /> -->
 				</span>
 				<div class="swiper partners-slider">
+					
+					<?php wp_reset_postdata(); ?>
+
 					<div class="swiper-wrapper partners-slider__wrapper ">
 
-						<!-- <div class="swiper-slide partners-slider__card ">
-							<a href="#" class="partners-slider__link">
-								<img src="<?=get_template_directory_uri();?>/assets/img/partners/part1.svg" alt="" class="partners-slider__image">
+					<?php if (have_rows('online_retailers')) { ?>
+					<?php while (have_rows('online_retailers')) { the_row();?>
+					<!-- <?php
+						$url = 'https://catalog.loopautomotive.com/catalog/part-attributes?part_id=' . $_GET['part_id']; // Замените на фактический URL вашего API
+
+						// Заголовки запроса
+						$headers = array(
+							'Content-Type: application/json',
+						);
+					
+						// Создаем новый cURL ресурс
+						$ch = curl_init($url);
+					
+						// Устанавливаем опции cURL
+						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+						//curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params)); // Преобразуем параметры в JSON и передаем их в теле запроса
+					
+						// Выполняем запрос
+						$response = curl_exec($ch);
+					
+						// Проверяем наличие ошибок
+						if (curl_errno($ch)) {
+							echo 'Ошибка cURL: ' . curl_error($ch);
+						} else {
+							$data = json_decode($response, true);
+							
+							// Печатаем данные
+							//print_r($data);
+							$partAttribute = $data;
+							//var_dump($data);
+						}
+						curl_close($ch);
+					?> -->
+					<!-- api -->
+					<?php $linkToMarket = "https://www.ebay.com/itm/116321581739"; //Получить из api ?>
+					<?php $ratingOnMarket = 4.8; //Получить из api ?>
+
+
+
+						<div class="swiper-slide partners-slider__card ">
+							<a href="<?=$linkToMarket ?>" class="partners-slider__link">
+								<img src='<?php echo get_sub_field('logo') ?>' alt="" class="partners-slider__image">
 							</a>
+
 							<div class="partners-slider__star">
 
 								<div class="rating rating_set">
@@ -431,148 +726,30 @@ get_header() ?>
 											<input type="radio" class="rating__item" value="5" name="rating">
 										</div>
 									</div>
-									<div class="rating__value"><b>3.6</b> / 5</div>
+									<div class="rating__value"><b><?= $ratingOnMarket ?></b> / 5</div>
 								</div>
 
 							</div>
-						</div> -->
-						<div class="swiper-slide partners-slider__card ">
-							<a href="#" class="partners-slider__link">
-								<img src="<?=get_template_directory_uri();?>/assets/img/partners/part2.svg" alt="" class="partners-slider__image">
-							</a>
-							<!-- <div class="partners-slider__star">
-								<div class="rating rating_set">
-									<div class="rating__body">
-										<div class="rating__active" style="width:66%"></div>
-										<div class="rating__items">
-											<input type="radio" class="rating__item" value="1" name="rating">
-											<input type="radio" class="rating__item" value="2" name="rating">
-											<input type="radio" class="rating__item" value="3" name="rating">
-											<input type="radio" class="rating__item" value="4" name="rating">
-											<input type="radio" class="rating__item" value="5" name="rating">
-										</div>
-									</div>
-									<div class="rating__value"><b>3.6</b> / 5</div>
-								</div>
-							</div> -->
-						</div>
-						<div class="swiper-slide partners-slider__card ">
-							<a href="#" class="partners-slider__link">
-								<img src="<?=get_template_directory_uri();?>/assets/img/partners/part3.svg" alt="" class="partners-slider__image">
-							</a>
-							<!-- <div class="rating rating_set">
-								<div class="rating__body">
-									<div class="rating__active" style="width:100%"></div>
-									<div class="rating__items">
-										<input type="radio" class="rating__item" value="1" name="rating">
-										<input type="radio" class="rating__item" value="2" name="rating">
-										<input type="radio" class="rating__item" value="3" name="rating">
-										<input type="radio" class="rating__item" value="4" name="rating">
-										<input type="radio" class="rating__item" value="5" name="rating">
-									</div>
-								</div>
-								<div class="rating__value"><b>5</b> / 5</div>
-							</div> -->
-						</div>
-						<div class="swiper-slide partners-slider__card ">
-							<a href="#" class="partners-slider__link">
-								<img src="<?=get_template_directory_uri();?>/assets/img/partners/part4.svg" alt="" class="partners-slider__image">
-							</a>
-							<!-- <div class="rating rating_set">
-								<div class="rating__body">
-									<div class="rating__active" style="width:20%"></div>
-									<div class="rating__items">
-										<input type="radio" class="rating__item" value="1" name="rating">
-										<input type="radio" class="rating__item" value="2" name="rating">
-										<input type="radio" class="rating__item" value="3" name="rating">
-										<input type="radio" class="rating__item" value="4" name="rating">
-										<input type="radio" class="rating__item" value="5" name="rating">
-									</div>
-								</div>
-								<div class="rating__value"><b>2</b> / 5</div>
-							</div> -->
 						</div>
 
-						<!-- <div class="swiper-slide partners-slider__card ">
-							<a href="#" class="partners-slider__link">
-								<img src="<?=get_template_directory_uri();?>/assets/img/partners/part1.svg" alt="" class="partners-slider__image">
-							</a>
-							<div class="partners-slider__star">
 
-								<div class="rating rating_set">
-									<div class="rating__body">
-										<div class="rating__active" style="width:66%"></div>
-										<div class="rating__items">
-											<input type="radio" class="rating__item" value="1" name="rating">
-											<input type="radio" class="rating__item" value="2" name="rating">
-											<input type="radio" class="rating__item" value="3" name="rating">
-											<input type="radio" class="rating__item" value="4" name="rating">
-											<input type="radio" class="rating__item" value="5" name="rating">
-										</div>
-									</div>
-									<div class="rating__value"><b>3.6</b> / 5</div>
-								</div>
-
-							</div>
-						</div> -->
-						<div class="swiper-slide partners-slider__card ">
-							<a href="#" class="partners-slider__link">
-								<img src="<?=get_template_directory_uri();?>/assets/img/partners/part2.svg" alt="" class="partners-slider__image">
-							</a>
-							<!-- <div class="partners-slider__star">
-								<div class="rating rating_set">
-									<div class="rating__body">
-										<div class="rating__active" style="width:66%"></div>
-										<div class="rating__items">
-											<input type="radio" class="rating__item" value="1" name="rating">
-											<input type="radio" class="rating__item" value="2" name="rating">
-											<input type="radio" class="rating__item" value="3" name="rating">
-											<input type="radio" class="rating__item" value="4" name="rating">
-											<input type="radio" class="rating__item" value="5" name="rating">
-										</div>
-									</div>
-									<div class="rating__value"><b>3.6</b> / 5</div>
-								</div>
-							</div> -->
-						</div>
-						<div class="swiper-slide partners-slider__card ">
-							<a href="#" class="partners-slider__link">
-								<img src="<?=get_template_directory_uri();?>/assets/img/partners/part3.svg" alt="" class="partners-slider__image">
-							</a>
-							<!-- <div class="rating rating_set">
-								<div class="rating__body">
-									<div class="rating__active" style="width:100%"></div>
-									<div class="rating__items">
-										<input type="radio" class="rating__item" value="1" name="rating">
-										<input type="radio" class="rating__item" value="2" name="rating">
-										<input type="radio" class="rating__item" value="3" name="rating">
-										<input type="radio" class="rating__item" value="4" name="rating">
-										<input type="radio" class="rating__item" value="5" name="rating">
-									</div>
-								</div>
-								<div class="rating__value"><b>5</b> / 5</div>
-							</div> -->
-						</div>
-						<div class="swiper-slide partners-slider__card ">
-							<a href="#" class="partners-slider__link">
-								<img src="<?=get_template_directory_uri();?>/assets/img/partners/part4.svg" alt="" class="partners-slider__image">
-							</a>
-							<!-- <div class="rating rating_set">
-								<div class="rating__body">
-									<div class="rating__active" style="width:20%"></div>
-									<div class="rating__items">
-										<input type="radio" class="rating__item" value="1" name="rating">
-										<input type="radio" class="rating__item" value="2" name="rating">
-										<input type="radio" class="rating__item" value="3" name="rating">
-										<input type="radio" class="rating__item" value="4" name="rating">
-										<input type="radio" class="rating__item" value="5" name="rating">
-									</div>
-								</div>
-								<div class="rating__value"><b>2</b> / 5</div>
-							</div> -->
-						</div>
-
+					<?php }} ?>
+					
 					</div>
+
+					<?php
+						$query->rewind_posts();
+						if ( $query->have_posts() ) { 
+							while ( $query->have_posts() ) { 
+								$query->the_post(); 
+								$title = get_the_title();
+								if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+									break;
+								};
+							} 
+						}
+					?>
+
 				</div>
 				<span class="slider-right-arrow partners-right _icon-arrow-new">
 					<!-- <img src="<?=get_template_directory_uri();?>/assets/img/home/arrow-left.png" alt="" class="partners-right-arrow__img" /> -->
@@ -584,37 +761,25 @@ get_header() ?>
 	</section>
 
 	<section class="page__card-work-circles">
+		<?php wp_reset_postdata() ?>
 		<?php get_template_part('template_part/how_it_works') ?>
+		<?php
+			$query->rewind_posts();
+			if ( $query->have_posts() ) { 
+				$counter = 0;
+				while ( $query->have_posts() ) { 
+					$query->the_post(); 
+					$title = get_the_title();
+					if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+						break;
+					};
+				} 
+			}
+		?>
 	</section>
 
 	<section class="page__card-benefit benefit">
-		<div class="benefit__container">
-			<div class="benefit__text">
-
-				<div class="benefit__heading">
-					<h3 class="small-header-white">Get More Benefits!<br>
-						Friction Master BK1591 Brake Kit</h3>
-				</div>
-
-				<div class="benefit__list card-list">
-					<p>By purchasing this item as a set, you will receive:</p>
-					<li class="card-list__item">
-						Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-					</li>
-					<li class="card-list__item">
-						Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-					</li>
-					<li class="card-list__item">
-						Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate, eaque?
-					</li>
-				</div>
-
-			</div>
-			<div class="benefit__image">
-				<img src="<?=get_template_directory_uri();?>/assets/img/card/benefit1.jpg" alt="">
-				<button type="submit" class="benefit__button buy-button"><?php the_field('buy','option');?></button>
-			</div>
-		</div>
+		<?php get_template_part('template_part/benefit') ?>
 	</section>
 
 	<section class="page__card-catalog catalog">
@@ -628,7 +793,46 @@ get_header() ?>
 				</div>
 
 				<div class="catalog__row">
+					<?php foreach ($allItems as $item) { ?>
 
+					<?php
+						$img = "";
+						$url = 'https://catalog.loopautomotive.com/catalog/part-images?part_ids=' . $item['part_id'];
+						$headers = array(
+							'Content-Type: application/json',
+						);
+					
+						$ch = curl_init($url);
+					
+						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+					
+						$response = curl_exec($ch);
+					
+						if (curl_errno($ch)) {
+							echo 'Ошибка cURL: ' . curl_error($ch);
+						} else {
+							$data = json_decode($response, true);
+							$partImage = $data;
+						}
+						curl_close($ch);
+
+						foreach ($partImages as $partImage) {
+							if (is_array($partImage) && isset($partImage['images'])) {
+								foreach ($partImage['images'] as $image) {
+									$img = $image;
+									break;
+								}
+								if ($img == "") {
+									foreach ($partImage['tech_drawings'] as $image) {
+										$img = $image;
+										break;
+									}
+								}
+							}
+						}
+					?>
+						
 					<div class="catalog__item item-catalog">
 
 						<div class="item-catalog__header">
@@ -638,121 +842,23 @@ get_header() ?>
 								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
 							</div>
 							<div class="item-catalog__header-heading">
-								R1915
+								<?= $item['part_number'] ?>
 							</div>
 						</div>
 
 						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
+							<img src="<?= $img ?>" alt="Без фото">
 						</div>
 
 						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
+							<a href="<?= setLink($item['part_id']); ?>">Show more</a>
+							<button type="submit" class="item-catalog__footer-button buy-button"><?php the_field('buy','option');?></button>
 
 						</div>
 
 					</div>
 
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
-
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
-
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
-
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
+					<?php } ?>
 
 				</div>
 
@@ -761,7 +867,46 @@ get_header() ?>
 				</div>
 
 				<div class="catalog__row">
+					<?php foreach ($allItems as $item) { ?>
 
+					<?php
+						$img = "";
+						$url = 'https://catalog.loopautomotive.com/catalog/part-images?part_ids=' . $item['part_id'];
+						$headers = array(
+							'Content-Type: application/json',
+						);
+					
+						$ch = curl_init($url);
+					
+						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+					
+						$response = curl_exec($ch);
+					
+						if (curl_errno($ch)) {
+							echo 'Ошибка cURL: ' . curl_error($ch);
+						} else {
+							$data = json_decode($response, true);
+							$partImage = $data;
+						}
+						curl_close($ch);
+
+						foreach ($partImages as $partImage) {
+							if (is_array($partImage) && isset($partImage['images'])) {
+								foreach ($partImage['images'] as $image) {
+									$img = $image;
+									break;
+								}
+								if ($img == "") {
+									foreach ($partImage['tech_drawings'] as $image) {
+										$img = $image;
+										break;
+									}
+								}
+							}
+						}
+					?>
+						
 					<div class="catalog__item item-catalog">
 
 						<div class="item-catalog__header">
@@ -771,121 +916,23 @@ get_header() ?>
 								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
 							</div>
 							<div class="item-catalog__header-heading">
-								R1915
+								<?= $item['part_number'] ?>
 							</div>
 						</div>
 
 						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
+							<img src="<?= $img ?>" alt="Без фото">
 						</div>
 
 						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
+							<a href="<?= setLink($item['part_id']); ?>">Show more</a>
+							<button type="submit" class="item-catalog__footer-button buy-button"><?php the_field('buy','option');?></button>
 
 						</div>
 
 					</div>
 
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
-
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
-
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
-
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
+					<?php } ?>
 
 				</div>
 
