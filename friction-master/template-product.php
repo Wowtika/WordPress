@@ -162,6 +162,14 @@ get_header() ?>
 		$filtered = array_filter($partApplications, function($item) use ($group) {
 			return array_key_exists($group, $item);
 		});
+		$related = [];
+		foreach ($partApplications as $part) {
+			foreach ($part as $key => $value) {
+				if ($key !== $group && $key !== array_key_first($part)) {
+					$related[] = $value;
+				}
+			}
+		}
 		$allItems = [];
 		foreach ($filtered as $item) {
 			if (isset($item[$group])) {
@@ -171,7 +179,8 @@ get_header() ?>
 		$isFrontLink = false;
 		$isRearLink = false;
 		$isAllLink = false;
-		function setLink($baseUrl, $newId) {
+		function setLink($newId) {
+			$baseUrl = ((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 			$parsed_url = parse_url($baseUrl);
 			parse_str($parsed_url['query'], $query_params);
 			$query_params['part_id'] = $newId;
@@ -184,15 +193,15 @@ get_header() ?>
 					$position = $part['position'];
 				}
 				if (!$isFrontLink && $part['position'] === "Front") {
-					$frontLink = setLink($url, $part['part_id']);
+					$frontLink = setLink($part['part_id']);
 					$isFrontLink = true;
 				}
 				if (!$isRearLink && $part['position'] === "Rear") {
-					$rearLink = setLink($url, $part['part_id']);
+					$rearLink = setLink($part['part_id']);
 					$isRearLink = true;
 				}
 				if (!$isAllLink && $part['position'] !== "Front" && $part['position'] !== "Rear") {
-					$allLink = setLink($url, $part['part_id']);
+					$allLink = setLink($part['part_id']);
 					$isAllLink = true;
 				}
 			}
@@ -275,7 +284,7 @@ get_header() ?>
 									$label = get_sub_field('label');
 									foreach ($allItems as $item) {
 										if ($item['part_number'] == $label . $onlyNumber) {
-											$link = setLink($url, $item['part_id']);
+											$link = setLink($item['part_id']);
 											break;
 										}
 									}
@@ -291,7 +300,7 @@ get_header() ?>
 								if ($link == "") {
 									foreach ($allItems as $item) {
 										if ($item['part_number'] == $label['label'] . $onlyNumber) {
-											$link = setLink($url, $item['part_id']);
+											$link = setLink($item['part_id']);
 											break;
 										}
 									}
@@ -784,7 +793,46 @@ get_header() ?>
 				</div>
 
 				<div class="catalog__row">
+					<?php foreach ($allItems as $item) { ?>
 
+					<?php
+						$img = "";
+						$url = 'https://catalog.loopautomotive.com/catalog/part-images?part_ids=' . $item['part_id'];
+						$headers = array(
+							'Content-Type: application/json',
+						);
+					
+						$ch = curl_init($url);
+					
+						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+					
+						$response = curl_exec($ch);
+					
+						if (curl_errno($ch)) {
+							echo 'Ошибка cURL: ' . curl_error($ch);
+						} else {
+							$data = json_decode($response, true);
+							$partImage = $data;
+						}
+						curl_close($ch);
+
+						foreach ($partImages as $partImage) {
+							if (is_array($partImage) && isset($partImage['images'])) {
+								foreach ($partImage['images'] as $image) {
+									$img = $image;
+									break;
+								}
+								if ($img == "") {
+									foreach ($partImage['tech_drawings'] as $image) {
+										$img = $image;
+										break;
+									}
+								}
+							}
+						}
+					?>
+						
 					<div class="catalog__item item-catalog">
 
 						<div class="item-catalog__header">
@@ -794,21 +842,23 @@ get_header() ?>
 								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
 							</div>
 							<div class="item-catalog__header-heading">
-								R1915
+								<?= $item['part_number'] ?>
 							</div>
 						</div>
 
 						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
+							<img src="<?= $img ?>" alt="Без фото">
 						</div>
 
 						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
+							<a href="<?= setLink($item['part_id']); ?>">Show more</a>
+							<button type="submit" class="item-catalog__footer-button buy-button"><?php the_field('buy','option');?></button>
 
 						</div>
 
 					</div>
+
+					<?php } ?>
 
 				</div>
 
@@ -817,7 +867,46 @@ get_header() ?>
 				</div>
 
 				<div class="catalog__row">
+					<?php foreach ($allItems as $item) { ?>
 
+					<?php
+						$img = "";
+						$url = 'https://catalog.loopautomotive.com/catalog/part-images?part_ids=' . $item['part_id'];
+						$headers = array(
+							'Content-Type: application/json',
+						);
+					
+						$ch = curl_init($url);
+					
+						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+					
+						$response = curl_exec($ch);
+					
+						if (curl_errno($ch)) {
+							echo 'Ошибка cURL: ' . curl_error($ch);
+						} else {
+							$data = json_decode($response, true);
+							$partImage = $data;
+						}
+						curl_close($ch);
+
+						foreach ($partImages as $partImage) {
+							if (is_array($partImage) && isset($partImage['images'])) {
+								foreach ($partImage['images'] as $image) {
+									$img = $image;
+									break;
+								}
+								if ($img == "") {
+									foreach ($partImage['tech_drawings'] as $image) {
+										$img = $image;
+										break;
+									}
+								}
+							}
+						}
+					?>
+						
 					<div class="catalog__item item-catalog">
 
 						<div class="item-catalog__header">
@@ -827,121 +916,23 @@ get_header() ?>
 								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
 							</div>
 							<div class="item-catalog__header-heading">
-								R1915
+								<?= $item['part_number'] ?>
 							</div>
 						</div>
 
 						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
+							<img src="<?= $img ?>" alt="Без фото">
 						</div>
 
 						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
+							<a href="<?= setLink($item['part_id']); ?>">Show more</a>
+							<button type="submit" class="item-catalog__footer-button buy-button"><?php the_field('buy','option');?></button>
 
 						</div>
 
 					</div>
 
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
-
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
-
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
-
-					<div class="catalog__item item-catalog">
-
-						<div class="item-catalog__header">
-							<div class="item-catalog__header-icons">
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card1.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card2.svg" alt=""></a>
-								<a href="#"><img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-card3.svg" alt=""></a>
-							</div>
-							<div class="item-catalog__header-heading">
-								R1915
-							</div>
-						</div>
-
-						<div class="item-catalog__image">
-							<img src="<?=get_template_directory_uri();?>/assets/img/catalog/catalog-item1.jpg" alt="Sxema">
-						</div>
-
-						<div class="item-catalog__footer">
-							<a href="#">Show more</a>
-							<button type="submit" class="item-catalog__footer-button buy-button">BUY</button>
-
-						</div>
-
-					</div>
+					<?php } ?>
 
 				</div>
 
