@@ -1932,10 +1932,7 @@
                 [dynamicKey]: filteredItems, // Обновляем только массив под динамическим ключом
               };
             }
-            console.warn(
-              "No exact matches found in dynamicValue for key:",
-              dynamicKey
-            );
+
             return null; // Вернуть null, если нет совпадений
           })
           .filter((obj) => obj !== null); // Удаляем null значения
@@ -1945,7 +1942,7 @@
 
         return filteredData.length > 0 ? filteredData : null; // Возвращаем отфильтрованные данные или null
       } else {
-        console.error("dataAll is not a valid array:", dataAll);
+
         return null; // Возвращаем null, если dataAll не массив
       }
     }
@@ -2150,10 +2147,10 @@
       let partOptionsSide = document.createElement("div");
       partOptionsSide.classList.add("item-catalog__image");
 
-      if (productCategorySide === "Front") {
+      if (productCategorySide === "Rear") {
         partOptionsSide.innerHTML =
           '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-right.svg" alt="Side" />';
-      } else if (productCategorySide === "Rear") {
+      } else if (productCategorySide === "Front") {
         partOptionsSide.innerHTML =
           '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-left.svg" alt="Side" />';
       } else {
