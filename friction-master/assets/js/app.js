@@ -1725,7 +1725,7 @@
       _this.rebuildSelect(_this.$submodel);
       _this.$engine.html('<option value="" selected>Engine</option>');
       _this.rebuildSelect(_this.$engine);
-
+      // let load_catalog = $("#load_catalog");
       _this.loadingBlock(load_catalog, true);
 
       return $.ajax({
@@ -1746,6 +1746,7 @@
         success: function (res) {
           if (res && res.success) {
             if (res.data) {
+              console.log("checkModel Полученные данные:", res.data.part_applications);
               if (res.data.engines && res.data.vehicles) {
                 _this.setOptionsSubmodels(res.data.vehicles, _this.$submodel);
                 _this.setOptionsEngines(res.data.engines, _this.$engine);
@@ -1809,6 +1810,9 @@
               }
             }
             if (res.data.part_applications.length === 0) {
+              // load_catalog.html("");
+              // $("#catalog_row").html("");
+              // $("#inner1").fadeIn().css("display", "grid");
               load_catalog.html(
                 '<div class="catalog_nodata">No data available</div>'
               );
@@ -1865,6 +1869,7 @@
         success: function (res) {
           if (res && res.success) {
             if (res.data) {
+              console.log("partsSearch Полученные данные:", res.data.part_applications);
               _this.$currentData = _this.exactMatchFilterData(
                 res.data.part_applications
               );
@@ -1954,12 +1959,15 @@
       let withoutFilterData = _this.exactMatchFilterData(data);
       let filteredData = _this.needToSortProduct(withoutFilterData);
 
+      let load_catalog = $("#load_catalog");
+      _this.loadingBlock(load_catalog, true);
       // Очищаем контейнер перед рендером новых компонентов
       catalog__wrapper.html("");
 
       console.log("Отфильтрованные товары для рендера", filteredData);
 
       if (filteredData && filteredData.length > 0) {
+        catalog[0].style.display = "block";
         const addBlockProduct = function (dataForFender) {
           let categoryName = dataForFender[0]
             ? dataForFender[0].product_group
@@ -2099,6 +2107,7 @@
           // Добавляем контейнер категории в обертку каталога
           catalog__wrapper.append(partContainer);
         };
+        console.log(filteredData);
         if (filteredData.length === 1) {
           const dynamicKey = Object.keys(filteredData[0]).find(
             (key) => key !== "fitment_type"
@@ -2116,6 +2125,31 @@
             }
           });
         }
+      } else if (!filteredData || filteredData.length === 0) {
+        console.log("No data found");
+        let load_catalog = $("#load_catalog");
+        // _this.loadingBlock(load_catalog, true);
+        // load_catalog.html("");
+        $("#catalog_row").html("");
+        // $("#inner1").fadeIn().css("display", "grid");
+        load_catalog.html(
+          '<div class="catalog_nodata">No data available</div>'
+        );
+        // let catalogNodata = $(".catalog_nodata")[0];
+        // if (catalogNodata) {
+        //   catalogNodata.style.display = "block";
+        // }
+        let catalogAutoTitle = $("#catalog_auto_title")[0];
+        if (catalogAutoTitle) {
+          catalogAutoTitle.style.display = "none";
+          // catalogAutoTitle.innerHTML = "No data available";
+        }
+        // catalog
+        catalog[0].style.display = "none";
+        // let catalogNodata = $(".catalog_nodata")[0];
+        // if (catalogNodata) {
+        //   catalogNodata.style.display = "none";
+        // }
       }
     }
 
@@ -2533,20 +2567,10 @@
         }
       });
 
-      const categoryGroupBlockLines = document.querySelector(
-        '.category__items.item-category[data-fillter-groups="lines"]'
-      );
-      const categoryLinksLines = categoryGroupBlockLines.querySelectorAll(
-        ".item-category__link"
-      );
-      const LinesActive = categoryGroupBlockLines.closest(".active");
-
       categoryGroupBlock.addEventListener("click", (event) => {
         event.preventDefault();
 
         const linkCategory = event.target.closest(".item-category__link");
-        // if ()
-        categoryLinksLines.forEach((item) => item.classList.remove("active"));
 
         if (activeBtn === linkCategory) {
           linkCategory.classList.remove("active");
@@ -2619,13 +2643,6 @@
         ".item-category__link"
       );
 
-      const categoryGroupBlock = document.querySelector(
-        '.category__items.item-category[data-fillter-groups="category"]'
-      );
-      const categoryLinks = categoryGroupBlock.querySelectorAll(
-        ".item-category__link"
-      );
-
       let activeBtn = null;
       categoryLinksLines.forEach((item) => {
         if (item.classList.contains("active")) {
@@ -2633,32 +2650,8 @@
         }
       });
 
-      const buttonBrakePads = document.querySelector(
-        '[data-tippy-content="Brake Pads"]'
-      );
-
-      const selestedButtonBrakePads =
-        buttonBrakePads.classList.contains("active");
-
       categoryGroupBlockLines.addEventListener("click", (event) => {
         event.preventDefault();
-
-        let activeBtnCategory = null;
-        categoryLinks.forEach((item) => {
-          if (item.classList.contains("active")) {
-            activeBtnCategory = item;
-          }
-        });
-
-        if (buttonBrakePads.classList.contains("active") || !activeBtn) {
-          categoryLinks.forEach((item) => item.classList.remove("active"));
-          buttonBrakePads.classList.add("active");
-        } else {
-          categoryLinksLines.forEach((item) => item.classList.remove("active"));
-          alert("Select Brake Pads and Lines");
-          event.stopPropagation(); // Остановить всплытие события
-          return; // Прекратить выполнение функции
-        }
 
         const linkCategory = event.target.closest(".item-category__link");
         if (activeBtn === linkCategory) {
