@@ -2067,7 +2067,7 @@
               '<a href="/product?part_id=' +
               part.part_id +
               '&car=' +
-              `${_this.$make.val()} ${_this.$model.val()} ${_this.$year.val()}` +
+              `${_this.$make.val()}_${_this.$model.val()}_${_this.$year.val()}` +
               '&region_id=' +
               `${_this.$region.val()}` +
               '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';

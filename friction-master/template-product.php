@@ -134,9 +134,10 @@ get_header() ?>
 
 	$url = ((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 
+	//выполнить поиск
 	$parsed_url = parse_url($url);
 	parse_str($parsed_url['query'], $query_params);
-	$car = explode(' ', $query_params['car']);
+	$car = explode('_', $query_params['car']);
 	$make = $car[0];
 	$model = $car[1];
 	$year = $car[2];
@@ -159,9 +160,11 @@ get_header() ?>
 	} else {
 		$data = json_decode($response, true);
 		$partApplications = $data['part_applications'];
+		//достаём товары текущей группы
 		$filtered = array_filter($partApplications, function($item) use ($group) {
 			return array_key_exists($group, $item);
 		});
+		//достаём похожие товары (перед футером)
 		$related = [];
 		foreach ($partApplications as $part) {
 			foreach ($part as $key => $value) {
@@ -170,15 +173,18 @@ get_header() ?>
 				}
 			}
 		}
+		//Преобразуем товары текущей группы в односложный массив
 		$allItems = [];
 		foreach ($filtered as $item) {
 			if (isset($item[$group])) {
 				$allItems = array_merge($allItems, $item[$group]);
 			}
 		}
+		//Найдены ли товары для других направлений
 		$isFrontLink = false;
 		$isRearLink = false;
 		$isAllLink = false;
+		//Установить ссылку на товар по id
 		function setLink($newId) {
 			$baseUrl = ((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 			$parsed_url = parse_url($baseUrl);
@@ -187,6 +193,7 @@ get_header() ?>
 			$new_query_string = http_build_query($query_params);
 			return $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $new_query_string;
 		}
+		//Ищем товары для других позиций (перед, зад, оба)
 		foreach ($allItems as $part) {
 			if (isset($part['exact_match'])) {
 				if ($number == $part['part_number']) {
@@ -206,6 +213,7 @@ get_header() ?>
 				}
 			}
 		}
+		//Вставляем ссылку на текущий товар
 		switch ($position) {
 			case 'Front':
 				$isFrontLink = true;
@@ -392,7 +400,7 @@ get_header() ?>
 				<div class="card__content content-card">
 
 					<div class="content-card__header header-card">
-						<span class="header-card__icon _icon-arrow-down"></span>Fits <?php echo $_GET['car'] ?>
+						<span class="header-card__icon _icon-arrow-down"></span>Fits <?php echo str_replace('_', ' ', $_GET['car']); ?>
 					</div>
 
 					<div class="content-card__body body-card">
