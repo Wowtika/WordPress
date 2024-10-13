@@ -314,8 +314,8 @@ get_header() ?>
 							}
 						}
 						if ($link != "") {
-							echo '<a href="' . $link . '" class="card-category__link" style="background:' . $bgColor . '; color: white;' . $opacity . '">';
-								echo '<span>' . the_title() . '</span>';
+							echo '<a href="' . $link . '" class="card-category__link" style="color: black;' . $opacity . '">';
+								echo '<span>' . get_field('name_product_line') . '</span>';
 							echo '</a>';
 						}
 
