@@ -245,7 +245,29 @@ get_header() ?>
 					в зависимости от категории (Black, Ultralife, Speed, Elite) тут должна менятся картинка
 				*/
 			?>
-			<a href=<?php echo home_url('/catalog/') ?> class="item-category__link" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: #000000"><?php the_field('back_to_catalog') ?></a>
+			<?php
+				$carName = explode('_', $_GET['car']);
+				$make = $carName[0];
+				$model = $carName[1];
+				$year = $carName[2];
+				$engine = $carName[3];
+				$submodel = $carName[4];
+				if ($engine != '')
+					$engineWithParm = "&eg=" . $engine;
+				else
+					$engineWithParm = '';
+				if ($submodel != '')
+					$submodelWithParm = "&sm=" . $submodel;
+				else
+					$submodelWithParm = '';
+				$region = $_GET['region_id'];
+			?>
+			<a href="<?php echo home_url('/catalog/') . '?tp=1&yr=' . $year .
+															 '&mk=' . $make . 
+															 '&md=' . $model . 
+															 $submodelWithParm . 
+															 $engineWithParm . 
+															 '&rg=' . $region ?>" class="item-category__link" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: #000000"><?php the_field('back_to_catalog') ?></a>
 			<img class="card-header__image" src="<?=get_template_directory_uri();?>/assets/img/card/card-bg.svg" alt="">
 			<!-- <img class="card-header__image-mobile" src="<?=get_template_directory_uri();?>/assets/img/catalog/header-bg-mobile.svg" alt=""> -->
 		</div>
@@ -400,7 +422,7 @@ get_header() ?>
 				<div class="card__content content-card">
 
 					<div class="content-card__header header-card">
-						<span class="header-card__icon _icon-arrow-down"></span>Fits <?php echo str_replace('_', ' ', $_GET['car']); ?>
+						<span class="header-card__icon _icon-arrow-down"></span>Fits <?php echo $make . " " . $model . " " . $submodel . " " . $year . " " . $engine; ?>
 					</div>
 
 					<div class="content-card__body body-card">
