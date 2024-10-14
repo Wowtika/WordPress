@@ -1086,27 +1086,6 @@
       this.rebuildSelect($select);
     }
 
-    setOptionsSubmodels(data, $select, selected = false) {
-      $select = $($select);
-
-      for (let i = 0; i < data.length; i++) {
-        let val = data[i];
-        let opt = document.createElement("option");
-        opt.value = val.submodel;
-        opt.innerHTML = val.submodel;
-
-        if (selected && selected == val) {
-          opt.setAttribute("selected", "selected");
-        }
-
-        $select.append(opt);
-      }
-
-      $select.attr("disabled", false);
-
-      this.rebuildSelect($select);
-    }
-
     setOptionsEngines(data, $select, selected = false) {
       $select = $($select);
       let _this = this;
@@ -1137,7 +1116,40 @@
         // Если больше одного элемента, разрешаем выбор
         $select.attr("disabled", false);
       }
-      // $select.attr("disabled", false);
+      $select.attr("disabled", false);
+      this.rebuildSelect($select);
+    }
+
+    setOptionsSubmodels(data, $select, selected = false) {
+      $select = $($select);
+
+      for (let i = 0; i < data.length; i++) {
+        let val = data[i];
+        let opt = document.createElement("option");
+        opt.value = val.submodel;
+        opt.innerHTML = val.submodel;
+
+        if (selected && selected == val) {
+          opt.setAttribute("selected", "selected");
+        }
+
+        $select.append(opt);
+      }
+
+      if (data.length === 1) {
+        // Устанавливаем селект как disabled
+        $select.attr("disabled", true);
+        // тут показывается один двигатель и блокируется блок чтобы не было выбора
+        let selectOptionButtonAll = $select[0].querySelectorAll("option");
+        let selectOption = selectOptionButtonAll[0];
+        let selectOptionButton = selectOptionButtonAll[1];
+        let dataValue = selectOptionButton.textContent;
+        selectOption.textContent = dataValue;
+      } else if (data.length > 1) {
+        // Если больше одного элемента, разрешаем выбор
+        $select.attr("disabled", false);
+      }
+      $select.attr("disabled", false);
       this.rebuildSelect($select);
     }
 
@@ -1801,6 +1813,8 @@
       let _this = this;
       let load_catalog = $("#load_catalog");
       let catalog = $("#catalog");
+      let engine = _this.$engine.val();
+      let submodel = _this.$submodel.val();
 
       _this.hideInfotitle();
 
@@ -1808,7 +1822,7 @@
       _this.rebuildSelect(_this.$submodel);
       _this.$engine.html('<option value="" selected>Engine</option>');
       _this.rebuildSelect(_this.$engine);
-      // let load_catalog = $("#load_catalog");
+
       _this.loadingBlock(load_catalog, true);
 
       return $.ajax({
@@ -1829,76 +1843,80 @@
         success: function (res) {
           if (res && res.success) {
             if (res.data) {
-              if (res.data.engines && res.data.vehicles) {
-                _this.setOptionsSubmodels(res.data.vehicles, _this.$submodel);
-                _this.setOptionsEngines(res.data.engines, _this.$engine);
+              console.log("checkModel отрабатывает", res.data);
+              let catalogAutoTitleBlock = document.querySelector(
+                "#catalog_auto_title"
+              );
 
+              if (res.data.engines || res.data.vehicles) {
                 load_catalog.html("");
                 $("#catalog_row").html("");
                 $("#inner1").fadeIn().css("display", "grid");
-              } else if (res.data.engines || res.data.vehicles) {
+                // let engine = _this.$engine ? _this.$engine.val() : "";
+                // let submodel = _this.$submodel ? _this.$submodel.val() : "";
+
+                let engineBlock = document.querySelector('[data-id="7"]');
                 if (res.data.engines) {
-                  _this.setOptionsEngines(res.data.engines, _this.$engine);
-                  if (res.data.engines.length === 1) {
-                    _this.$engine.val(res.data.engines[0].engine_short);
-                    _this.partsSearch(
-                      year,
-                      make,
-                      model,
-                      res.data.engines[0].engine_short
+                  if (engineBlock) {
+                    engineBlock.style.display = "block";
+                  }
+                  if (res.data.engines.length > 1) {
+                    _this.setOptionsEngines(res.data.engines, _this.$engine);
+                  } else if (res.data.engines.length === 1) {
+                    _this.setOptionsEngines(
+                      res.data.engines,
+                      _this.$engine,
+                      res.data.engines[0]
                     );
+                    engine = res.data.engines[0];
+                    _this.$engine.attr("disabled", true);
+                    // _this.partsSearch(year, make, model, engine, submodel);
                   }
                 } else {
-                  const engineElement = $('.select[data-id="7"]');
-                  if (engineElement) {
-                    engineElement[0].style.display = "none"; // Скрыть элемент
-                  }
+                  engineBlock.style.display = "none";
                 }
 
+                let submodelBlock = document.querySelector('[data-id="6"]');
                 if (res.data.vehicles) {
-                  _this.setOptionsSubmodels(res.data.vehicles, _this.$submodel);
-                  if (res.data.vehicles.length === 1) {
-                    _this.$submodel.val(res.data.vehicles[0].submodel);
-                    _this.partsSearch(
-                      year,
-                      make,
-                      model,
-                      res.data.vehicles[0].submodel
-                    );
-                  } else if (res.data.vehicles.length > 1) {
+                  if (submodelBlock) {
+                    submodelBlock.style.display = "block";
+                  }
+                  if (res.data.vehicles.length > 1) {
                     _this.setOptionsSubmodels(
                       res.data.vehicles,
                       _this.$submodel
                     );
+                  } else if (res.data.vehicles.length === 1) {
+                    _this.setOptionsSubmodels(
+                      res.data.vehicles,
+                      _this.$submodel,
+                      res.data.vehicles[0]
+                    );
+                    submodel = res.data.vehicles[0].submodel;
+                    _this.$submodel.attr("disabled", true);
                   }
                 } else {
-                  const submodelElement = $('.select[data-id="6"]');
-                  if (submodelElement) {
-                    submodelElement[0].style.display = "none"; // Скрыть элемент
-                  }
+                  submodelBlock.style.display = "none";
                 }
 
-                if (res.data.part_applications.length === 0) {
+                _this.partsSearch(year, make, model, engine, submodel);
+                // load_catalog.html("");
+                // $("#catalog_row").html("");
+                // $("#inner1").fadeIn().css("display", "grid");
+                // catalogAutoTitleBlock.style.display = "flex";
+              }
+
+              // если нет подмодели и двигателя
+              if (!res.data.engines && !res.data.vehicles) {
+                if (res.data.part_applications.length) {
+                  _this.partsSearch(year, make, model);
+                } else {
                   load_catalog.html(
                     '<div class="catalog_nodata">No data available</div>'
                   );
-                } else if (res.data.part_applications.length > 0) {
-                  load_catalog.html("");
-                  $("#catalog_row").html("");
-                  $("#inner1").fadeIn().css("display", "grid");
                 }
               }
-            }
-            if (res.data.part_applications.length === 0) {
-              load_catalog.html(
-                '<div class="catalog_nodata">No data available</div>'
-              );
-            } else if (
-              res.data.part_applications.length &&
-              !res.data.engines &&
-              !res.data.vehicles
-            ) {
-              _this.partsSearch(year, make, model);
+              // конец if (res.data) {
             }
           }
         },
@@ -1933,10 +1951,12 @@
 
       // Добавляем engine и submodel только если они определены
       if (engine) {
-        requestData.engine = engine;
+        // Проверяем, что engine не пустой
+        engine = _this.$engine.val();
       }
       if (submodel) {
-        requestData.submodel = submodel;
+        // Проверяем, что submodel не пустой
+        submodel = _this.$submodel.val();
       }
 
       return $.ajax({
@@ -1946,19 +1966,21 @@
         success: function (res) {
           if (res && res.success) {
             if (res.data) {
-
+              console.log(
+                "Данные поиска для группы продуктовых линий:",
+                res.data
+              );
               _this.$currentData = _this.exactMatchFilterData(
                 res.data.part_applications
               );
-              // _this.$currentData = res.data
               catalog_auto_title.html(
                 make +
                   " " +
                   model +
                   " " +
-                  (submodel || "") +
-                  " " +
                   (engine || "") +
+                  " " +
+                  (submodel || "") +
                   " " +
                   year
               );
@@ -1981,274 +2003,561 @@
     }
 
     exactMatchFilterData(dataAll) {
+      console.log("exactMatchFilterData", dataAll);
       if (Array.isArray(dataAll)) {
-        // Фильтруем данные
-        const filteredData = dataAll
-          .map((obj) => {
-            // Найти динамический ключ, который не равен "fitment_type"
-            const dynamicKey = Object.keys(obj).find(
-              (key) => key !== "fitment_type"
-            );
+        // Создаем массивы для двух групп
+        const exactMatches = [];
+        const nonExactMatches = [];
 
-            // Проверка на случай, если dynamicKey не найден
-            if (!dynamicKey) {
-              console.warn("No dynamic key found in obj:", obj);
-              return null; // Вернуть null, если ключ не найден
-            }
+        dataAll.forEach((obj) => {
+          const dynamicKey = this.getDynamicKey(obj);
+          console.log("dynamicKey", dynamicKey);
+          // Проверка на случай, если dynamicKey не найден
+          if (!dynamicKey) {
+            return; // Пропускаем объект, если ключ не найден
+          }
 
-            const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
+          const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
+          console.log("dynamicValue", dynamicValue);
 
-            // Фильтруем массив внутри объекта
-            const filteredItems = dynamicValue.filter(
-              (item) => item.exact_match === true
-            );
+          // Фильтруем массив внутри объекта
+          const filteredItemsExactMatchTrue = dynamicValue.filter(
+            (item) => item.exact_match === true
+          );
+          const filteredItemsExactMatchFalse = dynamicValue.filter(
+            (item) =>
+              item.exact_match === undefined || item.exact_match === false
+          );
 
-            // Возвращаем новый объект с отфильтрованными элементами, если есть совпадения
-            if (filteredItems.length > 0) {
-              return {
-                ...obj, // Остальные свойства объекта
-                [dynamicKey]: filteredItems, // Обновляем только массив под динамическим ключом
-              };
-            }
+          console.log(
+            "filteredItemsExactMatchTrue",
+            filteredItemsExactMatchTrue
+          );
+          console.log(
+            "filteredItemsExactMatchFalse",
+            filteredItemsExactMatchFalse
+          );
 
-            return null; // Вернуть null, если нет совпадений
-          })
-          .filter((obj) => obj !== null); // Удаляем null значения
+          // Если есть совпадения, добавляем в группу exactMatches
+          if (filteredItemsExactMatchTrue.length > 0) {
+            exactMatches.push({
+              ...obj,
+              [dynamicKey]: filteredItemsExactMatchTrue, // Обновляем только массив под динамическим ключом
+            });
+          } else {
+            // Если нет совпадений, добавляем в nonExactMatches
+            nonExactMatches.push(obj);
+            console.log("nonExactMatches", nonExactMatches);
+          }
+        });
 
         // Сохраняем отфильтрованные данные
-        this.$currentData = filteredData;
+        this.$currentData = {
+          exactMatches: exactMatches,
+          nonExactMatches: nonExactMatches,
+        };
 
-        return filteredData.length > 0 ? filteredData : null; // Возвращаем отфильтрованные данные или null
+        return {
+          exactMatches: exactMatches,
+          nonExactMatches: nonExactMatches,
+        };
       } else {
         return null; // Возвращаем null, если dataAll не массив
       }
     }
 
+    hasSortedProducts(filteredData) {
+      // Проверяем, что filteredData — это объект и содержит массивы exactMatches и nonExactMatches
+      if (
+        filteredData &&
+        typeof filteredData === "object" &&
+        Array.isArray(filteredData.exactMatches) &&
+        Array.isArray(filteredData.nonExactMatches)
+      ) {
+        console.log("hasSortedProducts filteredData", filteredData);
+        // Проверяем, что хотя бы один из массивов не пуст
+        if (
+          filteredData.exactMatches.length > 0 ||
+          filteredData.nonExactMatches.length > 0
+        ) {
+          return true; // Возвращаем true, если хотя бы один массив не пустой
+          // // Итерируем по массиву exactMatches
+          // for (const obj of filteredData.exactMatches) {
+          //   const dynamicValue = this.getDynamicValue(obj);
+          //   if (dynamicValue) {
+          //     // Сортируем объект
+          //     const dataForFender = this.sortByqualifierProduct(dynamicValue);
+          //     // Проверяем, есть ли отсортированные данные
+          //     if (dataForFender && Object.keys(dataForFender).length > 0) {
+          //       return true; // Возвращаем true, если найден хотя бы один отсортированный объект
+          //     }
+          //   }
+          // }
+        }
+      }
+      return false; // Возвращаем false, если отсортированных объектов нет
+    }
+
     create_parts(data) {
+      // console.log("create_parts", data);
       let _this = this;
-      let catalog = $("#catalog"); // Контейнер всех продуктов
+      let catalog = $("#catalog");
       let catalog__wrapper = catalog.find(".catalog__wrapper");
+      let catalog_auto_title = $("#catalog_auto_title");
       let withoutFilterData = _this.exactMatchFilterData(data);
+      // console.log("withoutFilterData", withoutFilterData);
       let filteredData = _this.needToSortProduct(withoutFilterData);
-
-      catalog__wrapper.html("");
-
-      console.log("Отфильтрованные товары для рендера", filteredData);
-
-      if (filteredData && filteredData.length > 0) {
-        catalog[0].style.display = "block";
-        let catalogAutoTitle = $("#catalog_auto_title")[0];
-        if (catalogAutoTitle) {
-          catalogAutoTitle.style.display = "flex";
-        }
-        let catalogNodata = $(".catalog_nodata")[0];
-        if (catalogNodata) {
-          catalogNodata.style.display = "none";
-        }
-        const addBlockProduct = function (dataForFender) {
-          let categoryName = dataForFender[0]
-            ? dataForFender[0].product_group
-            : "";
-
-          // Создаем контейнер для категории
-          let partContainer = document.createElement("div");
-          partContainer.classList.add("container-catalog");
-
-          partContainer.setAttribute("category_name", categoryName);
-
-          let partHeaderContainer = document.createElement("div");
-          partHeaderContainer.classList.add("catalog__header");
-          partHeaderContainer.classList.add("header-catalog");
-
-          let partHeaderSpan = document.createElement("span");
-          partHeaderSpan.classList.add("header-catalog__icon");
-          // переменная для получения иконки категории
-          const objValueCategoryGroup = [
-            "Brake Shoes",
-            "Brake Kits",
-            "Brake Pads",
-            "Brake Rotors",
-            "Brake Hardware",
-            "Wheel Hubs",
-          ];
-          let numberIcon = objValueCategoryGroup.indexOf(categoryName);
-          let numberOnIconCategory =
-            "_icon-catalog" + (numberIcon > 0 ? numberIcon : 3);
-
-          partHeaderSpan.classList.add(numberOnIconCategory);
-
-          partHeaderContainer.append(partHeaderSpan);
-
-          let partHeaderTitle = document.createElement("h2");
-          partHeaderTitle.classList.add("header-catalog__heading");
-          partHeaderTitle.textContent = categoryName;
-
-          partHeaderContainer.append(partHeaderTitle);
-          partContainer.append(partHeaderContainer);
-
-          let partContainerBasic = document.createElement("div");
-          partContainerBasic.classList.add("container-catalog");
-
-          const productSorder = _this.sortByqualifierProduct(dataForFender);
-
-          // Обрабатываем каждую часть в категории
-          const keysArr = Object.keys(productSorder);
-          let productCategoryName = null;
-          let productCategoryData = null;
-          let productCategorySide = null;
-          keysArr.forEach((key) => {
-            productCategoryName = key;
-            productCategoryData = productSorder[key];
-            productCategorySide = productCategoryData[0].position;
-            let OptionBlock = _this.renderBlockOptionsContainer(
-              productCategoryName,
-              categoryName,
-              productCategorySide
-            );
-
-            // Создаем элемент для части
-            let categoryContainer = document.createElement("div");
-            categoryContainer.classList.add("category-container");
-
-            let optionsContainer = document.createElement("div");
-            optionsContainer.classList.add("option-catalog-container");
-
-            let productsContainer = document.createElement("div");
-            productsContainer.classList.add("products-container");
-
-            categoryContainer.append(OptionBlock);
-            categoryContainer.append(productsContainer);
-
-            productCategoryData.forEach((part) => {
-              // Создаем элемент для части
-              let partElement = document.createElement("div");
-              partElement.classList.add("item-catalog");
-              partElement.setAttribute("data-part_id", part.part_id);
-
-              let part_icon = document.createElement("div");
-              part_icon.classList.add("item-catalog__header-icons");
-              part_icon.innerHTML =
-                '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card1.svg" alt="" /></a>' +
-                '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card2.svg" alt="" /></a>' +
-                '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card3.svg" alt="" /></a>';
-
-              let part_heading = document.createElement("div");
-              part_heading.classList.add("item-catalog__header-heading");
-              part_heading.textContent = part.part_number;
-
-              let part_header = document.createElement("div");
-              part_header.classList.add("item-catalog__header");
-              part_header.append(part_icon);
-              part_header.append(part_heading);
-
-              let part_img = document.createElement("div");
-              part_img.classList.add("item-catalog__image");
-
-              async function getImage() {
-                let imgStringProduct = await _this.getImagesForProduct(
-                  part.part_id
-                );
-                if (
-                  imgStringProduct &&
-                  imgStringProduct[0] &&
-                  imgStringProduct[0].images &&
-                  imgStringProduct[0].images[0]
-                ) {
-                  part_img.innerHTML = `<img src="${imgStringProduct[0].images[0]}" alt="Sxema" />`;
-                } else {
-                  part_img.innerHTML =
-                    '<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />';
-                }
-              }
-              getImage();
-
-              let engine = _this.$engine.val() ? `$engine=${_this.$engine.val()}` : '';
-              let part_footer = document.createElement("div");
-              part_footer.classList.add("item-catalog__footer");
-              part_footer.innerHTML =
-              '<a href="/product?part_id=' +
-              part.part_id +
-              '&car=' +
-              `${_this.$make.val()}_${_this.$model.val()}_${_this.$year.val()}_${_this.$engine.val()}_${_this.$submodel.val()}` +
-              '&region_id=' +
-              `${_this.$region.val()}` +
-              '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
-
-              partElement.append(part_header);
-              partElement.append(part_img);
-              partElement.append(part_footer);
-
-              productsContainer.append(partElement);
-              // partElement
-            });
-            partContainerBasic.append(categoryContainer);
-            // Добавляем элемент в контейнер
-          });
-          partContainer.append(partContainerBasic);
-
-          // Добавляем контейнер категории в обертку каталога
-          catalog__wrapper.append(partContainer);
-        };
-        console.log(filteredData);
-        if (filteredData.length === 1) {
-          const dynamicKey = Object.keys(filteredData[0]).find(
-            (key) => key !== "fitment_type"
+      let filteredDataExactMatches = null;
+      let filteredDataNonExactMatches = null;
+      if (filteredData) {
+        if (filteredData.exactMatches) {
+          // withoutFilterData
+          console.log(
+            "filteredData.exactMatches",
+            filteredData.exactMatches
           );
-          const dynamicValue = filteredData[0][dynamicKey]; // Значение под динамическим ключом
-          addBlockProduct(dynamicValue);
-        } else if (filteredData.length > 1) {
-          filteredData.forEach((obj) => {
-            if (obj) {
-              const dynamicKey = Object.keys(obj).find(
-                (key) => key !== "fitment_type"
-              );
-              const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
-              addBlockProduct(dynamicValue);
-            }
-          });
+          filteredDataExactMatches = filteredData.exactMatches
+          // filteredDataExactMatches = _this.needToSortProduct(
+          //   filteredData.exactMatches
+          // );
         }
-      } else if (!filteredData || filteredData.length === 0) {
-        console.log("No data found");
-        let load_catalog = $("#load_catalog");
-        $("#catalog_row").html("");
-
-        load_catalog.html(
-          '<div class="catalog_nodata">No data available</div>'
-        );
-
-        let catalogAutoTitle = $("#catalog_auto_title")[0];
-        if (catalogAutoTitle) {
-          catalogAutoTitle.style.display = "none";
+        if (filteredData.nonExactMatches) {
+          console.log(
+            "withoutFilterData.nonExactMatches",
+            filteredData.nonExactMatches
+          );
+          filteredDataNonExactMatches = filteredData.nonExactMatches
+          // filteredDataNonExactMatches = _this.needToSortProduct(
+          //   filteredData.nonExactMatches
+          // );
         }
-        catalog[0].style.display = "none";
+      }
+      console.log("filteredDataNonExactMatches", filteredDataNonExactMatches);
+      // let filteredData = _this.needToSortProduct(withoutFilterData);
+      // console.log("withoutFilterData", withoutFilterData.nonExactMatches);
+      // let dataForFender = _this.sortByqualifierProduct(filteredData);
+      let ifhasSortedProducts = _this.hasSortedProducts(filteredData);
+      console.log("ifhasSortedProducts", ifhasSortedProducts);
+
+      // _this.exactMatchFilterData(data) = {
+      //   exactMatches: exactMatches,
+      //   nonExactMatches: nonExactMatches,
+      // };
+      catalog__wrapper.html("");
+      if (ifhasSortedProducts) {
+        // if (filteredData && filteredData.length > 0) {
+        // if (filteredDataExactMatches, filteredDataNonExactMatches) {
+        this.renderParts(filteredDataExactMatches, filteredDataNonExactMatches);
+        // }
+        // if (filteredDataNonExactMatches) {
+        //   this.renderParts(filteredDataNonExactMatches);
+        // }
+      } else {
+        // } else if (!filteredData || filteredData.length === 0) {
+        this.renderNoData(catalog);
       }
     }
 
-    renderBlockOptionsContainer(
-      nameCategory,
-      productCategory,
-      productCategorySide
-    ) {
+    renderParts(filteredDataExactMatches, filteredDataNonExactMatches) {
+      let _this = this;
+      let catalog = $("#catalog"); // Контейнер всех продуктов
+      let catalog__wrapper = catalog.find(".catalog__wrapper");
+      let catalog_auto_title = $("#catalog_auto_title");
+
+      catalog_auto_title.fadeIn().css("display", "flex");
+      // if (catalog_auto_title) {
+      //   catalog_auto_title.fadeIn().css("display", "flex");
+      // }
+      let catalogNodata = $(".catalog_nodata")[0];
+      if (catalogNodata) {
+        catalogNodata.style.display = "none";
+      }
+      catalog[0].style.display = "block";
+      console.log(
+        "renderParts filteredDataExactMatches",
+        filteredDataExactMatches
+      );
+       // Создаем два контейнера
+      let exactMatchesContainer = document.createElement("div");
+      exactMatchesContainer.classList.add("exact-matches-container");
+      let nonExactMatchesContainer = document.createElement("div");
+      nonExactMatchesContainer.classList.add("non-exact-matches-container");
+      if (filteredDataExactMatches) {
+        filteredDataExactMatches.forEach((obj) => {
+          console.log("Exact renderParts obj", obj);
+          if (obj) {
+            // const dynamicValue = this.getDynamicValue(obj);
+            // const dynamicKey = this.getDynamicKey(obj);
+            this.renderPartContainer(obj, exactMatchesContainer);
+          }
+        });
+      }
+      if (filteredDataNonExactMatches) {
+        filteredDataNonExactMatches.forEach((obj) => {
+          console.log("renderParts NonExact obj", obj);
+          if (obj) {
+            // const dynamicValue = this.getDynamicValue(obj);
+            // const dynamicKey = this.getDynamicKey(obj);
+            this.renderPartContainerAddProducts(obj, nonExactMatchesContainer);
+          }
+        });
+      }
+      console.log("exactMatchesContainer", exactMatchesContainer);
+      console.log("nonExactMatchesContainer", nonExactMatchesContainer);
+      catalog__wrapper.append(exactMatchesContainer);
+      catalog__wrapper.append(nonExactMatchesContainer);
+    }
+
+    // async renderParts(filteredDataExactMatches, filteredDataNonExactMatches) {
+    //   let _this = this;
+    //   let catalog = $("#catalog");
+    //   let catalog__wrapper = catalog.find(".catalog__wrapper");
+    //   let catalog_auto_title = $("#catalog_auto_title");
+
+    //   catalog_auto_title.fadeIn().css("display", "flex");
+    //   let catalogNodata = $(".catalog_nodata")[0];
+    //   if (catalogNodata) {
+    //     catalogNodata.style.display = "none";
+    //   }
+    //   catalog[0].style.display = "block";
+
+    //   // Создаем два контейнера
+    //   let exactMatchesContainer = document.createElement("div");
+    //   exactMatchesContainer.classList.add("exact-matches-container");
+    //   let nonExactMatchesContainer = document.createElement("div");
+    //   nonExactMatchesContainer.classList.add("non-exact-matches-container");
+
+    //   // Обработка exactMatches
+    //   if (filteredDataExactMatches) {
+    //     console.log("filteredDataExactMatches", filteredDataExactMatches);
+    //     for (const obj of filteredDataExactMatches) {
+    //       if (obj) {
+    //         console.log("renderParts obj", obj);
+    //         await _this.renderPartContainer(obj, exactMatchesContainer);
+    //       }
+    //     }
+    //   }
+
+    //   // Добавляем контейнер с точными совпадениями в catalog__wrapper
+    //   catalog__wrapper.append(exactMatchesContainer);
+
+    //   // Обработка nonExactMatches
+    //   if (filteredDataNonExactMatches) {
+    //     for (const obj of filteredDataNonExactMatches) {
+    //       if (obj) {
+    //         await _this.renderPartContainerAddProducts(
+    //           obj,
+    //           nonExactMatchesContainer
+    //         );
+    //       }
+    //     }
+    //   }
+
+    //   // Добавляем контейнер с неполными совпадениями в catalog__wrapper
+    //   catalog__wrapper.append(nonExactMatchesContainer);
+    // }
+    renderPartContainer(productObject, exactMatchesContainer) {
+      const partContainer = this.createPartContainer(productObject);
+      // nonExactMatchesContainer.append(partContainer);
+      exactMatchesContainer.append(partContainer);
+      // catalog__wrapper.append(partContainer);
+      return partContainer;
+    }
+
+    renderPartContainerAddProducts(productObject, nonExactMatchesContainer) {
+      const partContainer = this.createPartContainerAddProducts(productObject);
+      nonExactMatchesContainer.append(partContainer);
+      return partContainer;
+    }
+
+    createPartContainer(dataAllCategory) {
+      const dynamicValue = this.getDynamicValue(dataAllCategory);
+      const dynamicKey = this.getDynamicKey(dataAllCategory);
+      console.log("createPartContainer dynamicValue", dataAllCategory);
+      const sorteddataForFender = this.sortByqualifierProduct(dynamicValue);
+      let partContainer = document.createElement("div");
+      partContainer.classList.add("container-catalog");
+
+      let partHeaderContainer = this.createPartHeaderContainer(dynamicKey);
+      partContainer.append(partHeaderContainer);
+      console.log(
+        "createPartContainer sorteddataForFender",
+        sorteddataForFender
+      );
+      let partContainerBasic =
+        this.createPartContainerBasic(sorteddataForFender);
+      partContainer.append(partContainerBasic);
+
+      return partContainer;
+    }
+
+    createPartContainerAddProducts(dataAllCategory) {
+      const dynamicValue = this.getDynamicValue(dataAllCategory);
+      const dynamicKey = this.getDynamicKey(dataAllCategory);
+
+      const h2 = document.createElement("h2");
+      h2.textContent = "Похожие продукты";
+
+      const sorteddataForFender = this.sortByqualifierProduct(dynamicValue);
+      let partContainer = document.createElement("div");
+      partContainer.classList.add("container-catalog");
+
+      let partHeaderContainer = this.createPartHeaderContainer(dynamicKey);
+      partContainer.append(partHeaderContainer);
+
+      let partContainerBasic =
+        this.createPartContainerBasic(sorteddataForFender);
+      partContainer.append(h2);
+      partContainer.append(partContainerBasic);
+
+      return partContainer;
+    }
+
+    createPartHeaderContainer(productCategory) {
+      let partHeaderContainer = document.createElement("div");
+      partHeaderContainer.classList.add("catalog__header");
+      partHeaderContainer.classList.add("header-catalog");
+
+      let partHeaderSpan = this.createPartHeaderSpan(productCategory);
+      partHeaderContainer.append(partHeaderSpan);
+
+      let partHeaderTitle = this.createPartHeaderTitle(productCategory);
+      partHeaderContainer.append(partHeaderTitle);
+
+      return partHeaderContainer;
+    }
+
+
+    createPartHeaderSpan(productCategory) {
+      let partHeaderSpan = document.createElement("span");
+      partHeaderSpan.classList.add("header-catalog__icon");
+      // variable for getting category icon
+      const objValueCategoryGroup = [
+        "Brake Shoes",
+        "Brake Kits",
+        "Brake Pads",
+        "Brake Rotors",
+        "Brake Hardware",
+        "Wheel Hubs",
+      ];
+      let numberIcon = objValueCategoryGroup.indexOf(productCategory);
+      let numberOnIconCategory =
+        "_icon-catalog" + (numberIcon > 0 ? numberIcon : 3);
+      partHeaderSpan.classList.add(numberOnIconCategory);
+      return partHeaderSpan;
+    }
+
+    createPartHeaderTitle(productCategory) {
+      let partHeaderTitle = document.createElement("h2");
+      partHeaderTitle.classList.add("header-catalog__heading");
+      partHeaderTitle.textContent = productCategory;
+      return partHeaderTitle;
+    }
+
+    createPartContainerBasic(dataForFender) {
+      let partContainerBasic = document.createElement("div");
+      partContainerBasic.classList.add("container-catalog");
+      console.log("createPartContainerBasic dataForFender", dataForFender);
+      let categoryContainer = this.createCategoryContainer(dataForFender);
+      partContainerBasic.append(categoryContainer);
+
+      return partContainerBasic;
+    }
+
+    createCategoryContainer(dataForFender) {
+      console.log("createCategoryContainer dataForFender", dataForFender);
+      const dynamicValue = this.getDynamicValue(dataForFender);
+      const dynamicKey = this.getDynamicKey(dataForFender);
+      // const productCategory = "productCategory";
+      const productCategory = dynamicValue[0].product_group;
+      const productsSide = dynamicValue[0].position;
+      let categoryContainer = document.createElement("div");
+      categoryContainer.classList.add("category-container");
+
+      let optionsContainer = this.createOptionsContainer(
+        dynamicKey,
+        productCategory,
+        productsSide
+      );
+      categoryContainer.append(optionsContainer);
+
+      let productsContainer = document.createElement("div");
+      productsContainer.classList.add("products-container");
+      categoryContainer.append(productsContainer);
+      console.log("ynamicValue внутри createCategoryContainer ", dynamicValue);
+      // console.log(
+      //   "dataForFender внутри createCategoryContainer ",
+      //   dynamicValue
+      // );
+      dynamicValue.forEach((part) => {
+        console.log("part внутри createCategoryContainer ", part);
+        this.createProduct(part, productsContainer);
+      });
+
+      return categoryContainer;
+    }
+
+    createProduct(part, productsContainer) {
+      let _this = this;
+      // Создаем элемент для части
+      console.log("part внутри createProduct ", part);
+      let partElement = document.createElement("div");
+      partElement.classList.add("item-catalog");
+      partElement.setAttribute("data-part_id", part.part_id);
+
+      let part_icon = document.createElement("div");
+      part_icon.classList.add("item-catalog__header-icons");
+      part_icon.innerHTML =
+        '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card1.svg" alt="" /></a>' +
+        '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card2.svg" alt="" /></a>' +
+        '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card3.svg" alt="" /></a>';
+
+      let part_heading = document.createElement("div");
+      part_heading.classList.add("item-catalog__header-heading");
+      part_heading.textContent = part.part_number;
+
+      let part_header = document.createElement("div");
+      part_header.classList.add("item-catalog__header");
+      part_header.append(part_icon);
+      part_header.append(part_heading);
+
+      let part_img = document.createElement("div");
+      part_img.classList.add("item-catalog__image");
+
+      async function getImage() {
+        let imgStringProduct = await _this.getImagesForProduct(part.part_id);
+        if (
+          imgStringProduct &&
+          imgStringProduct[0] &&
+          imgStringProduct[0].images &&
+          imgStringProduct[0].images[0]
+        ) {
+          part_img.innerHTML = `<img src="${imgStringProduct[0].images[0]}" alt="Sxema" />`;
+        } else {
+          part_img.innerHTML =
+            '<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />';
+        }
+      }
+      getImage();
+
+      let part_footer = document.createElement("div");
+      part_footer.classList.add("item-catalog__footer");
+      part_footer.innerHTML =
+        '<a href="/product?part_id=' +
+        part.part_id +
+        "&car=" +
+        `${_this.$make.val()}_${_this.$model.val()}_${_this.$year.val()}_${_this.$engine.val()}_${_this.$submodel.val()}` +
+        "&region_id=" +
+        `${_this.$region.val()}` +
+        '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
+
+      partElement.append(part_header);
+      partElement.append(part_img);
+      partElement.append(part_footer);
+
+      // productsContainer.append(partElement);
+
+      productsContainer.append(partElement);
+    }
+
+    getDynamicValue(obj) {
+      // console.log("getDynamicValue obj", obj);
+      const dynamicKey = Object.keys(obj).find((key) => key !== "fitment_type");
+      const dynamicValue = obj[dynamicKey];
+      // return { categoryName: dynamicKey, data: dynamicValue };
+      return dynamicValue;
+    }
+
+    getDynamicKey(obj) {
+      // console.log("getDynamicValue obj", obj);
+      const dynamicKey = Object.keys(obj).find((key) => key !== "fitment_type");
+      // const dynamicValue = obj[dynamicKey];
+      return dynamicKey;
+    }
+
+    renderNoData(catalog) {
+      let _this = this;
+      let catalog_auto_title = $("#catalog_auto_title");
+      let loadCatalogBlock = document.querySelector("#load_catalog");
+
+      console.log("No data found");
+
+      // Очистка каталога
+      $("#catalog_row").html("");
+
+      // Установка сообщения
+      loadCatalogBlock.innerHTML =
+        '<div class="catalog_nodata">No data available</div>';
+
+      // Показ блока с данными
+      $(loadCatalogBlock).fadeIn().css("display", "flex");
+
+      console.log("load_catalog", loadCatalogBlock);
+      $("#load_catalog").html(
+        '<div class="catalog_nodata">No data available</div>'
+      );
+      // Скрытие заголовка, если существует
+      if (catalog_auto_title.length) {
+        catalog_auto_title.fadeOut(); // Изменено на fadeOut
+      }
+
+      // Очистка каталога
+      $("#catalog").html("");
+    }
+    // renderNoData(catalog) {
+    //   // renderNoData(catalog, catalog_auto_title) {
+    //   let _this = this;
+    //   // let catalog = $("#catalog");
+    //   let catalog__wrapper = catalog.find(".catalog__wrapper");
+    //   let catalog_auto_title = $("#catalog_auto_title");
+    //   let load_catalog = $("#load_catalog");
+    //   console.log("No data found");
+    //   let loadCatalogBlock = document.querySelector("#load_catalog");
+    //   $("#catalog_row").html("");
+    //   // $("#load_catalog").html("");
+    //   // $("#load_catalog").html(
+    //   //   '<div class="catalog_nodata">No data available</div>'
+    //   // );
+    //   loadCatalogBlock.innerHTML =
+    //     '<div class="catalog_nodata">No data available</div>';
+    //   // loadCatalogBlock.style.display = "flex";
+    //   $("#load_catalog").fadeIn().css("display", "flex");
+    //   // load_catalog.css("display", "flex");
+    //   // load_catalog[0].style.display = "none";
+
+    //   console.log("load_catalog", load_catalog);
+    //   if (catalog_auto_title) {
+    //     catalog_auto_title.fadeIn().css("display", "none");
+    //   }
+    //   // catalog[0].style.display = "none";
+    //   $("#catalog").html("");
+    // }
+
+    createOptionsContainer(nameCategory, productCategory, productCategorySide) {
       let _this = this;
       // Создаем элемент для части
       let partOptions = document.createElement("div");
       partOptions.classList.add("options-qualifier");
       partOptions.setAttribute("data-options", productCategory);
 
-      // Проверяем, содержит ли строка 'w/'
-      if (nameCategory.includes("w/")) {
-        // Удаляем 'w/' и возможный пробел после него
-        nameCategory = nameCategory.replace(/w\/\s*/, "");
+      if (!nameCategory.includes("Dont have qualifier")) {
+        // Проверяем, содержит ли строка 'w/'
+        if (nameCategory.includes("w/")) {
+          // Удаляем 'w/' и возможный пробел после него
+          nameCategory = nameCategory.replace(/w\/\s*/, "");
+        }
+        nameCategory = nameCategory.replace(
+          /^(Front\s*\|\s*|Rear\s*\|\s*)/,
+          ""
+        );
+
+        let partOptionsHeading = document.createElement("h2");
+        partOptionsHeading.classList.add("item-catalog__header-heading");
+        partOptionsHeading.classList.add("item-options-heading");
+        partOptionsHeading.textContent = nameCategory;
+
+        partOptions.append(partOptionsHeading);
       }
-      nameCategory = nameCategory.replace(/^(Front\s*\|\s*|Rear\s*\|\s*)/, "");
-
-      let partOptionsHeading = document.createElement("h2");
-      partOptionsHeading.classList.add("item-catalog__header-heading");
-      partOptionsHeading.classList.add("item-options-heading");
-      partOptionsHeading.textContent = nameCategory;
-
-      partOptions.append(partOptionsHeading);
-
       let partOptionsSide = document.createElement("div");
       partOptionsSide.classList.add("item-catalog__image");
 
@@ -2335,21 +2644,21 @@
         "после группировки и сортировки objQualifier",
         sortedObjQualifier
       );
-      // Проверка на пустой объект
-      if (Object.keys(sortedObjQualifier).length === 0) {
-        let load_catalog = $("#load_catalog");
-        // return null; // Возврат null, если объект пустой
-        load_catalog.html(
-          '<div class="catalog_nodata">No data available</div>'
-        );
+      // // Проверка на пустой объект
+      // if (Object.keys(sortedObjQualifier).length === 0) {
+      //   let load_catalog = $("#load_catalog");
+      //   // return null; // Возврат null, если объект пустой
+      //   load_catalog.html(
+      //     '<div class="catalog_nodata">No data available</div>'
+      //   );
 
-        let catalogAutoTitle = $("#catalog_auto_title")[0];
-        if (catalogAutoTitle) {
-          catalogAutoTitle.style.display = "none";
-        }
-        console.log("catalog", catalog);
-        catalog[0].style.display = "none";
-      }
+      //   let catalogAutoTitle = $("#catalog_auto_title")[0];
+      //   if (catalogAutoTitle) {
+      //     catalogAutoTitle.style.display = "none";
+      //   }
+      //   console.log("catalog", catalog);
+      //   catalog[0].style.display = "none";
+      // }
       return sortedObjQualifier; // Возврат собранных данных
     }
 
@@ -2366,7 +2675,7 @@
       }
 
       if (submodel != "") {
-        _this.partsSearch(year, make, model, submodel);
+        _this.partsSearch(year, make, model, engine, submodel);
       }
     }
 
@@ -2394,7 +2703,7 @@
         _this.partsSearch(year, make, model, engine, submodel);
       }
       if (engine != "") {
-        _this.partsSearch(year, make, model, engine);
+        _this.partsSearch(year, make, model, engine, submodel);
       }
     }
 
@@ -2427,11 +2736,13 @@
     needToSortProduct(data) {
       let _this = this;
 
+      // Получаем текущие данные
       let dataAll = _this.$currentData ? _this.$currentData : null;
-      // let dataAll = _this.$currentData
-      // ? _this.$currentData.part_applications
-      // : null;
-      console.log("dataAll", dataAll);
+
+      if (!dataAll) {
+        return null; // Возвращаем null, если данных нет
+      }
+
       const objValueProductLines = {
         "DAILY DRIVER": "OE Replacement",
         UPGRADE: "up",
@@ -2444,172 +2755,79 @@
         right: "Rear",
         all: "Both",
       };
+
       const objFilter = this.filterProductsAllGroups();
 
-      // Получаем активный элемент из группы продуктовых линий
       const activeProductLine = objFilter.productLines;
       const activeCategory = objFilter.categoryGroup;
       const activeSide = objFilter.sideGroup;
       const activeLinesPads = objFilter.linesGroup;
 
-      // if (dataAll) {
       const filterValue = objValueProductLines[activeProductLine];
 
-      let filteredData = null;
-      if (dataAll) {
-        if (!activeProductLine) {
-          filteredData = dataAll;
-        } else if (activeProductLine) {
-          filteredData = dataAll.filter(
+      // Функция для фильтрации
+      const filterData = (dataArray) => {
+        let filteredData = dataArray;
+
+        // Фильтрация по product line
+        if (activeProductLine) {
+          filteredData = filteredData.filter(
             (item) => item.fitment_type === filterValue
           );
         }
-        let resultParts = null;
 
+        // Фильтрация по activeCategory
         if (activeCategory) {
-          // Создаем новый массив для результатов
-          resultParts = filteredData
+          filteredData = filteredData
             .map((item) => {
-              // Проверяем, есть ли активная категория в текущем объекте
               if (item[activeCategory]) {
                 return {
-                  fitment_type: item.fitment_type, // Сохраняем fitment_type
-                  [activeCategory]: item[activeCategory], // Сохраняем найденные части
+                  fitment_type: item.fitment_type,
+                  [activeCategory]: item[activeCategory],
                 };
               }
               return null; // Возвращаем null, если категория не найдена
             })
             .filter((obj) => obj !== null); // Убираем null значения
-        } else {
-          resultParts = filteredData; // Если activeCategory нет, возвращаем все данные
         }
 
-        // Фильтруем данные
-        let dataOnCategoryandSide = resultParts;
-
-        const positionValue = objValueSideGroup[activeSide];
-
+        // Фильтрация по activeSide
         if (activeSide != null) {
-          // Получаем значение позиции для фильтрации
-          if (dataOnCategoryandSide.length === 1) {
-            let namefitmentType = dataOnCategoryandSide[0].fitment_type;
-            const dynamicKey = Object.keys(dataOnCategoryandSide[0]).find(
-              (key) => key !== "fitment_type"
-            );
-            const dynamicValue = dataOnCategoryandSide[0][dynamicKey]; // Значение под динамическим ключом
-            const arr = dynamicValue.filter(
-              (item) => item.position === positionValue
-            );
-            dataOnCategoryandSide = [
-              {
-                fitment_type: namefitmentType,
-                [dynamicKey]: arr,
-              },
-            ];
-          } else if (dataOnCategoryandSide.length > 1) {
-            const filteredData = dataOnCategoryandSide
-              .map((obj) => {
-                // Найти динамический ключ, который не равен "fitment_type"
-                const dynamicKey = Object.keys(obj).find(
-                  (key) => key !== "fitment_type"
-                );
-                const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
+          const positionValue = objValueSideGroup[activeSide];
+          filteredData = filteredData
+            .map((obj) => {
+              const dynamicKey = Object.keys(obj).find(
+                (key) => key !== "fitment_type"
+              );
+              const dynamicValue = obj[dynamicKey];
+              const filteredItems = dynamicValue.filter(
+                (item) => item.position === positionValue
+              );
 
-                // Фильтруем массив внутри объекта
-                const filteredItems = dynamicValue.filter(
-                  (item) => item.position === positionValue
-                );
-
-                // Возвращаем новый объект с отфильтрованными элементами, если есть совпадения
-                if (filteredItems.length > 0) {
-                  return {
-                    ...obj, // Остальные свойства объекта
-                    [dynamicKey]: filteredItems, // Обновляем только массив под динамическим ключом
-                  };
-                }
-                return null; // Вернуть null, если нет совпадений
-              })
-              .filter((obj) => obj !== null); // Удаляем null значения
-
-            dataOnCategoryandSide = filteredData;
-          }
-          // return dataOnCategoryandSide; // Возвращаем отфильтрованные данные
+              if (filteredItems.length > 0) {
+                return {
+                  ...obj,
+                  [dynamicKey]: filteredItems,
+                };
+              }
+              return null; // Вернуть null, если нет совпадений
+            })
+            .filter((obj) => obj !== null); // Удаляем null значения
         }
 
-        if (activeLinesPads) {
-          if (activeCategory === "Brake Pads") {
-            console.log("dataOnCategoryandSide", dataOnCategoryandSide);
-            console.log("filteredData", filteredData);
-            if (activeSide != null) {
-              dataOnCategoryandSide = filteredData;
-            } else {
-              dataOnCategoryandSide = resultParts;
-            }
+        return filteredData;
+      };
 
-            // const buttonBrakePads = document.querySelector(
-            //   '[data-tippy-content="Brake Pads"]'
-            // );
-            // buttonBrakePads.click();
+      // Фильтрация exactMatches
+      let filteredExactMatches = filterData(dataAll.exactMatches);
+      // Фильтрация nonExactMatches
+      let filteredNonExactMatches = filterData(dataAll.nonExactMatches);
 
-            let brakePadsObject = [];
-
-            // Проходим по каждому объекту в массиве dataOnCategoryandSide
-            dataOnCategoryandSide.forEach((obj) => {
-              if (obj["Brake Pads"]) {
-                brakePadsObject.push(obj);
-              }
-            });
-
-            // Если нет объектов с "Brake Pads", обнуляем dataOnCategoryandSide
-            if (brakePadsObject.length === 0) {
-              dataOnCategoryandSide = null;
-            } else {
-              dataOnCategoryandSide = brakePadsObject;
-            }
-
-            const filterOnBrakePads = {
-              Black: /(?:d|mkd)/i, // /d | mkd/i   "d | mkd",
-              Ultralife: /Cmx/i, // "Cmx",
-              Speed: /hps/i, // "hps",
-              Elite: /elt/i, // "elt",
-            };
-
-            // Объект для хранения отфильтрованных данных
-            const filteredDataLines = [];
-
-            // Проверка соответствия регулярному выражению
-            brakePadsObject.forEach((obj) => {
-              const filteredBrakePads = obj["Brake Pads"].filter((item) => {
-                // Проверяем, соответствует ли part_number регулярному выражению
-                return filterOnBrakePads[activeLinesPads].test(
-                  item.part_number
-                );
-              });
-
-              // Если есть отфильтрованные элементы, добавляем объект в результат
-              if (filteredBrakePads.length > 0) {
-                filteredDataLines.push({
-                  fitment_type: obj.fitment_type,
-                  "Brake Pads": filteredBrakePads,
-                });
-              }
-            });
-
-            // Если нет совпадений, можно вернуть null или пустой массив
-            if (filteredDataLines.length === 0) {
-              return null; // или return [];
-            }
-
-            // Выводим отфильтрованные данные
-            return filteredDataLines;
-          } else {
-            return null;
-          }
-        }
-
-        return dataOnCategoryandSide; // Возвращаем отфильтрованные данные
-      }
-      return null; // Возвращаем null, если ничего не найдено
+      // Формирование объекта результата
+      return {
+        exactMatches: filteredExactMatches,
+        nonExactMatches: filteredNonExactMatches,
+      };
     }
 
     setupGroupProductLines() {
@@ -2726,12 +2944,16 @@
         event.preventDefault();
         const linkCategory = event.target.closest(".item-category__link");
 
-        if (activeLink === linkCategory) {
-          linkCategory.classList.remove("active");
-        } else if (linkCategory) {
-          categoryLinksSide.forEach((item) => item.classList.remove("active"));
-          linkCategory.classList.add("active");
-          activeLink = linkCategory;
+        if (linkCategory) {
+          if (activeLink === linkCategory) {
+            linkCategory.classList.remove("active");
+          } else {
+            categoryLinksSide.forEach((item) =>
+              item.classList.remove("active")
+            );
+            linkCategory.classList.add("active");
+            activeLink = linkCategory;
+          }
         }
       });
 
@@ -2767,12 +2989,16 @@
         event.preventDefault();
 
         const linkCategory = event.target.closest(".item-category__link");
-        if (activeBtn === linkCategory) {
-          linkCategory.classList.remove("active");
-        } else if (linkCategory) {
-          categoryLinksLines.forEach((item) => item.classList.remove("active"));
-          linkCategory.classList.add("active");
-          activeBtn = linkCategory;
+        if (linkCategory) {
+          if (activeBtn === linkCategory) {
+            linkCategory.classList.remove("active");
+          } else if (linkCategory) {
+            categoryLinksLines.forEach((item) =>
+              item.classList.remove("active")
+            );
+            linkCategory.classList.add("active");
+            activeBtn = linkCategory;
+          }
         }
       });
 
