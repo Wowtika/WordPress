@@ -1475,9 +1475,47 @@
     $make = null;
     $model = null;
     $currentData = null; // Переменная для хранения актуальных данных
+    groupedData;
 
     constructor(block, Select) {
       super(block, Select);
+
+      //Получить линейки
+      const url = '/wp-json/wp/v2/product-lines?per_page=20';
+      let groupedData;
+
+      fetch(url)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+          }
+          return response.json();
+        })
+        .then(data => {
+          groupedData = data.reduce((acc, item) => {
+            const [group, line] = item.title.rendered.split(' &#8211; ');
+            if (!acc[group]) {
+              acc[group] = [];
+            }
+            const labeling = item.acf.labeling ? item.acf.labeling.map(label => label.label) : [];
+            const imgId = item.acf.img;
+            acc[group].push({ line, labeling, imgId });
+            return acc;
+          }, {});
+          return groupedData;
+        })
+        .then(data => {
+          const order = ["Black", "Ultralife®", "Elite", "SPEED™", "Circuit Spec"];
+      
+          // Sort each group's array
+          Object.keys(data).forEach(group => {
+            data[group].sort((a, b) => order.indexOf(a.line) - order.indexOf(b.line));
+          });
+          this.groupedData = data;
+        })
+        .catch(error => {
+          console.error('There has been a problem with your fetch operation:', error);
+        });
 
       let _this = this;
       if (this.$block.length) {
@@ -1970,6 +2008,26 @@
                 "Данные поиска для группы продуктовых линий:",
                 res.data
               );
+              
+              // Находим все массивы Brake Pads и объединяем их
+              let combinedBrakePads = [];
+              let firstBrakePadsIndex = -1;
+
+              res.data.part_applications.forEach((app, index) => {
+                  if (app["Brake Pads"]) {
+                      combinedBrakePads = combinedBrakePads.concat(app["Brake Pads"]);
+                      if (firstBrakePadsIndex === -1) {
+                          firstBrakePadsIndex = index;
+                      }
+                      delete app["Brake Pads"];
+                  }
+              });
+
+              // Вставляем объединенный массив Brake Pads в первый найденный объект
+              if (firstBrakePadsIndex !== -1) {
+                  res.data.part_applications[firstBrakePadsIndex]["Brake Pads"] = combinedBrakePads;
+              }
+
               _this.$currentData = _this.exactMatchFilterData(
                 res.data.part_applications
               );
@@ -2100,6 +2158,48 @@
 
     create_parts(data) {
       // console.log("create_parts", data);
+      function sortGroupsByPartNumber(groups, orderData) {
+        // Функция для извлечения буквенной части из part_number
+        function getLetterPart(partNumber) {
+            return partNumber.match(/[A-Za-z]+/)[0];
+        }
+
+        //Получение списка сортировок для группы
+        function getLabeling (data, name) {
+          if (data.hasOwnProperty(name)) {
+              let combinedLabeling = [];
+              data[name].forEach(item => {
+                  combinedLabeling = combinedLabeling.concat(item.labeling || []);
+              });
+              return combinedLabeling;
+          } else {
+              return [];
+          }
+        }
+    
+        // Функция для получения индекса из массива порядков
+        function getOrderIndex(group, letterPart) {
+            return getLabeling(orderData, group).indexOf(letterPart);
+        }
+    
+        // Сортировка элементов внутри каждой группы
+        groups.forEach((group) => {
+          for (let key of Object.keys(group)) {
+            if (Array.isArray(group[key])) {
+              group[key].sort((a, b) => {
+                const aLetterPart = getLetterPart(a.part_number);
+                const bLetterPart = getLetterPart(b.part_number);
+                return getOrderIndex(key, aLetterPart) - getOrderIndex(key, bLetterPart);
+              });
+            }
+          }
+        })
+
+        return groups;
+      }  
+
+      data = sortGroupsByPartNumber(data, this.groupedData);
+
       let _this = this;
       let catalog = $("#catalog");
       let catalog__wrapper = catalog.find(".catalog__wrapper");
@@ -2425,17 +2525,24 @@
       part_img.classList.add("item-catalog__image");
 
       async function getImage() {
-        let imgStringProduct = await _this.getImagesForProduct(part.part_id);
-        if (
-          imgStringProduct &&
-          imgStringProduct[0] &&
-          imgStringProduct[0].images &&
-          imgStringProduct[0].images[0]
-        ) {
-          part_img.innerHTML = `<img src="${imgStringProduct[0].images[0]}" alt="Sxema" />`;
-        } else {
+        let imgPath = "";
+        if (_this.groupedData[part.product_group]) {
+          const partGroupData = _this.groupedData[part.product_group];
+          const letterPart = part.part_number.match(/[A-Za-z]+/)[0];
+          let result = Object.values(partGroupData).find(item => item.labeling.includes(letterPart));
+          if (result && result.imgId) {
+            console.log(result.imgId);
+            const response = await fetch(`/wp-json/wp/v2/media/${result.imgId}`)
+            const data = await response.json();
+            imgPath = data.source_url;
+            console.log(imgPath);
+            part_img.innerHTML =
+            `<img src="${imgPath}" alt="Sxema" />`;
+          }
+        }
+        if (!imgPath) {
           part_img.innerHTML =
-            '<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />';
+            `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />`;
         }
       }
       getImage();
