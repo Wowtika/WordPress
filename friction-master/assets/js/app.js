@@ -1498,7 +1498,8 @@
               acc[group] = [];
             }
             const labeling = item.acf.labeling ? item.acf.labeling.map(label => label.label) : [];
-            acc[group].push({ line, labeling });
+            const imgId = item.acf.img;
+            acc[group].push({ line, labeling, imgId });
             return acc;
           }, {});
           return groupedData;
@@ -2524,17 +2525,24 @@
       part_img.classList.add("item-catalog__image");
 
       async function getImage() {
-        let imgStringProduct = await _this.getImagesForProduct(part.part_id);
-        if (
-          imgStringProduct &&
-          imgStringProduct[0] &&
-          imgStringProduct[0].images &&
-          imgStringProduct[0].images[0]
-        ) {
-          part_img.innerHTML = `<img src="${imgStringProduct[0].images[0]}" alt="Sxema" />`;
-        } else {
+        let imgPath = "";
+        if (_this.groupedData[part.product_group]) {
+          const partGroupData = _this.groupedData[part.product_group];
+          const letterPart = part.part_number.match(/[A-Za-z]+/)[0];
+          let result = Object.values(partGroupData).find(item => item.labeling.includes(letterPart));
+          if (result && result.imgId) {
+            console.log(result.imgId);
+            const response = await fetch(`/wp-json/wp/v2/media/${result.imgId}`)
+            const data = await response.json();
+            imgPath = data.source_url;
+            console.log(imgPath);
+            part_img.innerHTML =
+            `<img src="${imgPath}" alt="Sxema" />`;
+          }
+        }
+        if (!imgPath) {
           part_img.innerHTML =
-            '<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />';
+            `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />`;
         }
       }
       getImage();
