@@ -1475,9 +1475,46 @@
     $make = null;
     $model = null;
     $currentData = null; // Переменная для хранения актуальных данных
+    groupedData;
 
     constructor(block, Select) {
       super(block, Select);
+
+      //Получить линейки
+      const url = '/wp-json/wp/v2/product-lines?per_page=20';
+      let groupedData;
+
+      fetch(url)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+          }
+          return response.json();
+        })
+        .then(data => {
+          groupedData = data.reduce((acc, item) => {
+            const [group, line] = item.title.rendered.split(' &#8211; ');
+            if (!acc[group]) {
+              acc[group] = [];
+            }
+            const labeling = item.acf.labeling ? item.acf.labeling.map(label => label.label) : [];
+            acc[group].push({ line, labeling });
+            return acc;
+          }, {});
+          return groupedData;
+        })
+        .then(data => {
+          const order = ["Black", "Ultralife®", "Elite", "SPEED™", "Circuit Spec"];
+      
+          // Sort each group's array
+          Object.keys(data).forEach(group => {
+            data[group].sort((a, b) => order.indexOf(a.line) - order.indexOf(b.line));
+          });
+          this.groupedData = data;
+        })
+        .catch(error => {
+          console.error('There has been a problem with your fetch operation:', error);
+        });
 
       let _this = this;
       if (this.$block.length) {
@@ -2120,6 +2157,48 @@
 
     create_parts(data) {
       // console.log("create_parts", data);
+      function sortGroupsByPartNumber(groups, orderData) {
+        // Функция для извлечения буквенной части из part_number
+        function getLetterPart(partNumber) {
+            return partNumber.match(/[A-Za-z]+/)[0];
+        }
+
+        //Получение списка сортировок для группы
+        function getLabeling (data, name) {
+          if (data.hasOwnProperty(name)) {
+              let combinedLabeling = [];
+              data[name].forEach(item => {
+                  combinedLabeling = combinedLabeling.concat(item.labeling || []);
+              });
+              return combinedLabeling;
+          } else {
+              return [];
+          }
+        }
+    
+        // Функция для получения индекса из массива порядков
+        function getOrderIndex(group, letterPart) {
+            return getLabeling(orderData, group).indexOf(letterPart);
+        }
+    
+        // Сортировка элементов внутри каждой группы
+        groups.forEach((group) => {
+          for (let key of Object.keys(group)) {
+            if (Array.isArray(group[key])) {
+              group[key].sort((a, b) => {
+                const aLetterPart = getLetterPart(a.part_number);
+                const bLetterPart = getLetterPart(b.part_number);
+                return getOrderIndex(key, aLetterPart) - getOrderIndex(key, bLetterPart);
+              });
+            }
+          }
+        })
+
+        return groups;
+      }  
+
+      data = sortGroupsByPartNumber(data, this.groupedData);
+
       let _this = this;
       let catalog = $("#catalog");
       let catalog__wrapper = catalog.find(".catalog__wrapper");
