@@ -1970,6 +1970,26 @@
                 "Данные поиска для группы продуктовых линий:",
                 res.data
               );
+              
+              // Находим все массивы Brake Pads и объединяем их
+              let combinedBrakePads = [];
+              let firstBrakePadsIndex = -1;
+
+              res.data.part_applications.forEach((app, index) => {
+                  if (app["Brake Pads"]) {
+                      combinedBrakePads = combinedBrakePads.concat(app["Brake Pads"]);
+                      if (firstBrakePadsIndex === -1) {
+                          firstBrakePadsIndex = index;
+                      }
+                      delete app["Brake Pads"];
+                  }
+              });
+
+              // Вставляем объединенный массив Brake Pads в первый найденный объект
+              if (firstBrakePadsIndex !== -1) {
+                  res.data.part_applications[firstBrakePadsIndex]["Brake Pads"] = combinedBrakePads;
+              }
+
               _this.$currentData = _this.exactMatchFilterData(
                 res.data.part_applications
               );
