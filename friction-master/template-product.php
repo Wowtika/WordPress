@@ -134,9 +134,10 @@ get_header() ?>
 
 	$url = ((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 
+	//выполнить поиск
 	$parsed_url = parse_url($url);
 	parse_str($parsed_url['query'], $query_params);
-	$car = explode(' ', $query_params['car']);
+	$car = explode('_', $query_params['car']);
 	$make = $car[0];
 	$model = $car[1];
 	$year = $car[2];
@@ -159,9 +160,11 @@ get_header() ?>
 	} else {
 		$data = json_decode($response, true);
 		$partApplications = $data['part_applications'];
+		//достаём товары текущей группы
 		$filtered = array_filter($partApplications, function($item) use ($group) {
 			return array_key_exists($group, $item);
 		});
+		//достаём похожие товары (перед футером)
 		$related = [];
 		foreach ($partApplications as $part) {
 			foreach ($part as $key => $value) {
@@ -170,15 +173,18 @@ get_header() ?>
 				}
 			}
 		}
+		//Преобразуем товары текущей группы в односложный массив
 		$allItems = [];
 		foreach ($filtered as $item) {
 			if (isset($item[$group])) {
 				$allItems = array_merge($allItems, $item[$group]);
 			}
 		}
+		//Найдены ли товары для других направлений
 		$isFrontLink = false;
 		$isRearLink = false;
 		$isAllLink = false;
+		//Установить ссылку на товар по id
 		function setLink($newId) {
 			$baseUrl = ((!empty($_SERVER['HTTPS'])) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 			$parsed_url = parse_url($baseUrl);
@@ -187,6 +193,7 @@ get_header() ?>
 			$new_query_string = http_build_query($query_params);
 			return $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $new_query_string;
 		}
+		//Ищем товары для других позиций (перед, зад, оба)
 		foreach ($allItems as $part) {
 			if (isset($part['exact_match'])) {
 				if ($number == $part['part_number']) {
@@ -206,6 +213,7 @@ get_header() ?>
 				}
 			}
 		}
+		//Вставляем ссылку на текущий товар
 		switch ($position) {
 			case 'Front':
 				$isFrontLink = true;
@@ -237,7 +245,29 @@ get_header() ?>
 					в зависимости от категории (Black, Ultralife, Speed, Elite) тут должна менятся картинка
 				*/
 			?>
-			<a href=<?php echo home_url('/catalog/') ?> class="item-category__link" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: #000000"><?php the_field('back_to_catalog') ?></a>
+			<?php
+				$carName = explode('_', $_GET['car']);
+				$make = $carName[0];
+				$model = $carName[1];
+				$year = $carName[2];
+				$engine = $carName[3];
+				$submodel = $carName[4];
+				if ($engine != '')
+					$engineWithParm = "&eg=" . $engine;
+				else
+					$engineWithParm = '';
+				if ($submodel != '')
+					$submodelWithParm = "&sm=" . $submodel;
+				else
+					$submodelWithParm = '';
+				$region = $_GET['region_id'];
+			?>
+			<a href="<?php echo home_url('/catalog/') . '?tp=1&yr=' . $year .
+															 '&mk=' . $make . 
+															 '&md=' . $model . 
+															 $submodelWithParm . 
+															 $engineWithParm . 
+															 '&rg=' . $region ?>" class="item-category__link" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: #000000"><?php the_field('back_to_catalog') ?></a>
 			<img class="card-header__image" src="<?=get_template_directory_uri();?>/assets/img/card/card-bg.svg" alt="">
 			<!-- <img class="card-header__image-mobile" src="<?=get_template_directory_uri();?>/assets/img/catalog/header-bg-mobile.svg" alt=""> -->
 		</div>
@@ -314,8 +344,8 @@ get_header() ?>
 							}
 						}
 						if ($link != "") {
-							echo '<a href="' . $link . '" class="card-category__link" style="background:' . $bgColor . '; color: white;' . $opacity . '">';
-								echo '<span>' . the_title() . '</span>';
+							echo '<a href="' . $link . '" class="card-category__link" style="color: black;' . $opacity . '">';
+								echo '<span>' . get_field('name_product_line') . '</span>';
 							echo '</a>';
 						}
 
@@ -392,7 +422,7 @@ get_header() ?>
 				<div class="card__content content-card">
 
 					<div class="content-card__header header-card">
-						<span class="header-card__icon _icon-arrow-down"></span>Fits <?php echo $_GET['car'] ?>
+						<span class="header-card__icon _icon-arrow-down"></span>Fits <?php echo $make . " " . $model . " " . $submodel . " " . $year . " " . $engine; ?>
 					</div>
 
 					<div class="content-card__body body-card">
