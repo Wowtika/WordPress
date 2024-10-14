@@ -2005,34 +2005,37 @@
       let catalog_auto_title = $("#catalog_auto_title");
       let withoutFilterData = _this.exactMatchFilterData(data);
       // console.log("withoutFilterData", withoutFilterData);
+      let filteredData = _this.needToSortProduct(withoutFilterData);
       let filteredDataExactMatches = null;
       let filteredDataNonExactMatches = null;
-      if (withoutFilterData) {
-        if (withoutFilterData.exactMatches) {
+      if (filteredData) {
+        if (filteredData.exactMatches) {
           // withoutFilterData
           console.log(
-            "withoutFilterData.exactMatches",
-            withoutFilterData.exactMatches
+            "filteredData.exactMatches",
+            filteredData.exactMatches
           );
-          filteredDataExactMatches = _this.needToSortProduct(
-            withoutFilterData.exactMatches
-          );
+          filteredDataExactMatches = filteredData.exactMatches
+          // filteredDataExactMatches = _this.needToSortProduct(
+          //   filteredData.exactMatches
+          // );
         }
-        if (withoutFilterData.nonExactMatches) {
+        if (filteredData.nonExactMatches) {
           console.log(
             "withoutFilterData.nonExactMatches",
-            withoutFilterData.nonExactMatches
+            filteredData.nonExactMatches
           );
-          filteredDataNonExactMatches = _this.needToSortProduct(
-            withoutFilterData.nonExactMatches
-          );
+          filteredDataNonExactMatches = filteredData.nonExactMatches
+          // filteredDataNonExactMatches = _this.needToSortProduct(
+          //   filteredData.nonExactMatches
+          // );
         }
       }
       console.log("filteredDataNonExactMatches", filteredDataNonExactMatches);
       // let filteredData = _this.needToSortProduct(withoutFilterData);
       // console.log("withoutFilterData", withoutFilterData.nonExactMatches);
       // let dataForFender = _this.sortByqualifierProduct(filteredData);
-      let ifhasSortedProducts = _this.hasSortedProducts(withoutFilterData);
+      let ifhasSortedProducts = _this.hasSortedProducts(filteredData);
       console.log("ifhasSortedProducts", ifhasSortedProducts);
 
       // _this.exactMatchFilterData(data) = {
@@ -2054,95 +2057,104 @@
       }
     }
 
-    // renderParts(filteredDataExactMatches, filteredDataNonExactMatches) {
-    //   let _this = this;
-    //   let catalog = $("#catalog"); // Контейнер всех продуктов
-    //   let catalog__wrapper = catalog.find(".catalog__wrapper");
-    //   let catalog_auto_title = $("#catalog_auto_title");
-
-    //   catalog_auto_title.fadeIn().css("display", "flex");
-    //   // if (catalog_auto_title) {
-    //   //   catalog_auto_title.fadeIn().css("display", "flex");
-    //   // }
-    //   let catalogNodata = $(".catalog_nodata")[0];
-    //   if (catalogNodata) {
-    //     catalogNodata.style.display = "none";
-    //   }
-    //   catalog[0].style.display = "block";
-    //   console.log(
-    //     "renderParts filteredDataExactMatches",
-    //     filteredDataExactMatches
-    //   );
-    //   if (filteredDataExactMatches) {
-    //     filteredDataExactMatches.forEach((obj) => {
-    //       console.log("renderParts obj", obj);
-    //       if (obj) {
-    //         // const dynamicValue = this.getDynamicValue(obj);
-    //         // const dynamicKey = this.getDynamicKey(obj);
-    //         this.renderPartContainer(obj, catalog__wrapper);
-    //       }
-    //     });
-    //   }
-    //   if (filteredDataNonExactMatches) {
-    //     filteredDataNonExactMatches.forEach((obj) => {
-    //       // console.log("renderParts obj", obj);
-    //       if (obj) {
-    //         // const dynamicValue = this.getDynamicValue(obj);
-    //         // const dynamicKey = this.getDynamicKey(obj);
-    //         this.renderPartContainerAddProducts(obj, catalog__wrapper);
-    //       }
-    //     });
-    //   }
-    // }
-
-    async renderParts(filteredDataExactMatches, filteredDataNonExactMatches) {
+    renderParts(filteredDataExactMatches, filteredDataNonExactMatches) {
       let _this = this;
-      let catalog = $("#catalog");
+      let catalog = $("#catalog"); // Контейнер всех продуктов
       let catalog__wrapper = catalog.find(".catalog__wrapper");
       let catalog_auto_title = $("#catalog_auto_title");
 
       catalog_auto_title.fadeIn().css("display", "flex");
+      // if (catalog_auto_title) {
+      //   catalog_auto_title.fadeIn().css("display", "flex");
+      // }
       let catalogNodata = $(".catalog_nodata")[0];
       if (catalogNodata) {
         catalogNodata.style.display = "none";
       }
       catalog[0].style.display = "block";
-
-      // Создаем два контейнера
+      console.log(
+        "renderParts filteredDataExactMatches",
+        filteredDataExactMatches
+      );
+       // Создаем два контейнера
       let exactMatchesContainer = document.createElement("div");
       exactMatchesContainer.classList.add("exact-matches-container");
       let nonExactMatchesContainer = document.createElement("div");
       nonExactMatchesContainer.classList.add("non-exact-matches-container");
-
-      // Обработка exactMatches
       if (filteredDataExactMatches) {
-        console.log("filteredDataExactMatches", filteredDataExactMatches);
-        for (const obj of filteredDataExactMatches) {
+        filteredDataExactMatches.forEach((obj) => {
+          console.log("Exact renderParts obj", obj);
           if (obj) {
-            console.log("renderParts obj", obj);
-            await _this.renderPartContainer(obj, exactMatchesContainer);
+            // const dynamicValue = this.getDynamicValue(obj);
+            // const dynamicKey = this.getDynamicKey(obj);
+            this.renderPartContainer(obj, exactMatchesContainer);
           }
-        }
+        });
       }
-
-      // Добавляем контейнер с точными совпадениями в catalog__wrapper
-      catalog__wrapper.append(exactMatchesContainer);
-
-      // Обработка nonExactMatches
       if (filteredDataNonExactMatches) {
-        for (const obj of filteredDataNonExactMatches) {
+        filteredDataNonExactMatches.forEach((obj) => {
+          console.log("renderParts NonExact obj", obj);
           if (obj) {
-            await _this.renderPartContainerAddProducts(
-              obj,
-              nonExactMatchesContainer
-            );
+            // const dynamicValue = this.getDynamicValue(obj);
+            // const dynamicKey = this.getDynamicKey(obj);
+            this.renderPartContainerAddProducts(obj, nonExactMatchesContainer);
           }
-        }
+        });
       }
-
-      // Добавляем контейнер с неполными совпадениями в catalog__wrapper
+      console.log("exactMatchesContainer", exactMatchesContainer);
+      console.log("nonExactMatchesContainer", nonExactMatchesContainer);
+      catalog__wrapper.append(exactMatchesContainer);
       catalog__wrapper.append(nonExactMatchesContainer);
     }
+
+    // async renderParts(filteredDataExactMatches, filteredDataNonExactMatches) {
+    //   let _this = this;
+    //   let catalog = $("#catalog");
+    //   let catalog__wrapper = catalog.find(".catalog__wrapper");
+    //   let catalog_auto_title = $("#catalog_auto_title");
+
+    //   catalog_auto_title.fadeIn().css("display", "flex");
+    //   let catalogNodata = $(".catalog_nodata")[0];
+    //   if (catalogNodata) {
+    //     catalogNodata.style.display = "none";
+    //   }
+    //   catalog[0].style.display = "block";
+
+    //   // Создаем два контейнера
+    //   let exactMatchesContainer = document.createElement("div");
+    //   exactMatchesContainer.classList.add("exact-matches-container");
+    //   let nonExactMatchesContainer = document.createElement("div");
+    //   nonExactMatchesContainer.classList.add("non-exact-matches-container");
+
+    //   // Обработка exactMatches
+    //   if (filteredDataExactMatches) {
+    //     console.log("filteredDataExactMatches", filteredDataExactMatches);
+    //     for (const obj of filteredDataExactMatches) {
+    //       if (obj) {
+    //         console.log("renderParts obj", obj);
+    //         await _this.renderPartContainer(obj, exactMatchesContainer);
+    //       }
+    //     }
+    //   }
+
+    //   // Добавляем контейнер с точными совпадениями в catalog__wrapper
+    //   catalog__wrapper.append(exactMatchesContainer);
+
+    //   // Обработка nonExactMatches
+    //   if (filteredDataNonExactMatches) {
+    //     for (const obj of filteredDataNonExactMatches) {
+    //       if (obj) {
+    //         await _this.renderPartContainerAddProducts(
+    //           obj,
+    //           nonExactMatchesContainer
+    //         );
+    //       }
+    //     }
+    //   }
+
+    //   // Добавляем контейнер с неполными совпадениями в catalog__wrapper
+    //   catalog__wrapper.append(nonExactMatchesContainer);
+    // }
     renderPartContainer(productObject, exactMatchesContainer) {
       const partContainer = this.createPartContainer(productObject);
       // nonExactMatchesContainer.append(partContainer);
@@ -2592,25 +2604,13 @@
     needToSortProduct(data) {
       let _this = this;
 
-      let dataAll = data;
-      // let dataAll = _this.$currentData ? _this.$currentData : null;
-      // if (dataAll) {
-      //   if (dataAll.exactMatches) {
-      //     dataAll = dataAll.exactMatches;
-      //  } else if (dataAll.nonExactMatches) {
-      //     dataAll = dataAll.nonExactMatches;
-      //  }
-      // }
-      // _this.exactMatchFilterData(data) = {
-      //   exactMatches: exactMatches,
-      //   nonExactMatches: nonExactMatches,
-      // };
-      // let dataAll = _this.$currentData ? _this.$currentData : null;
-      // if (_this.$currentData)
-      // let dataAll = _this.$currentData
-      // ? _this.$currentData.part_applications
-      // : null;
-      console.log("needToSortProduct data", data);
+      // Получаем текущие данные
+      let dataAll = _this.$currentData ? _this.$currentData : null;
+
+      if (!dataAll) {
+        return null; // Возвращаем null, если данных нет
+      }
+
       const objValueProductLines = {
         "DAILY DRIVER": "OE Replacement",
         UPGRADE: "up",
@@ -2623,172 +2623,79 @@
         right: "Rear",
         all: "Both",
       };
+
       const objFilter = this.filterProductsAllGroups();
 
-      // Получаем активный элемент из группы продуктовых линий
       const activeProductLine = objFilter.productLines;
       const activeCategory = objFilter.categoryGroup;
       const activeSide = objFilter.sideGroup;
       const activeLinesPads = objFilter.linesGroup;
 
-      // if (dataAll) {
       const filterValue = objValueProductLines[activeProductLine];
 
-      let filteredData = null;
-      if (data) {
-        if (!activeProductLine) {
-          filteredData = dataAll;
-        } else if (activeProductLine) {
-          filteredData = dataAll.filter(
+      // Функция для фильтрации
+      const filterData = (dataArray) => {
+        let filteredData = dataArray;
+
+        // Фильтрация по product line
+        if (activeProductLine) {
+          filteredData = filteredData.filter(
             (item) => item.fitment_type === filterValue
           );
         }
-        let resultParts = null;
 
+        // Фильтрация по activeCategory
         if (activeCategory) {
-          // Создаем новый массив для результатов
-          resultParts = filteredData
+          filteredData = filteredData
             .map((item) => {
-              // Проверяем, есть ли активная категория в текущем объекте
               if (item[activeCategory]) {
                 return {
-                  fitment_type: item.fitment_type, // Сохраняем fitment_type
-                  [activeCategory]: item[activeCategory], // Сохраняем найденные части
+                  fitment_type: item.fitment_type,
+                  [activeCategory]: item[activeCategory],
                 };
               }
               return null; // Возвращаем null, если категория не найдена
             })
             .filter((obj) => obj !== null); // Убираем null значения
-        } else {
-          resultParts = filteredData; // Если activeCategory нет, возвращаем все данные
         }
 
-        // Фильтруем данные
-        let dataOnCategoryandSide = resultParts;
-
-        const positionValue = objValueSideGroup[activeSide];
-
+        // Фильтрация по activeSide
         if (activeSide != null) {
-          // Получаем значение позиции для фильтрации
-          if (dataOnCategoryandSide.length === 1) {
-            let namefitmentType = dataOnCategoryandSide[0].fitment_type;
-            const dynamicKey = Object.keys(dataOnCategoryandSide[0]).find(
-              (key) => key !== "fitment_type"
-            );
-            const dynamicValue = dataOnCategoryandSide[0][dynamicKey]; // Значение под динамическим ключом
-            const arr = dynamicValue.filter(
-              (item) => item.position === positionValue
-            );
-            dataOnCategoryandSide = [
-              {
-                fitment_type: namefitmentType,
-                [dynamicKey]: arr,
-              },
-            ];
-          } else if (dataOnCategoryandSide.length > 1) {
-            const filteredData = dataOnCategoryandSide
-              .map((obj) => {
-                // Найти динамический ключ, который не равен "fitment_type"
-                const dynamicKey = Object.keys(obj).find(
-                  (key) => key !== "fitment_type"
-                );
-                const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
+          const positionValue = objValueSideGroup[activeSide];
+          filteredData = filteredData
+            .map((obj) => {
+              const dynamicKey = Object.keys(obj).find(
+                (key) => key !== "fitment_type"
+              );
+              const dynamicValue = obj[dynamicKey];
+              const filteredItems = dynamicValue.filter(
+                (item) => item.position === positionValue
+              );
 
-                // Фильтруем массив внутри объекта
-                const filteredItems = dynamicValue.filter(
-                  (item) => item.position === positionValue
-                );
-
-                // Возвращаем новый объект с отфильтрованными элементами, если есть совпадения
-                if (filteredItems.length > 0) {
-                  return {
-                    ...obj, // Остальные свойства объекта
-                    [dynamicKey]: filteredItems, // Обновляем только массив под динамическим ключом
-                  };
-                }
-                return null; // Вернуть null, если нет совпадений
-              })
-              .filter((obj) => obj !== null); // Удаляем null значения
-
-            dataOnCategoryandSide = filteredData;
-          }
-          // return dataOnCategoryandSide; // Возвращаем отфильтрованные данные
+              if (filteredItems.length > 0) {
+                return {
+                  ...obj,
+                  [dynamicKey]: filteredItems,
+                };
+              }
+              return null; // Вернуть null, если нет совпадений
+            })
+            .filter((obj) => obj !== null); // Удаляем null значения
         }
 
-        if (activeLinesPads) {
-          if (activeCategory === "Brake Pads") {
-            // console.log("dataOnCategoryandSide", dataOnCategoryandSide);
-            // console.log("filteredData", filteredData);
-            if (activeSide != null) {
-              dataOnCategoryandSide = filteredData;
-            } else {
-              dataOnCategoryandSide = resultParts;
-            }
+        return filteredData;
+      };
 
-            // const buttonBrakePads = document.querySelector(
-            //   '[data-tippy-content="Brake Pads"]'
-            // );
-            // buttonBrakePads.click();
+      // Фильтрация exactMatches
+      let filteredExactMatches = filterData(dataAll.exactMatches);
+      // Фильтрация nonExactMatches
+      let filteredNonExactMatches = filterData(dataAll.nonExactMatches);
 
-            let brakePadsObject = [];
-
-            // Проходим по каждому объекту в массиве dataOnCategoryandSide
-            dataOnCategoryandSide.forEach((obj) => {
-              if (obj["Brake Pads"]) {
-                brakePadsObject.push(obj);
-              }
-            });
-
-            // Если нет объектов с "Brake Pads", обнуляем dataOnCategoryandSide
-            if (brakePadsObject.length === 0) {
-              dataOnCategoryandSide = null;
-            } else {
-              dataOnCategoryandSide = brakePadsObject;
-            }
-
-            const filterOnBrakePads = {
-              Black: /(?:d|mkd)/i, // /d | mkd/i   "d | mkd",
-              Ultralife: /Cmx/i, // "Cmx",
-              Speed: /hps/i, // "hps",
-              Elite: /elt/i, // "elt",
-            };
-
-            // Объект для хранения отфильтрованных данных
-            const filteredDataLines = [];
-
-            // Проверка соответствия регулярному выражению
-            brakePadsObject.forEach((obj) => {
-              const filteredBrakePads = obj["Brake Pads"].filter((item) => {
-                // Проверяем, соответствует ли part_number регулярному выражению
-                return filterOnBrakePads[activeLinesPads].test(
-                  item.part_number
-                );
-              });
-
-              // Если есть отфильтрованные элементы, добавляем объект в результат
-              if (filteredBrakePads.length > 0) {
-                filteredDataLines.push({
-                  fitment_type: obj.fitment_type,
-                  "Brake Pads": filteredBrakePads,
-                });
-              }
-            });
-
-            // Если нет совпадений, можно вернуть null или пустой массив
-            if (filteredDataLines.length === 0) {
-              return null; // или return [];
-            }
-
-            // Выводим отфильтрованные данные
-            return filteredDataLines;
-          } else {
-            return null;
-          }
-        }
-
-        return dataOnCategoryandSide; // Возвращаем отфильтрованные данные
-      }
-      return null; // Возвращаем null, если ничего не найдено
+      // Формирование объекта результата
+      return {
+        exactMatches: filteredExactMatches,
+        nonExactMatches: filteredNonExactMatches,
+      };
     }
 
     setupGroupProductLines() {
