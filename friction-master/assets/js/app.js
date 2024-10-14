@@ -1581,6 +1581,107 @@
           _this.loadModels(getYear, getMake, getModel);
           _this.checkModel(getYear, getMake, getModel);
         }
+
+        if (getUrlParameter("eg") && !getUrlParameter("sm")) {
+          _this.checkEngineFromUrl(
+            getYear,
+            getMake,
+            getModel,
+            getUrlParameter("eg"),
+            ""
+          )
+          const observer = new MutationObserver((mutationsList, observer) => {
+            for (let mutation of mutationsList) {
+                if (mutation.type === 'childList') {
+                  this.$engine.closest('.select').find('.select__content').text(getUrlParameter("eg"));
+                  this.$engine.closest('.select').find('.select__option').each(function() {
+                    if ($(this).data('value') === getUrlParameter("eg")) {
+                        $(this).attr('hidden', true);
+                    }
+                  });
+                  let currentUrl = new URL(window.location.href);
+                  currentUrl.searchParams.delete('eg');
+                  window.history.replaceState({}, '', currentUrl);
+                  observer.disconnect();
+                  break;
+                }
+            }
+          });
+          observer.observe(this.$engine[0], {childList: true})
+        }
+        if (getUrlParameter("sm") && !getUrlParameter("eg")) {
+          _this.checkSubModelFromUrl(
+            getYear,
+            getMake,
+            getModel,
+            "",
+            getUrlParameter("sm")
+          )
+          const observer = new MutationObserver((mutationsList, observer) => {
+            for (let mutation of mutationsList) {
+                if (mutation.type === 'childList') {
+                  this.$submodel.closest('.select').find('.select__content').text(getUrlParameter("sm"));
+                  this.$submodel.closest('.select').find('.select__option').each(function() {
+                    if ($(this).data('value') === getUrlParameter("eg")) {
+                        $(this).attr('hidden', true);
+                    }
+                  });
+                  let currentUrl = new URL(window.location.href);
+                  currentUrl.searchParams.delete('sm');
+                  window.history.replaceState({}, '', currentUrl);
+                  observer.disconnect();
+                  break;
+                }
+            }
+          });
+          observer.observe(this.$submodel[0], {childList: true})
+        }
+        if (getUrlParameter("sm") && getUrlParameter("eg")) {
+          _this.checkEngineFromUrl(
+            getYear,
+            getMake,
+            getModel,
+            getUrlParameter("eg"),
+            getUrlParameter("sm")
+          )
+          const observerEngine = new MutationObserver((mutationsList, observer) => {
+            for (let mutation of mutationsList) {
+                if (mutation.type === 'childList') {
+                  this.$engine.closest('.select').find('.select__content').text(getUrlParameter("eg"));
+                  this.$engine.closest('.select').find('.select__option').each(function() {
+                    if ($(this).data('value') === getUrlParameter("eg")) {
+                        $(this).attr('hidden', true);
+                    }
+                  });
+                  let currentUrl = new URL(window.location.href);
+                  currentUrl.searchParams.delete('eg');
+                  window.history.replaceState({}, '', currentUrl);
+                  observer.disconnect();
+                  break;
+                }
+            }
+          });
+          observerEngine.observe(this.$engine[0], {childList: true})
+          const observerSubmodel = new MutationObserver((mutationsList, observer) => {
+            for (let mutation of mutationsList) {
+                if (mutation.type === 'childList') {
+                  this.$submodel.closest('.select').find('.select__content').text(getUrlParameter("sm"));
+                  this.$submodel.closest('.select').find('.select__option').each(function() {
+                    if ($(this).data('value') === getUrlParameter("sm")) {
+                        $(this).attr('hidden', true);
+                    }
+                  });
+                  let currentUrl = new URL(window.location.href);
+                  currentUrl.searchParams.delete('sm');
+                  window.history.replaceState({}, '', currentUrl);
+                  observer.disconnect();
+                  break;
+                }
+            }
+          });
+          observerSubmodel.observe(this.$submodel[0], {childList: true})
+        }
+
         // для работы фильтра
         document
           .querySelector(".page_catalog")
@@ -2226,6 +2327,7 @@
       return partHeaderContainer;
     }
 
+
     createPartHeaderSpan(productCategory) {
       let partHeaderSpan = document.createElement("span");
       partHeaderSpan.classList.add("header-catalog__icon");
@@ -2577,6 +2679,18 @@
       }
     }
 
+    checkSubModelFromUrl(year, make, model, engine, submodel) {
+      let _this = this;
+
+      if (engine != "" && submodel != "") {
+        _this.partsSearch(year, make, model, engine, submodel);
+      }
+
+      if (submodel != "") {
+        _this.partsSearch(year, make, model, submodel);
+      }
+    }
+
     checkEngine() {
       let _this = this;
       let year = _this.$year.val();
@@ -2592,6 +2706,20 @@
         _this.partsSearch(year, make, model, engine, submodel);
       }
     }
+
+    checkEngineFromUrl(year, make, model, engine, submodel) {
+      let _this = this;
+
+      console.log(engine);
+
+      if (engine != "" && submodel != "") {
+        _this.partsSearch(year, make, model, engine, submodel);
+      }
+      if (engine != "") {
+        _this.partsSearch(year, make, model, engine);
+      }
+    }
+
 
     loadingBlock($block, load = true) {
       $block = $($block);
