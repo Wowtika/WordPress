@@ -2438,20 +2438,24 @@
       partOptions.classList.add("options-qualifier");
       partOptions.setAttribute("data-options", productCategory);
 
-      // Проверяем, содержит ли строка 'w/'
-      if (nameCategory.includes("w/")) {
-        // Удаляем 'w/' и возможный пробел после него
-        nameCategory = nameCategory.replace(/w\/\s*/, "");
+      if (!nameCategory.includes("Dont have qualifier")) {
+        // Проверяем, содержит ли строка 'w/'
+        if (nameCategory.includes("w/")) {
+          // Удаляем 'w/' и возможный пробел после него
+          nameCategory = nameCategory.replace(/w\/\s*/, "");
+        }
+        nameCategory = nameCategory.replace(
+          /^(Front\s*\|\s*|Rear\s*\|\s*)/,
+          ""
+        );
+
+        let partOptionsHeading = document.createElement("h2");
+        partOptionsHeading.classList.add("item-catalog__header-heading");
+        partOptionsHeading.classList.add("item-options-heading");
+        partOptionsHeading.textContent = nameCategory;
+
+        partOptions.append(partOptionsHeading);
       }
-      nameCategory = nameCategory.replace(/^(Front\s*\|\s*|Rear\s*\|\s*)/, "");
-
-      let partOptionsHeading = document.createElement("h2");
-      partOptionsHeading.classList.add("item-catalog__header-heading");
-      partOptionsHeading.classList.add("item-options-heading");
-      partOptionsHeading.textContent = nameCategory;
-
-      partOptions.append(partOptionsHeading);
-
       let partOptionsSide = document.createElement("div");
       partOptionsSide.classList.add("item-catalog__image");
 
