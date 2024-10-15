@@ -2299,13 +2299,23 @@
           }
         });
       }
-      if (filteredDataNonExactMatches) {
-        console.log("filteredDataNonExactMatches", filteredDataNonExactMatches);
-        filteredDataNonExactMatches.forEach((obj) => {
-          if (obj) {
-            this.renderPartContainerAddProducts(obj, nonExactMatchesContainer);
-          }
-        });
+      let engine = _this.$engine.val();
+      let submodel = _this.$submodel.val();
+      if (engine != "" || submodel != "") {
+        if (filteredDataNonExactMatches) {
+          console.log(
+            "filteredDataNonExactMatches",
+            filteredDataNonExactMatches
+          );
+          filteredDataNonExactMatches.forEach((obj) => {
+            if (obj) {
+              this.renderPartContainerAddProducts(
+                obj,
+                nonExactMatchesContainer
+              );
+            }
+          });
+        }
       }
       console.log("exactMatchesContainer", exactMatchesContainer);
       console.log("nonExactMatchesContainer", nonExactMatchesContainer);
