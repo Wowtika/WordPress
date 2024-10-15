@@ -1873,7 +1873,7 @@
         let getMake = getUrlParameter("mk");
         let getModel = getUrlParameter("md");
         let getRegion = getUrlParameter("rg");
-        let getType = 1;
+        let getType = getUrlParameter("tp");
 
         if (getUrlParameter("carData")) {
 
@@ -1934,12 +1934,6 @@
 
           function findField(carName, fields) {
             return findClosestMatch(carName, fields);
-            for (let field of fields) {
-                if (carName.startsWith(field.toLowerCase())) {
-                    return field;
-                }
-            }
-            return null;
           }
 
           function removeManufacturer(carName, manufacturer) {

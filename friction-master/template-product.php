@@ -140,7 +140,7 @@ get_header() ?>
 	$car = explode('_', $query_params['car']);
 	$make = $car[0];
 	$model = $car[1];
-	$year = $car[2];
+	$year = $car[2]; 	
 	$urlToSearch = 'https://catalog.loopautomotive.com/catalog/search?filter=' . urlencode(json_encode([
 		'make' => $make,
 		'model' => $model,
@@ -159,7 +159,13 @@ get_header() ?>
 		echo 'Ошибка cURL: ' . curl_error($ch);
 	} else {
 		$data = json_decode($response, true);
+		if (isset($data['part_applications'])) {
 		$partApplications = $data['part_applications'];
+		}
+		else
+		{
+			$partApplications = [];
+		}
 		//достаём товары текущей группы
 		$filtered = array_filter($partApplications, function($item) use ($group) {
 			return array_key_exists($group, $item);
@@ -194,6 +200,7 @@ get_header() ?>
 			return $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'] . '?' . $new_query_string;
 		}
 		//Ищем товары для других позиций (перед, зад, оба)
+		$position = "";
 		foreach ($allItems as $part) {
 			if (isset($part['exact_match'])) {
 				if ($number == $part['part_number']) {
@@ -214,6 +221,22 @@ get_header() ?>
 			}
 		}
 		//Вставляем ссылку на текущий товар
+		if ($position == "") {
+			$urlToSearch = "https://catalog.loopautomotive.com/catalog/part-search?part_number=" . $numberData['number'];
+			$headers = array(
+				'Content-Type: application/json',
+			);
+			$ch = curl_init($urlToSearch);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+			$response = curl_exec($ch);
+			if (curl_errno($ch)) {
+				echo 'Ошибка cURL: ' . curl_error($ch);
+			} else {
+				$data = json_decode($response, true);
+				$position = current($data)['position'];
+			}
+		}
 		switch ($position) {
 			case 'Front':
 				$isFrontLink = true;
