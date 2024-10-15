@@ -2148,11 +2148,11 @@
           }
         });
 
-        // Сохраняем отфильтрованные данные
-        this.$currentData = {
-          exactMatches: exactMatches,
-          nonExactMatches: nonExactMatches,
-        };
+        // // Сохраняем отфильтрованные данные
+        // this.$currentData = {
+        //   exactMatches: exactMatches,
+        //   nonExactMatches: nonExactMatches,
+        // };
 
         return {
           exactMatches: exactMatches,
@@ -2164,52 +2164,49 @@
     }
 
     hasSortedProducts(filteredData) {
-      // Проверяем, что filteredData — это объект и содержит массивы exactMatches и nonExactMatches
-      if (
-        filteredData &&
-        typeof filteredData === "object" &&
-        Array.isArray(filteredData.exactMatches) &&
-        Array.isArray(filteredData.nonExactMatches)
-      ) {
-        // Проверяем, что хотя бы один из массивов не пуст
-        if (
-          filteredData.exactMatches.length > 0 ||
-          filteredData.nonExactMatches.length > 0
-        ) {
-          return true; // Возвращаем true, если хотя бы один массив не пустой
-        }
+      if (filteredData) {
+        filteredData.forEach((item) => {
+          let dynamicKey = this.getDynamicKey(item);
+          if (dynamicKey) {
+            let dynamicValue = item[dynamicKey];
+            if (dynamicValue.length > 0) {
+              return true;
+            }
+          }
+        });
       }
+
       return false; // Возвращаем false, если отсортированных объектов нет
     }
 
     create_parts(data) {
       // перенесла вобщий фильтр
-      console.log("data", data); 
+      console.log("data", data);
 
       function sortGroupsByPartNumber(groups, orderData) {
         // Функция для извлечения буквенной части из part_number
         function getLetterPart(partNumber) {
-            return partNumber.match(/[A-Za-z]+/)[0];
+          return partNumber.match(/[A-Za-z]+/)[0];
         }
 
         //Получение списка сортировок для группы
-        function getLabeling (data, name) {
+        function getLabeling(data, name) {
           if (data.hasOwnProperty(name)) {
-              let combinedLabeling = [];
-              data[name].forEach(item => {
-                  combinedLabeling = combinedLabeling.concat(item.labeling || []);
-              });
-              return combinedLabeling;
+            let combinedLabeling = [];
+            data[name].forEach((item) => {
+              combinedLabeling = combinedLabeling.concat(item.labeling || []);
+            });
+            return combinedLabeling;
           } else {
-              return [];
+            return [];
           }
         }
-    
+
         // Функция для получения индекса из массива порядков
         function getOrderIndex(group, letterPart) {
-            return getLabeling(orderData, group).indexOf(letterPart);
+          return getLabeling(orderData, group).indexOf(letterPart);
         }
-    
+
         // Сортировка элементов внутри каждой группы
         groups.forEach((group) => {
           for (let key of Object.keys(group)) {
@@ -2217,14 +2214,17 @@
               group[key].sort((a, b) => {
                 const aLetterPart = getLetterPart(a.part_number);
                 const bLetterPart = getLetterPart(b.part_number);
-                return getOrderIndex(key, aLetterPart) - getOrderIndex(key, bLetterPart);
+                return (
+                  getOrderIndex(key, aLetterPart) -
+                  getOrderIndex(key, bLetterPart)
+                );
               });
             }
           }
-        })
+        });
 
         return groups;
-      } 
+      }
 
       data = sortGroupsByPartNumber(data, this.groupedData);
 
@@ -2232,21 +2232,30 @@
       let catalog = $("#catalog");
       let catalog__wrapper = catalog.find(".catalog__wrapper");
       // let catalog_auto_title = $("#catalog_auto_title");
-      let withoutFilterData = _this.exactMatchFilterData(data);
+      // let withoutFilterData = _this.exactMatchFilterData(data);
+      let filteredData = data;
 
-      let filteredData = _this.needToSortProduct(withoutFilterData);
+      // let filteredData = _this.needToSortProduct(withoutFilterData);
 
-      let filteredDataExactMatches = null;
-      let filteredDataNonExactMatches = null;
+      const map1 = filteredData.map((item) => {
+        if (item) {
+          let dynamicKey = _this.getDynamicKey(item);
+          let dynamicValue = item[dynamicKey];
 
-      if (filteredData) {
-        if (filteredData.exactMatches) {
-          filteredDataExactMatches = filteredData.exactMatches;
+          if (dynamicValue) {
+            if (dynamicValue.length > 0) {
+              let sortedObj = this.sortByqualifierProduct(dynamicValue);
+              return (item[dynamicKey] = sortedObj);
+            }
+          }
         }
-        if (filteredData.nonExactMatches) {
-          filteredDataNonExactMatches = filteredData.nonExactMatches;
-        }
-      }
+      });
+
+      console.log("map1", map1);
+      
+      const cleanedData = this.exactMatchFilterData(map1);
+
+      console.log("cleanedData", cleanedData.exactMatches);
 
       let ifhasSortedProducts = _this.hasSortedProducts(filteredData);
       console.log("ifhasSortedProducts", ifhasSortedProducts);
@@ -2256,14 +2265,18 @@
       //   nonExactMatches: nonExactMatches,
       // };
       catalog__wrapper.html("");
+      ifhasSortedProducts = true;
+
+      console.log("filteredData", filteredData);
       if (ifhasSortedProducts) {
-        this.renderParts(filteredDataExactMatches, filteredDataNonExactMatches);
+        this.renderParts(filteredData);
+        // this.renderParts(filteredDataExactMatches, filteredDataNonExactMatches);
       } else {
         this.renderNoData(catalog);
       }
     }
 
-    renderParts(filteredDataExactMatches, filteredDataNonExactMatches) {
+    renderParts(filteredData) {
       let _this = this;
       let catalog = $("#catalog"); // Контейнер всех продуктов
       let catalog__wrapper = catalog.find(".catalog__wrapper");
@@ -2272,7 +2285,8 @@
       catalog_auto_title.fadeIn().css("display", "flex");
       if (!catalog__wrapper) {
         const catalog__wrapper = document.createElement("div");
-        atalog__wrapper.classList.add("catalog__wrapper");
+        catalog__wrapper.classList.add("catalog__wrapper");
+        catalog[0].append(catalog__wrapper);
       }
       // if (catalog_auto_title) {
       //   catalog_auto_title.fadeIn().css("display", "flex");
@@ -2282,84 +2296,34 @@
         catalogNodata.style.display = "none";
       }
       catalog[0].style.display = "block";
-      console.log(
-        "renderParts filteredDataExactMatches",
-        filteredDataExactMatches
-      );
-      // Создаем два контейнера
-      let exactMatchesContainer = document.createElement("div");
-      exactMatchesContainer.classList.add("exact-matches-container");
-      let nonExactMatchesContainer = document.createElement("div");
-      nonExactMatchesContainer.classList.add("non-exact-matches-container");
-      if (filteredDataExactMatches) {
-        console.log("filteredDataExactMatches", filteredDataExactMatches);
-        filteredDataExactMatches.forEach((obj) => {
+
+      const fullContainer = document.createElement("div");
+      fullContainer.classList.add("full-container");
+      if (filteredData) {
+        filteredData.forEach((obj) => {
           if (obj) {
-            this.renderPartContainer(obj, exactMatchesContainer);
+            // let filterFonExam =this.exactMatchFilterData(dataAll)
+            this.renderPartContainer(obj, fullContainer);
           }
         });
       }
-      let engine = _this.$engine.val();
-      let submodel = _this.$submodel.val();
-      if (engine != "" || submodel != "") {
-        if (filteredDataNonExactMatches) {
-          console.log(
-            "filteredDataNonExactMatches",
-            filteredDataNonExactMatches
-          );
-          filteredDataNonExactMatches.forEach((obj) => {
-            if (obj) {
-              this.renderPartContainerAddProducts(
-                obj,
-                nonExactMatchesContainer
-              );
-            }
-          });
-        }
-      }
-      console.log("exactMatchesContainer", exactMatchesContainer);
-      console.log("nonExactMatchesContainer", nonExactMatchesContainer);
-      catalog__wrapper.append(exactMatchesContainer);
-      catalog__wrapper.append(nonExactMatchesContainer);
+
+      catalog__wrapper.append(fullContainer);
     }
 
-    renderPartContainer(productObject, exactMatchesContainer) {
+    renderPartContainer(productObject, fullContainer) {
       const partContainer = this.createPartContainer(productObject);
-      exactMatchesContainer.append(partContainer);
-      return partContainer;
-    }
-
-    renderPartContainerAddProducts(productObject, nonExactMatchesContainer) {
-      const partContainer = this.createPartContainerAddProducts(productObject);
-      nonExactMatchesContainer.append(partContainer);
+      fullContainer.append(partContainer);
       return partContainer;
     }
 
     createPartContainer(dataAllCategory) {
-      const dynamicValue = this.getDynamicValue(dataAllCategory);
-      const dynamicKey = this.getDynamicKey(dataAllCategory);
-      const sorteddataForFender = this.sortByqualifierProduct(dynamicValue);
-      let partContainer = document.createElement("div");
-      partContainer.classList.add("container-catalog");
 
-      let partHeaderContainer = this.createPartHeaderContainer(dynamicKey);
-      partContainer.append(partHeaderContainer);
-      
-      let partContainerBasic =
-        this.createCategoryContainer(sorteddataForFender);
-      partContainer.append(partContainerBasic);
-
-      return partContainer;
-    }
-
-    createPartContainerAddProducts(dataAllCategory) {
       const dynamicValue = this.getDynamicValue(dataAllCategory);
       const dynamicKey = this.getDynamicKey(dataAllCategory);
 
-      const h2 = document.createElement("h2");
-      h2.textContent = "Похожие продукты";
-
-      const sorteddataForFender = this.sortByqualifierProduct(dynamicValue);
+      const sorteddataForFender = dynamicValue;
+      // const sorteddataForFender = this.sortByqualifierProduct(dynamicValue);
       let partContainer = document.createElement("div");
       partContainer.classList.add("container-catalog");
 
@@ -2368,9 +2332,7 @@
 
       let partContainerBasic =
         this.createCategoryContainer(sorteddataForFender);
-      partContainer.append(h2);
       partContainer.append(partContainerBasic);
-
       return partContainer;
     }
 
@@ -2419,7 +2381,6 @@
       partContainerBasic.classList.add("container-catalog");
 
       for (const key in dataForFender) {
-
         let allProductsKeys = key;
         let allProductsValues = dataForFender[key];
 
@@ -2461,6 +2422,9 @@
       let partElement = document.createElement("div");
       partElement.classList.add("item-catalog");
       partElement.setAttribute("data-part_id", part.part_id);
+      if (!part.exact_match) {
+        partElement.classList.add("item-catalog-non-exact_match");
+      }
 
       let part_icon = document.createElement("div");
       part_icon.classList.add("item-catalog__header-icons");
@@ -2553,7 +2517,6 @@
       // Показ блока с данными
       $(loadCatalogBlock).fadeIn().css("display", "flex");
 
-      console.log("load_catalog", loadCatalogBlock);
       $("#load_catalog").html(
         '<div class="catalog_nodata">No data available</div>'
       );
@@ -2564,10 +2527,10 @@
 
       // Очистка каталога
       $("#catalog").html("");
-      if (loadCatalogBlock.textContent = '') {
+      if ((loadCatalogBlock.textContent = "")) {
         // Установка сообщения
-      loadCatalogBlock.innerHTML =
-      '<div class="catalog_nodata">No data available</div>';
+        loadCatalogBlock.innerHTML =
+          '<div class="catalog_nodata">No data available</div>';
       }
     }
 
@@ -2650,42 +2613,53 @@
     sortByqualifierProduct(dataProducts) {
       const objQualifier = {};
       let catalog = $("#catalog"); // Контейнер всех продуктов
+
       // Группируем продукты по комбинации position и qualifier
-      dataProducts.forEach((product) => {
-        const qualifier = product.qualifier || "Dont have qualifier"; // Используем "Dont have qualifier"
-        const position = product.position;
+      if (dataProducts) {
+        dataProducts.forEach((product) => {
+          const qualifier = product.qualifier || "Dont have qualifier"; // Используем "Dont have qualifier"
+          const position = product.position;
 
-        // Формируем ключ с учетом позиции и qualifier
-        const categoryKey =
-          qualifier === "Dont have qualifier"
-            ? `${position} | ${qualifier}`
-            : `${position} | ${qualifier}`;
+          // Формируем ключ с учетом позиции и qualifier
+          const categoryKey = `${position} | ${qualifier}`;
 
-        // Проверяем, существует ли уже ключ в объекте
-        if (!objQualifier.hasOwnProperty(categoryKey)) {
-          objQualifier[categoryKey] = [];
-        }
+          // Проверяем, существует ли уже ключ в объекте
+          if (!objQualifier.hasOwnProperty(categoryKey)) {
+            objQualifier[categoryKey] = [];
+          }
 
-        // Добавляем продукт в соответствующую группу
-        objQualifier[categoryKey].push(product);
-      });
-
-      // Сортируем итоговый объект по ключам
-      const sortedObjQualifier = {};
-      Object.keys(objQualifier)
-        .sort()
-        .forEach((key) => {
-          sortedObjQualifier[key] = objQualifier[key];
+          // Добавляем продукт в массив
+          objQualifier[categoryKey].push(product);
         });
 
-      console.log(
-        "после группировки и сортировки objQualifier",
-        sortedObjQualifier
-      );
+        // Создаём новый объект для сортировки
+        const sortedObjQualifier = {};
 
-      return sortedObjQualifier; // Возврат собранных данных
+        // Сначала добавляем группы с exact_match === true
+        Object.keys(objQualifier).forEach((key) => {
+          const items = objQualifier[key];
+          if (items.some((item) => item.exact_match === true)) {
+            sortedObjQualifier[key] = items; // Добавляем всю группу
+          }
+        });
+
+        // Затем добавляем остальные группы
+        Object.keys(objQualifier).forEach((key) => {
+          const items = objQualifier[key];
+          if (!items.some((item) => item.exact_match === true)) {
+            sortedObjQualifier[key] = items; // Добавляем всю группу
+          }
+        });
+
+        console.log(
+          "после группировки и сортировки objQualifier",
+          sortedObjQualifier
+        );
+
+        return sortedObjQualifier; // Возврат собранных данных
+      }
+      return null;
     }
-
     checkSubModel() {
       let _this = this;
       let year = _this.$year.val();
@@ -2790,7 +2764,6 @@
 
       // Функция для фильтрации
       const filterData = (dataArray) => {
-
         let filteredData = dataArray;
 
         // Фильтрация по product line
@@ -2799,29 +2772,32 @@
             (item) => item.fitment_type === filterValue
           );
         } else {
-
           if (filteredData.length > 1) {
             // Объединяем объекты с одинаковыми динамическими ключами
             const mergedData = filteredData.reduce((acc, item) => {
-                const dynamicKey = Object.keys(item).find(key => key !== "fitment_type");
-        
-                // Ищем элемент с тем же динамическим ключом
-                const existingItem = acc.find(accItem => accItem[dynamicKey]);
-        
-                if (existingItem) {
-                    // Если существует, объединяем массивы
-                    existingItem[dynamicKey] = existingItem[dynamicKey].concat(item[dynamicKey]);
-                } else {
-                    // Если не существует, добавляем элемент в аккумулятор
-                    acc.push({ ...item });
-                }
-        
-                return acc;
+              const dynamicKey = Object.keys(item).find(
+                (key) => key !== "fitment_type"
+              );
+
+              // Ищем элемент с тем же динамическим ключом
+              const existingItem = acc.find((accItem) => accItem[dynamicKey]);
+
+              if (existingItem) {
+                // Если существует, объединяем массивы
+                existingItem[dynamicKey] = existingItem[dynamicKey].concat(
+                  item[dynamicKey]
+                );
+              } else {
+                // Если не существует, добавляем элемент в аккумулятор
+                acc.push({ ...item });
+              }
+
+              return acc;
             }, []);
-        
+
             // Перезаписываем filteredData объединёнными данными
             filteredData = mergedData;
-        }
+          }
         }
 
         // Фильтрация по activeCategory

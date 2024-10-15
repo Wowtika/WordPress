@@ -3897,6 +3897,9 @@ p {
 	height: 203.4px;
 }
 
+.item-catalog-non-exact_match {
+	background-color:  #f9010033;
+}
 .options-qualifier {
 	position: relative;
 	display: -webkit-box;
