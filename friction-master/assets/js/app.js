@@ -1921,7 +1921,7 @@
             return closestMatch;
           }
 
-          const carData = getUrlParameter("carData").toLowerCase();
+          const carData = getUrlParameter("carData").toLowerCase().replace(/\s/g, '+');
           const car = carData.split('+');
           const carName = carData.replace(/\+/g, ' ');
           getYear = car[car.length - 1];
@@ -1954,8 +1954,7 @@
           getModel = findField(carNameWithoutMake, models);
 
           getRegion = 1;
-          let currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.delete('carData');
+
         }
 
         this.$region
