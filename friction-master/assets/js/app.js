@@ -1481,40 +1481,55 @@
       super(block, Select);
 
       //Получить линейки
-      const url = '/wp-json/wp/v2/product-lines?per_page=20';
+      const url = "/wp-json/wp/v2/product-lines?per_page=20";
       let groupedData;
 
       fetch(url)
-        .then(response => {
+        .then((response) => {
           if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
+            throw new Error(
+              "Network response was not ok " + response.statusText
+            );
           }
           return response.json();
         })
-        .then(data => {
+        .then((data) => {
           groupedData = data.reduce((acc, item) => {
-            const [group, line] = item.title.rendered.split(' &#8211; ');
+            const [group, line] = item.title.rendered.split(" &#8211; ");
             if (!acc[group]) {
               acc[group] = [];
             }
-            const labeling = item.acf.labeling ? item.acf.labeling.map(label => label.label) : [];
+            const labeling = item.acf.labeling
+              ? item.acf.labeling.map((label) => label.label)
+              : [];
             const imgId = item.acf.img;
             acc[group].push({ line, labeling, imgId });
             return acc;
           }, {});
           return groupedData;
         })
-        .then(data => {
-          const order = ["Black", "Ultralife®", "Elite", "SPEED™", "Circuit Spec"];
-      
+        .then((data) => {
+          const order = [
+            "Black",
+            "Ultralife®",
+            "Elite",
+            "SPEED™",
+            "Circuit Spec",
+          ];
+
           // Sort each group's array
-          Object.keys(data).forEach(group => {
-            data[group].sort((a, b) => order.indexOf(a.line) - order.indexOf(b.line));
+          Object.keys(data).forEach((group) => {
+            data[group].sort(
+              (a, b) => order.indexOf(a.line) - order.indexOf(b.line)
+            );
           });
           this.groupedData = data;
         })
-        .catch(error => {
-          console.error('There has been a problem with your fetch operation:', error);
+        .catch((error) => {
+          console.error(
+            "There has been a problem with your fetch operation:",
+            error
+          );
         });
 
       let _this = this;
@@ -1627,25 +1642,31 @@
             getModel,
             getUrlParameter("eg"),
             ""
-          )
+          );
           const observer = new MutationObserver((mutationsList, observer) => {
             for (let mutation of mutationsList) {
-                if (mutation.type === 'childList') {
-                  this.$engine.closest('.select').find('.select__content').text(getUrlParameter("eg"));
-                  this.$engine.closest('.select').find('.select__option').each(function() {
-                    if ($(this).data('value') === getUrlParameter("eg")) {
-                        $(this).attr('hidden', true);
+              if (mutation.type === "childList") {
+                this.$engine
+                  .closest(".select")
+                  .find(".select__content")
+                  .text(getUrlParameter("eg"));
+                this.$engine
+                  .closest(".select")
+                  .find(".select__option")
+                  .each(function () {
+                    if ($(this).data("value") === getUrlParameter("eg")) {
+                      $(this).attr("hidden", true);
                     }
                   });
-                  let currentUrl = new URL(window.location.href);
-                  currentUrl.searchParams.delete('eg');
-                  window.history.replaceState({}, '', currentUrl);
-                  observer.disconnect();
-                  break;
-                }
+                let currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete("eg");
+                window.history.replaceState({}, "", currentUrl);
+                observer.disconnect();
+                break;
+              }
             }
           });
-          observer.observe(this.$engine[0], {childList: true})
+          observer.observe(this.$engine[0], { childList: true });
         }
         if (getUrlParameter("sm") && !getUrlParameter("eg")) {
           _this.checkSubModelFromUrl(
@@ -1654,25 +1675,31 @@
             getModel,
             "",
             getUrlParameter("sm")
-          )
+          );
           const observer = new MutationObserver((mutationsList, observer) => {
             for (let mutation of mutationsList) {
-                if (mutation.type === 'childList') {
-                  this.$submodel.closest('.select').find('.select__content').text(getUrlParameter("sm"));
-                  this.$submodel.closest('.select').find('.select__option').each(function() {
-                    if ($(this).data('value') === getUrlParameter("eg")) {
-                        $(this).attr('hidden', true);
+              if (mutation.type === "childList") {
+                this.$submodel
+                  .closest(".select")
+                  .find(".select__content")
+                  .text(getUrlParameter("sm"));
+                this.$submodel
+                  .closest(".select")
+                  .find(".select__option")
+                  .each(function () {
+                    if ($(this).data("value") === getUrlParameter("eg")) {
+                      $(this).attr("hidden", true);
                     }
                   });
-                  let currentUrl = new URL(window.location.href);
-                  currentUrl.searchParams.delete('sm');
-                  window.history.replaceState({}, '', currentUrl);
-                  observer.disconnect();
-                  break;
-                }
+                let currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete("sm");
+                window.history.replaceState({}, "", currentUrl);
+                observer.disconnect();
+                break;
+              }
             }
           });
-          observer.observe(this.$submodel[0], {childList: true})
+          observer.observe(this.$submodel[0], { childList: true });
         }
         if (getUrlParameter("sm") && getUrlParameter("eg")) {
           _this.checkEngineFromUrl(
@@ -1681,43 +1708,59 @@
             getModel,
             getUrlParameter("eg"),
             getUrlParameter("sm")
-          )
-          const observerEngine = new MutationObserver((mutationsList, observer) => {
-            for (let mutation of mutationsList) {
-                if (mutation.type === 'childList') {
-                  this.$engine.closest('.select').find('.select__content').text(getUrlParameter("eg"));
-                  this.$engine.closest('.select').find('.select__option').each(function() {
-                    if ($(this).data('value') === getUrlParameter("eg")) {
-                        $(this).attr('hidden', true);
-                    }
-                  });
+          );
+          const observerEngine = new MutationObserver(
+            (mutationsList, observer) => {
+              for (let mutation of mutationsList) {
+                if (mutation.type === "childList") {
+                  this.$engine
+                    .closest(".select")
+                    .find(".select__content")
+                    .text(getUrlParameter("eg"));
+                  this.$engine
+                    .closest(".select")
+                    .find(".select__option")
+                    .each(function () {
+                      if ($(this).data("value") === getUrlParameter("eg")) {
+                        $(this).attr("hidden", true);
+                      }
+                    });
                   let currentUrl = new URL(window.location.href);
-                  currentUrl.searchParams.delete('eg');
-                  window.history.replaceState({}, '', currentUrl);
+                  currentUrl.searchParams.delete("eg");
+                  window.history.replaceState({}, "", currentUrl);
                   observer.disconnect();
                   break;
                 }
+              }
             }
-          });
-          observerEngine.observe(this.$engine[0], {childList: true})
-          const observerSubmodel = new MutationObserver((mutationsList, observer) => {
-            for (let mutation of mutationsList) {
-                if (mutation.type === 'childList') {
-                  this.$submodel.closest('.select').find('.select__content').text(getUrlParameter("sm"));
-                  this.$submodel.closest('.select').find('.select__option').each(function() {
-                    if ($(this).data('value') === getUrlParameter("sm")) {
-                        $(this).attr('hidden', true);
-                    }
-                  });
+          );
+          observerEngine.observe(this.$engine[0], { childList: true });
+          const observerSubmodel = new MutationObserver(
+            (mutationsList, observer) => {
+              for (let mutation of mutationsList) {
+                if (mutation.type === "childList") {
+                  this.$submodel
+                    .closest(".select")
+                    .find(".select__content")
+                    .text(getUrlParameter("sm"));
+                  this.$submodel
+                    .closest(".select")
+                    .find(".select__option")
+                    .each(function () {
+                      if ($(this).data("value") === getUrlParameter("sm")) {
+                        $(this).attr("hidden", true);
+                      }
+                    });
                   let currentUrl = new URL(window.location.href);
-                  currentUrl.searchParams.delete('sm');
-                  window.history.replaceState({}, '', currentUrl);
+                  currentUrl.searchParams.delete("sm");
+                  window.history.replaceState({}, "", currentUrl);
                   observer.disconnect();
                   break;
                 }
+              }
             }
-          });
-          observerSubmodel.observe(this.$submodel[0], {childList: true})
+          );
+          observerSubmodel.observe(this.$submodel[0], { childList: true });
         }
 
         // для работы фильтра
@@ -2008,24 +2051,27 @@
                 "Данные поиска для группы продуктовых линий:",
                 res.data
               );
-              
+
               // Находим все массивы Brake Pads и объединяем их
               let combinedBrakePads = [];
               let firstBrakePadsIndex = -1;
 
               res.data.part_applications.forEach((app, index) => {
-                  if (app["Brake Pads"]) {
-                      combinedBrakePads = combinedBrakePads.concat(app["Brake Pads"]);
-                      if (firstBrakePadsIndex === -1) {
-                          firstBrakePadsIndex = index;
-                      }
-                      delete app["Brake Pads"];
+                if (app["Brake Pads"]) {
+                  combinedBrakePads = combinedBrakePads.concat(
+                    app["Brake Pads"]
+                  );
+                  if (firstBrakePadsIndex === -1) {
+                    firstBrakePadsIndex = index;
                   }
+                  delete app["Brake Pads"];
+                }
               });
 
               // Вставляем объединенный массив Brake Pads в первый найденный объект
               if (firstBrakePadsIndex !== -1) {
-                  res.data.part_applications[firstBrakePadsIndex]["Brake Pads"] = combinedBrakePads;
+                res.data.part_applications[firstBrakePadsIndex]["Brake Pads"] =
+                  combinedBrakePads;
               }
 
               _this.$currentData = _this.exactMatchFilterData(
@@ -2061,7 +2107,6 @@
     }
 
     exactMatchFilterData(dataAll) {
-      console.log("exactMatchFilterData", dataAll);
       if (Array.isArray(dataAll)) {
         // Создаем массивы для двух групп
         const exactMatches = [];
@@ -2069,14 +2114,13 @@
 
         dataAll.forEach((obj) => {
           const dynamicKey = this.getDynamicKey(obj);
-          console.log("dynamicKey", dynamicKey);
+
           // Проверка на случай, если dynamicKey не найден
           if (!dynamicKey) {
             return; // Пропускаем объект, если ключ не найден
           }
 
           const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
-          console.log("dynamicValue", dynamicValue);
 
           // Фильтруем массив внутри объекта
           const filteredItemsExactMatchTrue = dynamicValue.filter(
@@ -2087,33 +2131,28 @@
               item.exact_match === undefined || item.exact_match === false
           );
 
-          console.log(
-            "filteredItemsExactMatchTrue",
-            filteredItemsExactMatchTrue
-          );
-          console.log(
-            "filteredItemsExactMatchFalse",
-            filteredItemsExactMatchFalse
-          );
-
           // Если есть совпадения, добавляем в группу exactMatches
           if (filteredItemsExactMatchTrue.length > 0) {
             exactMatches.push({
               ...obj,
               [dynamicKey]: filteredItemsExactMatchTrue, // Обновляем только массив под динамическим ключом
             });
-          } else {
-            // Если нет совпадений, добавляем в nonExactMatches
-            nonExactMatches.push(obj);
-            console.log("nonExactMatches", nonExactMatches);
+          }
+
+          // Если нет совпадений exact_match === true, но есть non-exact matches
+          if (filteredItemsExactMatchFalse.length > 0) {
+            nonExactMatches.push({
+              ...obj,
+              [dynamicKey]: filteredItemsExactMatchFalse, // Обновляем только массив под динамическим ключом
+            });
           }
         });
 
-        // Сохраняем отфильтрованные данные
-        this.$currentData = {
-          exactMatches: exactMatches,
-          nonExactMatches: nonExactMatches,
-        };
+        // // Сохраняем отфильтрованные данные
+        // this.$currentData = {
+        //   exactMatches: exactMatches,
+        //   nonExactMatches: nonExactMatches,
+        // };
 
         return {
           exactMatches: exactMatches,
@@ -2125,63 +2164,49 @@
     }
 
     hasSortedProducts(filteredData) {
-      // Проверяем, что filteredData — это объект и содержит массивы exactMatches и nonExactMatches
-      if (
-        filteredData &&
-        typeof filteredData === "object" &&
-        Array.isArray(filteredData.exactMatches) &&
-        Array.isArray(filteredData.nonExactMatches)
-      ) {
-        console.log("hasSortedProducts filteredData", filteredData);
-        // Проверяем, что хотя бы один из массивов не пуст
-        if (
-          filteredData.exactMatches.length > 0 ||
-          filteredData.nonExactMatches.length > 0
-        ) {
-          return true; // Возвращаем true, если хотя бы один массив не пустой
-          // // Итерируем по массиву exactMatches
-          // for (const obj of filteredData.exactMatches) {
-          //   const dynamicValue = this.getDynamicValue(obj);
-          //   if (dynamicValue) {
-          //     // Сортируем объект
-          //     const dataForFender = this.sortByqualifierProduct(dynamicValue);
-          //     // Проверяем, есть ли отсортированные данные
-          //     if (dataForFender && Object.keys(dataForFender).length > 0) {
-          //       return true; // Возвращаем true, если найден хотя бы один отсортированный объект
-          //     }
-          //   }
-          // }
-        }
+      if (filteredData) {
+        filteredData.forEach((item) => {
+          let dynamicKey = this.getDynamicKey(item);
+          if (dynamicKey) {
+            let dynamicValue = item[dynamicKey];
+            if (dynamicValue.length > 0) {
+              return true;
+            }
+          }
+        });
       }
+
       return false; // Возвращаем false, если отсортированных объектов нет
     }
 
     create_parts(data) {
-      // console.log("create_parts", data);
+      // перенесла вобщий фильтр
+      console.log("data", data);
+
       function sortGroupsByPartNumber(groups, orderData) {
         // Функция для извлечения буквенной части из part_number
         function getLetterPart(partNumber) {
-            return partNumber.match(/[A-Za-z]+/)[0];
+          return partNumber.match(/[A-Za-z]+/)[0];
         }
 
         //Получение списка сортировок для группы
-        function getLabeling (data, name) {
+        function getLabeling(data, name) {
           if (data.hasOwnProperty(name)) {
-              let combinedLabeling = [];
-              data[name].forEach(item => {
-                  combinedLabeling = combinedLabeling.concat(item.labeling || []);
-              });
-              return combinedLabeling;
+            let combinedLabeling = [];
+            data[name].forEach((item) => {
+              combinedLabeling = combinedLabeling.concat(item.labeling || []);
+            });
+            return combinedLabeling;
           } else {
-              return [];
+            return [];
           }
         }
-    
+
         // Функция для получения индекса из массива порядков
         function getOrderIndex(group, letterPart) {
-            return getLabeling(orderData, group).indexOf(letterPart);
+          return getLabeling(orderData, group).indexOf(letterPart);
         }
-    
+
         // Сортировка элементов внутри каждой группы
         groups.forEach((group) => {
           for (let key of Object.keys(group)) {
@@ -2189,53 +2214,49 @@
               group[key].sort((a, b) => {
                 const aLetterPart = getLetterPart(a.part_number);
                 const bLetterPart = getLetterPart(b.part_number);
-                return getOrderIndex(key, aLetterPart) - getOrderIndex(key, bLetterPart);
+                return (
+                  getOrderIndex(key, aLetterPart) -
+                  getOrderIndex(key, bLetterPart)
+                );
               });
             }
           }
-        })
+        });
 
         return groups;
-      }  
+      }
 
       data = sortGroupsByPartNumber(data, this.groupedData);
 
       let _this = this;
       let catalog = $("#catalog");
       let catalog__wrapper = catalog.find(".catalog__wrapper");
-      let catalog_auto_title = $("#catalog_auto_title");
-      let withoutFilterData = _this.exactMatchFilterData(data);
-      // console.log("withoutFilterData", withoutFilterData);
-      let filteredData = _this.needToSortProduct(withoutFilterData);
-      let filteredDataExactMatches = null;
-      let filteredDataNonExactMatches = null;
-      if (filteredData) {
-        if (filteredData.exactMatches) {
-          // withoutFilterData
-          console.log(
-            "filteredData.exactMatches",
-            filteredData.exactMatches
-          );
-          filteredDataExactMatches = filteredData.exactMatches
-          // filteredDataExactMatches = _this.needToSortProduct(
-          //   filteredData.exactMatches
-          // );
-        }
-        if (filteredData.nonExactMatches) {
-          console.log(
-            "withoutFilterData.nonExactMatches",
-            filteredData.nonExactMatches
-          );
-          filteredDataNonExactMatches = filteredData.nonExactMatches
-          // filteredDataNonExactMatches = _this.needToSortProduct(
-          //   filteredData.nonExactMatches
-          // );
-        }
-      }
-      console.log("filteredDataNonExactMatches", filteredDataNonExactMatches);
+      // let catalog_auto_title = $("#catalog_auto_title");
+      // let withoutFilterData = _this.exactMatchFilterData(data);
+      let filteredData = data;
+
       // let filteredData = _this.needToSortProduct(withoutFilterData);
-      // console.log("withoutFilterData", withoutFilterData.nonExactMatches);
-      // let dataForFender = _this.sortByqualifierProduct(filteredData);
+
+      const map1 = filteredData.map((item) => {
+        if (item) {
+          let dynamicKey = _this.getDynamicKey(item);
+          let dynamicValue = item[dynamicKey];
+
+          if (dynamicValue) {
+            if (dynamicValue.length > 0) {
+              let sortedObj = this.sortByqualifierProduct(dynamicValue);
+              return (item[dynamicKey] = sortedObj);
+            }
+          }
+        }
+      });
+
+      console.log("map1", map1);
+      
+      const cleanedData = this.exactMatchFilterData(map1);
+
+      console.log("cleanedData", cleanedData.exactMatches);
+
       let ifhasSortedProducts = _this.hasSortedProducts(filteredData);
       console.log("ifhasSortedProducts", ifhasSortedProducts);
 
@@ -2244,27 +2265,29 @@
       //   nonExactMatches: nonExactMatches,
       // };
       catalog__wrapper.html("");
+      ifhasSortedProducts = true;
+
+      console.log("filteredData", filteredData);
       if (ifhasSortedProducts) {
-        // if (filteredData && filteredData.length > 0) {
-        // if (filteredDataExactMatches, filteredDataNonExactMatches) {
-        this.renderParts(filteredDataExactMatches, filteredDataNonExactMatches);
-        // }
-        // if (filteredDataNonExactMatches) {
-        //   this.renderParts(filteredDataNonExactMatches);
-        // }
+        this.renderParts(filteredData);
+        // this.renderParts(filteredDataExactMatches, filteredDataNonExactMatches);
       } else {
-        // } else if (!filteredData || filteredData.length === 0) {
         this.renderNoData(catalog);
       }
     }
 
-    renderParts(filteredDataExactMatches, filteredDataNonExactMatches) {
+    renderParts(filteredData) {
       let _this = this;
       let catalog = $("#catalog"); // Контейнер всех продуктов
       let catalog__wrapper = catalog.find(".catalog__wrapper");
       let catalog_auto_title = $("#catalog_auto_title");
 
       catalog_auto_title.fadeIn().css("display", "flex");
+      if (!catalog__wrapper) {
+        const catalog__wrapper = document.createElement("div");
+        catalog__wrapper.classList.add("catalog__wrapper");
+        catalog[0].append(catalog__wrapper);
+      }
       // if (catalog_auto_title) {
       //   catalog_auto_title.fadeIn().css("display", "flex");
       // }
@@ -2273,132 +2296,34 @@
         catalogNodata.style.display = "none";
       }
       catalog[0].style.display = "block";
-      console.log(
-        "renderParts filteredDataExactMatches",
-        filteredDataExactMatches
-      );
-       // Создаем два контейнера
-      let exactMatchesContainer = document.createElement("div");
-      exactMatchesContainer.classList.add("exact-matches-container");
-      let nonExactMatchesContainer = document.createElement("div");
-      nonExactMatchesContainer.classList.add("non-exact-matches-container");
-      if (filteredDataExactMatches) {
-        filteredDataExactMatches.forEach((obj) => {
-          console.log("Exact renderParts obj", obj);
+
+      const fullContainer = document.createElement("div");
+      fullContainer.classList.add("full-container");
+      if (filteredData) {
+        filteredData.forEach((obj) => {
           if (obj) {
-            // const dynamicValue = this.getDynamicValue(obj);
-            // const dynamicKey = this.getDynamicKey(obj);
-            this.renderPartContainer(obj, exactMatchesContainer);
+            // let filterFonExam =this.exactMatchFilterData(dataAll)
+            this.renderPartContainer(obj, fullContainer);
           }
         });
       }
-      if (filteredDataNonExactMatches) {
-        filteredDataNonExactMatches.forEach((obj) => {
-          console.log("renderParts NonExact obj", obj);
-          if (obj) {
-            // const dynamicValue = this.getDynamicValue(obj);
-            // const dynamicKey = this.getDynamicKey(obj);
-            this.renderPartContainerAddProducts(obj, nonExactMatchesContainer);
-          }
-        });
-      }
-      console.log("exactMatchesContainer", exactMatchesContainer);
-      console.log("nonExactMatchesContainer", nonExactMatchesContainer);
-      catalog__wrapper.append(exactMatchesContainer);
-      catalog__wrapper.append(nonExactMatchesContainer);
+
+      catalog__wrapper.append(fullContainer);
     }
 
-    // async renderParts(filteredDataExactMatches, filteredDataNonExactMatches) {
-    //   let _this = this;
-    //   let catalog = $("#catalog");
-    //   let catalog__wrapper = catalog.find(".catalog__wrapper");
-    //   let catalog_auto_title = $("#catalog_auto_title");
-
-    //   catalog_auto_title.fadeIn().css("display", "flex");
-    //   let catalogNodata = $(".catalog_nodata")[0];
-    //   if (catalogNodata) {
-    //     catalogNodata.style.display = "none";
-    //   }
-    //   catalog[0].style.display = "block";
-
-    //   // Создаем два контейнера
-    //   let exactMatchesContainer = document.createElement("div");
-    //   exactMatchesContainer.classList.add("exact-matches-container");
-    //   let nonExactMatchesContainer = document.createElement("div");
-    //   nonExactMatchesContainer.classList.add("non-exact-matches-container");
-
-    //   // Обработка exactMatches
-    //   if (filteredDataExactMatches) {
-    //     console.log("filteredDataExactMatches", filteredDataExactMatches);
-    //     for (const obj of filteredDataExactMatches) {
-    //       if (obj) {
-    //         console.log("renderParts obj", obj);
-    //         await _this.renderPartContainer(obj, exactMatchesContainer);
-    //       }
-    //     }
-    //   }
-
-    //   // Добавляем контейнер с точными совпадениями в catalog__wrapper
-    //   catalog__wrapper.append(exactMatchesContainer);
-
-    //   // Обработка nonExactMatches
-    //   if (filteredDataNonExactMatches) {
-    //     for (const obj of filteredDataNonExactMatches) {
-    //       if (obj) {
-    //         await _this.renderPartContainerAddProducts(
-    //           obj,
-    //           nonExactMatchesContainer
-    //         );
-    //       }
-    //     }
-    //   }
-
-    //   // Добавляем контейнер с неполными совпадениями в catalog__wrapper
-    //   catalog__wrapper.append(nonExactMatchesContainer);
-    // }
-    renderPartContainer(productObject, exactMatchesContainer) {
+    renderPartContainer(productObject, fullContainer) {
       const partContainer = this.createPartContainer(productObject);
-      // nonExactMatchesContainer.append(partContainer);
-      exactMatchesContainer.append(partContainer);
-      // catalog__wrapper.append(partContainer);
-      return partContainer;
-    }
-
-    renderPartContainerAddProducts(productObject, nonExactMatchesContainer) {
-      const partContainer = this.createPartContainerAddProducts(productObject);
-      nonExactMatchesContainer.append(partContainer);
+      fullContainer.append(partContainer);
       return partContainer;
     }
 
     createPartContainer(dataAllCategory) {
-      const dynamicValue = this.getDynamicValue(dataAllCategory);
-      const dynamicKey = this.getDynamicKey(dataAllCategory);
-      console.log("createPartContainer dynamicValue", dataAllCategory);
-      const sorteddataForFender = this.sortByqualifierProduct(dynamicValue);
-      let partContainer = document.createElement("div");
-      partContainer.classList.add("container-catalog");
 
-      let partHeaderContainer = this.createPartHeaderContainer(dynamicKey);
-      partContainer.append(partHeaderContainer);
-      console.log(
-        "createPartContainer sorteddataForFender",
-        sorteddataForFender
-      );
-      let partContainerBasic =
-        this.createPartContainerBasic(sorteddataForFender);
-      partContainer.append(partContainerBasic);
-
-      return partContainer;
-    }
-
-    createPartContainerAddProducts(dataAllCategory) {
       const dynamicValue = this.getDynamicValue(dataAllCategory);
       const dynamicKey = this.getDynamicKey(dataAllCategory);
 
-      const h2 = document.createElement("h2");
-      h2.textContent = "Похожие продукты";
-
-      const sorteddataForFender = this.sortByqualifierProduct(dynamicValue);
+      const sorteddataForFender = dynamicValue;
+      // const sorteddataForFender = this.sortByqualifierProduct(dynamicValue);
       let partContainer = document.createElement("div");
       partContainer.classList.add("container-catalog");
 
@@ -2406,10 +2331,8 @@
       partContainer.append(partHeaderContainer);
 
       let partContainerBasic =
-        this.createPartContainerBasic(sorteddataForFender);
-      partContainer.append(h2);
+        this.createCategoryContainer(sorteddataForFender);
       partContainer.append(partContainerBasic);
-
       return partContainer;
     }
 
@@ -2426,7 +2349,6 @@
 
       return partHeaderContainer;
     }
-
 
     createPartHeaderSpan(productCategory) {
       let partHeaderSpan = document.createElement("span");
@@ -2454,56 +2376,55 @@
       return partHeaderTitle;
     }
 
-    createPartContainerBasic(dataForFender) {
+    createCategoryContainer(dataForFender) {
       let partContainerBasic = document.createElement("div");
       partContainerBasic.classList.add("container-catalog");
-      console.log("createPartContainerBasic dataForFender", dataForFender);
-      let categoryContainer = this.createCategoryContainer(dataForFender);
-      partContainerBasic.append(categoryContainer);
+
+      for (const key in dataForFender) {
+        let allProductsKeys = key;
+        let allProductsValues = dataForFender[key];
+
+        let categoryContainer = document.createElement("div");
+        categoryContainer.classList.add("category-container");
+
+        let productsContainer = document.createElement("div");
+        productsContainer.classList.add("products-container");
+
+        const productCategory = allProductsValues[0].product_group;
+        const productsSide = allProductsValues[0].position;
+
+        let optionsContainer = this.createOptionsContainer(
+          allProductsKeys,
+          productCategory,
+          productsSide
+        );
+        categoryContainer.append(optionsContainer);
+
+        allProductsValues.forEach((part) => {
+          this.createProduct(part, productsContainer);
+          categoryContainer.append(productsContainer);
+        });
+        partContainerBasic.append(categoryContainer);
+      }
 
       return partContainerBasic;
     }
 
-    createCategoryContainer(dataForFender) {
-      console.log("createCategoryContainer dataForFender", dataForFender);
-      const dynamicValue = this.getDynamicValue(dataForFender);
-      const dynamicKey = this.getDynamicKey(dataForFender);
-      // const productCategory = "productCategory";
-      const productCategory = dynamicValue[0].product_group;
-      const productsSide = dynamicValue[0].position;
-      let categoryContainer = document.createElement("div");
-      categoryContainer.classList.add("category-container");
-
-      let optionsContainer = this.createOptionsContainer(
-        dynamicKey,
-        productCategory,
-        productsSide
-      );
-      categoryContainer.append(optionsContainer);
-
-      let productsContainer = document.createElement("div");
-      productsContainer.classList.add("products-container");
-      categoryContainer.append(productsContainer);
-      console.log("ynamicValue внутри createCategoryContainer ", dynamicValue);
-      // console.log(
-      //   "dataForFender внутри createCategoryContainer ",
-      //   dynamicValue
-      // );
-      dynamicValue.forEach((part) => {
-        console.log("part внутри createCategoryContainer ", part);
-        this.createProduct(part, productsContainer);
-      });
-
-      return categoryContainer;
+    listImagesForProduct(allIdProduct) {
+      let images = this.getImagesForProducts(allIdProduct);
+      return images;
     }
 
     createProduct(part, productsContainer) {
       let _this = this;
       // Создаем элемент для части
-      console.log("part внутри createProduct ", part);
+
       let partElement = document.createElement("div");
       partElement.classList.add("item-catalog");
       partElement.setAttribute("data-part_id", part.part_id);
+      if (!part.exact_match) {
+        partElement.classList.add("item-catalog-non-exact_match");
+      }
 
       let part_icon = document.createElement("div");
       part_icon.classList.add("item-catalog__header-icons");
@@ -2524,25 +2445,28 @@
       let part_img = document.createElement("div");
       part_img.classList.add("item-catalog__image");
 
+      // _this.getImagesForProducts(productIds);
       async function getImage() {
         let imgPath = "";
         if (_this.groupedData[part.product_group]) {
           const partGroupData = _this.groupedData[part.product_group];
           const letterPart = part.part_number.match(/[A-Za-z]+/)[0];
-          let result = Object.values(partGroupData).find(item => item.labeling.includes(letterPart));
+          let result = Object.values(partGroupData).find((item) =>
+            item.labeling.includes(letterPart)
+          );
           if (result && result.imgId) {
             console.log(result.imgId);
-            const response = await fetch(`/wp-json/wp/v2/media/${result.imgId}`)
+            const response = await fetch(
+              `/wp-json/wp/v2/media/${result.imgId}`
+            );
             const data = await response.json();
             imgPath = data.source_url;
             console.log(imgPath);
-            part_img.innerHTML =
-            `<img src="${imgPath}" alt="Sxema" />`;
+            part_img.innerHTML = `<img src="${imgPath}" alt="Sxema" />`;
           }
         }
         if (!imgPath) {
-          part_img.innerHTML =
-            `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />`;
+          part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />`;
         }
       }
       getImage();
@@ -2562,23 +2486,17 @@
       partElement.append(part_img);
       partElement.append(part_footer);
 
-      // productsContainer.append(partElement);
-
       productsContainer.append(partElement);
     }
 
     getDynamicValue(obj) {
-      // console.log("getDynamicValue obj", obj);
       const dynamicKey = Object.keys(obj).find((key) => key !== "fitment_type");
       const dynamicValue = obj[dynamicKey];
-      // return { categoryName: dynamicKey, data: dynamicValue };
       return dynamicValue;
     }
 
     getDynamicKey(obj) {
-      // console.log("getDynamicValue obj", obj);
       const dynamicKey = Object.keys(obj).find((key) => key !== "fitment_type");
-      // const dynamicValue = obj[dynamicKey];
       return dynamicKey;
     }
 
@@ -2599,7 +2517,6 @@
       // Показ блока с данными
       $(loadCatalogBlock).fadeIn().css("display", "flex");
 
-      console.log("load_catalog", loadCatalogBlock);
       $("#load_catalog").html(
         '<div class="catalog_nodata">No data available</div>'
       );
@@ -2610,35 +2527,12 @@
 
       // Очистка каталога
       $("#catalog").html("");
+      if ((loadCatalogBlock.textContent = "")) {
+        // Установка сообщения
+        loadCatalogBlock.innerHTML =
+          '<div class="catalog_nodata">No data available</div>';
+      }
     }
-    // renderNoData(catalog) {
-    //   // renderNoData(catalog, catalog_auto_title) {
-    //   let _this = this;
-    //   // let catalog = $("#catalog");
-    //   let catalog__wrapper = catalog.find(".catalog__wrapper");
-    //   let catalog_auto_title = $("#catalog_auto_title");
-    //   let load_catalog = $("#load_catalog");
-    //   console.log("No data found");
-    //   let loadCatalogBlock = document.querySelector("#load_catalog");
-    //   $("#catalog_row").html("");
-    //   // $("#load_catalog").html("");
-    //   // $("#load_catalog").html(
-    //   //   '<div class="catalog_nodata">No data available</div>'
-    //   // );
-    //   loadCatalogBlock.innerHTML =
-    //     '<div class="catalog_nodata">No data available</div>';
-    //   // loadCatalogBlock.style.display = "flex";
-    //   $("#load_catalog").fadeIn().css("display", "flex");
-    //   // load_catalog.css("display", "flex");
-    //   // load_catalog[0].style.display = "none";
-
-    //   console.log("load_catalog", load_catalog);
-    //   if (catalog_auto_title) {
-    //     catalog_auto_title.fadeIn().css("display", "none");
-    //   }
-    //   // catalog[0].style.display = "none";
-    //   $("#catalog").html("");
-    // }
 
     createOptionsContainer(nameCategory, productCategory, productCategorySide) {
       let _this = this;
@@ -2719,56 +2613,53 @@
     sortByqualifierProduct(dataProducts) {
       const objQualifier = {};
       let catalog = $("#catalog"); // Контейнер всех продуктов
+
       // Группируем продукты по комбинации position и qualifier
-      dataProducts.forEach((product) => {
-        const qualifier = product.qualifier || "Dont have qualifier"; // Используем "Dont have qualifier"
-        const position = product.position;
+      if (dataProducts) {
+        dataProducts.forEach((product) => {
+          const qualifier = product.qualifier || "Dont have qualifier"; // Используем "Dont have qualifier"
+          const position = product.position;
 
-        // Формируем ключ с учетом позиции и qualifier
-        const categoryKey =
-          qualifier === "Dont have qualifier"
-            ? `${position} | ${qualifier}`
-            : `${position} | ${qualifier}`;
+          // Формируем ключ с учетом позиции и qualifier
+          const categoryKey = `${position} | ${qualifier}`;
 
-        // Проверяем, существует ли уже ключ в объекте
-        if (!objQualifier.hasOwnProperty(categoryKey)) {
-          objQualifier[categoryKey] = [];
-        }
+          // Проверяем, существует ли уже ключ в объекте
+          if (!objQualifier.hasOwnProperty(categoryKey)) {
+            objQualifier[categoryKey] = [];
+          }
 
-        // Добавляем продукт в соответствующую группу
-        objQualifier[categoryKey].push(product);
-      });
-
-      // Сортируем итоговый объект по ключам
-      const sortedObjQualifier = {};
-      Object.keys(objQualifier)
-        .sort()
-        .forEach((key) => {
-          sortedObjQualifier[key] = objQualifier[key];
+          // Добавляем продукт в массив
+          objQualifier[categoryKey].push(product);
         });
 
-      console.log(
-        "после группировки и сортировки objQualifier",
-        sortedObjQualifier
-      );
-      // // Проверка на пустой объект
-      // if (Object.keys(sortedObjQualifier).length === 0) {
-      //   let load_catalog = $("#load_catalog");
-      //   // return null; // Возврат null, если объект пустой
-      //   load_catalog.html(
-      //     '<div class="catalog_nodata">No data available</div>'
-      //   );
+        // Создаём новый объект для сортировки
+        const sortedObjQualifier = {};
 
-      //   let catalogAutoTitle = $("#catalog_auto_title")[0];
-      //   if (catalogAutoTitle) {
-      //     catalogAutoTitle.style.display = "none";
-      //   }
-      //   console.log("catalog", catalog);
-      //   catalog[0].style.display = "none";
-      // }
-      return sortedObjQualifier; // Возврат собранных данных
+        // Сначала добавляем группы с exact_match === true
+        Object.keys(objQualifier).forEach((key) => {
+          const items = objQualifier[key];
+          if (items.some((item) => item.exact_match === true)) {
+            sortedObjQualifier[key] = items; // Добавляем всю группу
+          }
+        });
+
+        // Затем добавляем остальные группы
+        Object.keys(objQualifier).forEach((key) => {
+          const items = objQualifier[key];
+          if (!items.some((item) => item.exact_match === true)) {
+            sortedObjQualifier[key] = items; // Добавляем всю группу
+          }
+        });
+
+        console.log(
+          "после группировки и сортировки objQualifier",
+          sortedObjQualifier
+        );
+
+        return sortedObjQualifier; // Возврат собранных данных
+      }
+      return null;
     }
-
     checkSubModel() {
       let _this = this;
       let year = _this.$year.val();
@@ -2827,7 +2718,6 @@
       }
     }
 
-
     loadingBlock($block, load = true) {
       $block = $($block);
       let loading =
@@ -2881,6 +2771,33 @@
           filteredData = filteredData.filter(
             (item) => item.fitment_type === filterValue
           );
+        } else {
+          if (filteredData.length > 1) {
+            // Объединяем объекты с одинаковыми динамическими ключами
+            const mergedData = filteredData.reduce((acc, item) => {
+              const dynamicKey = Object.keys(item).find(
+                (key) => key !== "fitment_type"
+              );
+
+              // Ищем элемент с тем же динамическим ключом
+              const existingItem = acc.find((accItem) => accItem[dynamicKey]);
+
+              if (existingItem) {
+                // Если существует, объединяем массивы
+                existingItem[dynamicKey] = existingItem[dynamicKey].concat(
+                  item[dynamicKey]
+                );
+              } else {
+                // Если не существует, добавляем элемент в аккумулятор
+                acc.push({ ...item });
+              }
+
+              return acc;
+            }, []);
+
+            // Перезаписываем filteredData объединёнными данными
+            filteredData = mergedData;
+          }
         }
 
         // Фильтрация по activeCategory
@@ -2926,9 +2843,9 @@
       };
 
       // Фильтрация exactMatches
-      let filteredExactMatches = filterData(dataAll.exactMatches);
+      let filteredExactMatches = filterData(data.exactMatches);
       // Фильтрация nonExactMatches
-      let filteredNonExactMatches = filterData(dataAll.nonExactMatches);
+      let filteredNonExactMatches = filterData(data.nonExactMatches);
 
       // Формирование объекта результата
       return {
@@ -3129,22 +3046,22 @@
       return filteredSettings;
     }
 
-    getImagesForProduct(productId) {
+    getImagesForProducts(productIds) {
       let _this = this;
 
       return $.ajax({
         url: "https://catalog.loopautomotive.com/catalog/part-images",
         type: "GET",
         data: {
-          part_ids: productId,
-          // region_id: _this.getRegionId(),
+          part_ids: productIds.join(","), // Преобразуем массив в строку
+          // region_id: _this.getRegionId(), // Раскомментируйте, если нужно
           action: "apicatalog:getImages",
           nonce: ApiCatalog.nonce,
         },
         success: function (res) {
           if (res && res.success) {
             let images = res.data;
-            return images;
+            return images; // Возвращаем массив изображений
           }
         },
         error: function (xhr) {
