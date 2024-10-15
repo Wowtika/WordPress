@@ -1296,6 +1296,10 @@
         return false;
       };
 
+      if (getUrlParameter("searchdata")) {
+        this.doSearch(getUrlParameter("searchdata"));
+      }
+
       this.$partName
       .on("input", () => {
           const currentUrl = new URL(window.location.href);
@@ -1476,6 +1480,7 @@
     }
 
     createProduct(part, productsContainer) {
+      console.log(part);
       let _this = this;
 
       let partElement = document.createElement("div");
@@ -1528,7 +1533,7 @@
       part_footer.classList.add("item-catalog__footer");
       part_footer.innerHTML =
         '<a href="/product?part_id=' +
-        part.part_id +
+        part.id +
         "&car=" +
         `____` +
         "&region_id=" +
@@ -1858,7 +1863,7 @@
             if (sParameterName[0] === sParam) {
               return sParameterName[1] === undefined
                 ? true
-                : decodeURIComponent(sParameterName[1]);
+                : decodeURIComponent(sParameterName[1].replace(/\+/g, ' '));
             }
           }
           return false;
@@ -1868,7 +1873,96 @@
         let getMake = getUrlParameter("mk");
         let getModel = getUrlParameter("md");
         let getRegion = getUrlParameter("rg");
-        let getType = getUrlParameter("tp");
+        let getType = 1;
+
+        if (getUrlParameter("carData")) {
+
+          function levenshteinDistance(a, b) {
+            const matrix = [];
+        
+            // Инициализация первой строки и первого столбца
+            for (let i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+        
+            // Заполнение матрицы
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b[i - 1] === a[j - 1]) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1, // Замена
+                            matrix[i][j - 1] + 1,     // Вставка
+                            matrix[i - 1][j] + 1      // Удаление
+                        );
+                    }
+                }
+            }
+        
+            return matrix[b.length][a.length];
+          }     
+          
+          function findClosestMatch(input, list) {
+            let closestMatch = null;
+            let minDistance = Infinity;
+        
+            list.forEach(item => {
+                const distance = levenshteinDistance(input.toLowerCase(), item.toLowerCase());
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestMatch = item;
+                }
+            });
+        
+            return closestMatch;
+          }
+
+          const carData = getUrlParameter("carData").toLowerCase();
+          const car = carData.split('+');
+          const carName = carData.replace(/\+/g, ' ');
+          getYear = car[car.length - 1];
+          
+          let xhrMakes = new XMLHttpRequest();
+          xhrMakes.open('GET', `https://catalog.loopautomotive.com/catalog/makes?filter={"year":"${getYear}"}`, false);
+          xhrMakes.send();
+
+          const makes = JSON.parse(xhrMakes.responseText);
+
+          function findField(carName, fields) {
+            return findClosestMatch(carName, fields);
+            for (let field of fields) {
+                if (carName.startsWith(field.toLowerCase())) {
+                    return field;
+                }
+            }
+            return null;
+          }
+
+          function removeManufacturer(carName, manufacturer) {
+            const regex = new RegExp(manufacturer, 'i');
+            return carName.replace(regex, '').trim();
+          }
+
+          getMake = findField(carName, makes);
+
+          const carNameWithoutMake = removeManufacturer(carName, getMake);
+
+          let xhrModels = new XMLHttpRequest();
+          xhrModels.open('GET', `https://catalog.loopautomotive.com/catalog/models?filter={"year":"${getYear}", "make":"${getMake}"}`, false)
+          xhrModels.send();
+
+          const models = JSON.parse(xhrModels.responseText);
+
+          getModel = findField(carNameWithoutMake, models);
+
+          getRegion = 1;
+          let currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.delete('carData');
+        }
 
         this.$region
           .on("change", function () {
