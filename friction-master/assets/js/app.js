@@ -2111,7 +2111,7 @@
         // Создаем массивы для двух групп
         const exactMatches = [];
         const nonExactMatches = [];
-        // let idProduct = [];
+
         dataAll.forEach((obj) => {
           const dynamicKey = this.getDynamicKey(obj);
 
@@ -2131,21 +2131,20 @@
               item.exact_match === undefined || item.exact_match === false
           );
 
-          // ТУТ ID для запроса на все картинки
-          // не удалять, пока оставлю для дебага
-          // let allIdProduct = this.listImagesForProduct(idProduct);
-          // idProduct = dynamicValue.map(item => item.part_id).filter(id => id); // Получаем массив id и фильтруем его
-          // let allIdProduct = this.listImagesForProduct(idProduct);
-
           // Если есть совпадения, добавляем в группу exactMatches
           if (filteredItemsExactMatchTrue.length > 0) {
             exactMatches.push({
               ...obj,
               [dynamicKey]: filteredItemsExactMatchTrue, // Обновляем только массив под динамическим ключом
             });
-          } else {
-            // Если нет совпадений, добавляем в nonExactMatches
-            nonExactMatches.push(obj);
+          }
+
+          // Если нет совпадений exact_match === true, но есть non-exact matches
+          if (filteredItemsExactMatchFalse.length > 0) {
+            nonExactMatches.push({
+              ...obj,
+              [dynamicKey]: filteredItemsExactMatchFalse, // Обновляем только массив под динамическим ключом
+            });
           }
         });
 
@@ -2153,13 +2152,11 @@
         this.$currentData = {
           exactMatches: exactMatches,
           nonExactMatches: nonExactMatches,
-          // idProduct: this.listImagesForProduct(idProduct),
         };
 
         return {
           exactMatches: exactMatches,
           nonExactMatches: nonExactMatches,
-          // idProduct: this.listImagesForProduct(idProduct),
         };
       } else {
         return null; // Возвращаем null, если dataAll не массив
@@ -2295,6 +2292,7 @@
       let nonExactMatchesContainer = document.createElement("div");
       nonExactMatchesContainer.classList.add("non-exact-matches-container");
       if (filteredDataExactMatches) {
+        console.log("filteredDataExactMatches", filteredDataExactMatches);
         filteredDataExactMatches.forEach((obj) => {
           if (obj) {
             this.renderPartContainer(obj, exactMatchesContainer);
@@ -2302,6 +2300,7 @@
         });
       }
       if (filteredDataNonExactMatches) {
+        console.log("filteredDataNonExactMatches", filteredDataNonExactMatches);
         filteredDataNonExactMatches.forEach((obj) => {
           if (obj) {
             this.renderPartContainerAddProducts(obj, nonExactMatchesContainer);
