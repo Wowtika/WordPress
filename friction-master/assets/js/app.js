@@ -1227,6 +1227,328 @@
       });
     }
   }
+  class FilterName extends FilterCore {
+    $partName = null;
+    $button = null;
+    $region = null;
+    groupedData;
+    searchUrl = "https://catalog.loopautomotive.com/catalog/part-search?part_number=";
+
+    constructor(block, Select) {
+      super(block, Select);
+
+      let _this = this;
+
+      this.$partName = this.$block.find('[data-filter="partName"]');
+      this.$button = this.$partName.next('.search-form__button');
+      this.$region = this.$block.find('[data-filter="region"]');
+
+      const urlTax = '/wp-json/wp/v2/product-lines?per_page=20';
+      let groupedData;
+
+      fetch(urlTax)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+          }
+          return response.json();
+        })
+        .then(data => {
+          groupedData = data.reduce((acc, item) => {
+            const [group, line] = item.title.rendered.split(' &#8211; ');
+            if (!acc[group]) {
+              acc[group] = [];
+            }
+            const labeling = item.acf.labeling ? item.acf.labeling.map(label => label.label) : [];
+            const imgId = item.acf.img;
+            acc[group].push({ line, labeling, imgId });
+            return acc;
+          }, {});
+          return groupedData;
+        })
+        .then(data => {
+          const order = ["Black", "Ultralife®", "Elite", "SPEED™", "Circuit Spec"];
+      
+          // Sort each group's array
+          Object.keys(data).forEach(group => {
+            data[group].sort((a, b) => order.indexOf(a.line) - order.indexOf(b.line));
+          });
+          this.groupedData = data;
+        })
+        .catch(error => {
+          console.error('There has been a problem with your fetch operation:', error);
+        });
+
+
+      let getUrlParameter = function getUrlParameter(sParam) {
+        let sPageURL = window.location.search.substring(1),
+          sURLVariables = sPageURL.split("&"),
+          sParameterName,
+          i;
+        for (i = 0; i < sURLVariables.length; i++) {
+          sParameterName = sURLVariables[i].split("=");
+          if (sParameterName[0] === sParam) {
+            return sParameterName[1] === undefined
+              ? true
+              : decodeURIComponent(sParameterName[1]);
+          }
+        }
+        return false;
+      };
+
+      if (getUrlParameter("searchdata")) {
+        this.doSearch(getUrlParameter("searchdata"));
+      }
+
+      this.$partName
+      .on("input", () => {
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.set('searchdata', this.$partName.val());
+          window.history.pushState({}, '', currentUrl);
+        })
+      .attr("disabled", false);
+
+      this.$partName
+      .on("keypress", (event) => {
+          if (event.key === "Enter") {
+              const currentUrl = new URL(window.location.href);
+              currentUrl.searchParams.set('searchdata', this.$partName.val());
+              window.history.pushState({}, '', currentUrl);
+              this.doSearch(this.$partName.val());
+          }
+      });
+  
+
+      this.$button
+        .on("click", () => {
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.set('searchdata', this.$partName.val());
+          window.history.pushState({}, '', currentUrl);
+          this.doSearch(this.$partName.val());
+        });
+    }
+
+    doSearch(partNumber) {
+      let _this = this;
+      let load_catalog = $("#load_catalog");
+      this.loadingBlock(load_catalog);
+      const url = "https://catalog.loopautomotive.com/catalog/part-search?part_number=" + partNumber;
+      const xhr = new XMLHttpRequest();
+      xhr.open("GET", url, true);
+      xhr.setRequestHeader("Accept", "application/json");
+      
+      let catalog = $("#catalog");
+      catalog[0].style.display = "none";
+      let catalog__wrapper = catalog.find(".catalog__wrapper");
+      catalog__wrapper.html("");
+      $("#catalog_auto_title")[0].style.display = "none";
+
+      xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+              const response = JSON.parse(xhr.responseText);
+
+              catalog[0].style.display = "block";
+
+              let containerCatalog = document.createElement("div");
+              containerCatalog.classList.add("container-catalog");
+              catalog__wrapper.append(containerCatalog);
+
+              let catalogHeader = document.createElement("div");
+              catalogHeader.classList.add("catalog__header");
+              catalogHeader.classList.add("header-catalog");
+
+              let pgIcon = 1;
+              switch (response[0].pg_name) {
+                case "Brake Kist":
+                  pgIcon = 1;
+                  break;
+                case "Brake Pads":
+                  pgIcon = 2;
+                  break;
+                case "Brake Rotors":
+                  pgIcon = 3;
+                  break;
+                case "Brake Hardware":
+                  pgIcon = 4;
+                  break;
+                case "Wheel Hubs":
+                  pgIcon = 5;
+                  break;
+              }
+
+              let headerCatalogIcon = document.createElement("span");
+              headerCatalogIcon.classList.add("header-catalog__icon");
+              headerCatalogIcon.classList.add("_icon-catalog" + pgIcon);
+
+              let headerCatalogHeading = document.createElement("h2");
+              headerCatalogHeading.classList.add("header-catalog__heading");
+              headerCatalogHeading.innerHTML = response[0].pg_name;
+
+              catalogHeader.append(headerCatalogIcon);
+              catalogHeader.append(headerCatalogHeading)
+
+              containerCatalog.append(catalogHeader);
+
+              let categoryContainer = document.createElement("div");
+              categoryContainer.classList.add("category-container");
+              containerCatalog.append(categoryContainer);
+
+              let optionsQualifier = document.createElement("div");
+              optionsQualifier.classList.add("options-qualifier");
+
+              let partOptionsSide = document.createElement("div");
+              partOptionsSide.classList.add("item-catalog__image");
+
+              const productCategorySide = response[0].position;
+              if (productCategorySide === "Rear") {
+                partOptionsSide.innerHTML =
+                  '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-right.svg" alt="Side" />';
+              } else if (productCategorySide === "Front") {
+                partOptionsSide.innerHTML =
+                  '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-left.svg" alt="Side" />';
+              } else {
+                partOptionsSide.innerHTML =
+                  '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-all.svg" alt="Side" />';
+              }
+
+              let partOptionsSxema = document.createElement("div");
+              partOptionsSxema.classList.add("item-catalog__image");
+        
+              let indexSxema = "catalog-sxem.jpg"; 
+              if (response[0].pg_name === "Brake Kits") {
+                indexSxema = "catalog-sxem1.jpg"; 
+              } else if (response[0].pg_name === "Brake Pads") {
+                indexSxema = "catalog-sxem2.jpg"; 
+              }
+        
+              const imgElement = document.createElement("img");
+              imgElement.src = `/wp-content/themes/friction-master/assets/img/catalog/${indexSxema}`;
+              imgElement.alt = "Sxema";
+        
+              partOptionsSxema.appendChild(imgElement);
+
+              let partOptionsFooter = document.createElement("p");
+              partOptionsFooter.classList.add("item-catalog__footer");
+              partOptionsFooter.style.textAlign = "center";
+              partOptionsFooter.innerHTML =
+                '<a href="/product?part_id=' +
+                response[0].id +
+                "&car=" +
+                `____` +
+                "&region_id=" +
+                `${_this.$region.val()}` +
+                '">Compare lines</a>';
+
+              optionsQualifier.append(partOptionsSide);
+              optionsQualifier.append(partOptionsSxema);
+              optionsQualifier.append(partOptionsFooter);
+
+              categoryContainer.append(optionsQualifier);
+
+              _this.createProduct(response[0], categoryContainer);
+
+              $("#catalog_auto_title")[0].style.display = "flex";
+              $("#catalog_auto_title").addClass("_icon-arrow-down");
+              $("#catalog_auto_title").html("Found 1 part");
+
+          } else {
+              $("#catalog_auto_title")[0].style.display = "flex";
+              $("#catalog_auto_title").removeClass("_icon-arrow-down");
+              $("#catalog_auto_title").html("Didn't find");
+              console.error("Request failed with status:", xhr.status);
+          }
+          _this.loadingBlock(load_catalog, false);
+      };
+
+      xhr.onerror = function() {
+          console.error("Request error");
+      };
+
+      xhr.send();
+    }
+
+    loadingBlock($block, load = true) {
+      $block = $($block);
+      let loading =
+        '<div class="loading_block"><div class="loading_wave"></div> <div class="loading_wave"></div> <div class="loading_wave"></div> <div class="loading_wave"></div> <div class="loading_wave"></div> <div class="loading_wave"></div> <div class="loading_wave"></div> <div class="loading_wave"></div> <div class="loading_wave"></div> <div class="loading_wave"></div> </div>';
+
+      if (load) {
+        $block.html(loading);
+      } else {
+        $block.html("");
+      }
+    }
+
+    createProduct(part, productsContainer) {
+      console.log(part);
+      let _this = this;
+
+      let partElement = document.createElement("div");
+      partElement.classList.add("item-catalog");
+      partElement.setAttribute("data-part_id", part.id);
+
+      let part_icon = document.createElement("div");
+      part_icon.classList.add("item-catalog__header-icons");
+      part_icon.innerHTML =
+        '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card1.svg" alt="" /></a>' +
+        '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card2.svg" alt="" /></a>' +
+        '<a href="#"><img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-card3.svg" alt="" /></a>';
+
+      let part_heading = document.createElement("div");
+      part_heading.classList.add("item-catalog__header-heading");
+      part_heading.textContent = part.number;
+
+      let part_header = document.createElement("div");
+      part_header.classList.add("item-catalog__header");
+      part_header.append(part_icon);
+      part_header.append(part_heading);
+
+      let part_img = document.createElement("div");
+      part_img.classList.add("item-catalog__image");
+
+      async function getImage() {
+        let imgPath = "";
+        console.log(_this.groupedData[part.pg_name]);
+        if (_this.groupedData[part.pg_name]) {
+          const partGroupData = _this.groupedData[part.pg_name];
+          const letterPart = part.number.match(/[A-Za-z]+/)[0];
+          let result = Object.values(partGroupData).find(item => item.labeling.includes(letterPart));
+          if (result && result.imgId) {
+            const response = await fetch(`/wp-json/wp/v2/media/${result.imgId}`)
+            const data = await response.json();
+            imgPath = data.source_url;
+            console.log(imgPath);
+            part_img.innerHTML =
+            `<img src="${imgPath}" alt="Sxema" />`;
+          }
+        }
+        if (!imgPath) {
+          part_img.innerHTML =
+            `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="Sxema" />`;
+        }
+      }
+      getImage();
+
+      let part_footer = document.createElement("div");
+      part_footer.classList.add("item-catalog__footer");
+      part_footer.innerHTML =
+        '<a href="/product?part_id=' +
+        part.id +
+        "&car=" +
+        `____` +
+        "&region_id=" +
+        `${_this.$region.val()}` +
+        '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
+
+      partElement.append(part_header);
+      partElement.append(part_img);
+      partElement.append(part_footer);
+
+      // productsContainer.append(partElement);
+
+      productsContainer.append(partElement);
+    }
+  }
   class FilterMini extends FilterCore {
     $region = null;
     $year = null;
@@ -1556,7 +1878,7 @@
             if (sParameterName[0] === sParam) {
               return sParameterName[1] === undefined
                 ? true
-                : decodeURIComponent(sParameterName[1]);
+                : decodeURIComponent(sParameterName[1].replace(/\+/g, ' '));
             }
           }
           return false;
@@ -1567,6 +1889,88 @@
         let getModel = getUrlParameter("md");
         let getRegion = getUrlParameter("rg");
         let getType = getUrlParameter("tp");
+
+        if (getUrlParameter("carData")) {
+
+          function levenshteinDistance(a, b) {
+            const matrix = [];
+        
+            // Инициализация первой строки и первого столбца
+            for (let i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+        
+            // Заполнение матрицы
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b[i - 1] === a[j - 1]) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1, // Замена
+                            matrix[i][j - 1] + 1,     // Вставка
+                            matrix[i - 1][j] + 1      // Удаление
+                        );
+                    }
+                }
+            }
+        
+            return matrix[b.length][a.length];
+          }     
+          
+          function findClosestMatch(input, list) {
+            let closestMatch = null;
+            let minDistance = Infinity;
+        
+            list.forEach(item => {
+                const distance = levenshteinDistance(input.toLowerCase(), item.toLowerCase());
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestMatch = item;
+                }
+            });
+        
+            return closestMatch;
+          }
+
+          const carData = getUrlParameter("carData").toLowerCase().replace(/\s/g, '+');
+          const car = carData.split('+');
+          const carName = carData.replace(/\+/g, ' ');
+          getYear = car[car.length - 1];
+          
+          let xhrMakes = new XMLHttpRequest();
+          xhrMakes.open('GET', `https://catalog.loopautomotive.com/catalog/makes?filter={"year":"${getYear}"}`, false);
+          xhrMakes.send();
+
+          const makes = JSON.parse(xhrMakes.responseText);
+
+          function findField(carName, fields) {
+            return findClosestMatch(carName, fields);
+          }
+
+          function removeManufacturer(carName, manufacturer) {
+            const regex = new RegExp(manufacturer, 'i');
+            return carName.replace(regex, '').trim();
+          }
+
+          getMake = findField(carName, makes);
+
+          const carNameWithoutMake = removeManufacturer(carName, getMake);
+
+          let xhrModels = new XMLHttpRequest();
+          xhrModels.open('GET', `https://catalog.loopautomotive.com/catalog/models?filter={"year":"${getYear}", "make":"${getMake}"}`, false)
+          xhrModels.send();
+
+          const models = JSON.parse(xhrModels.responseText);
+
+          getModel = findField(carNameWithoutMake, models);
+
+          getRegion = 1;
+
+        }
 
         this.$region
           .on("change", function () {
@@ -3691,6 +4095,10 @@
     modules_flsModules.select
   );
   modules_flsModules.filter_full = new FilterFull(
+    '[data-filter="full"]',
+    modules_flsModules.select
+  );
+  modules_flsModules.filter_name = new FilterName(
     '[data-filter="full"]',
     modules_flsModules.select
   );
