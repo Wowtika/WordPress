@@ -3900,6 +3900,10 @@ p {
 .item-catalog-non-exact_match {
 	background-color:  #f9010033;
 }
+
+.item-catalog-exact_match {
+	background-color: #b2eab6af;
+}
 .options-qualifier {
 	position: relative;
 	display: -webkit-box;
