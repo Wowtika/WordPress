@@ -3059,7 +3059,7 @@
       part_footer.classList.add("item-catalog__footer");
       part_footer.style.textAlign = "center";
       part_footer.innerHTML =
-        '<a href="/product?part_id=' + nameCategory + '">Compare rulers</a>';
+        '<a href="/product?part_id=' + nameCategory + '">Product lines</a>';
       // part_footer.innerHTML = "Сравнить линейки";
       partOptions.append(part_footer);
       return partOptions;
