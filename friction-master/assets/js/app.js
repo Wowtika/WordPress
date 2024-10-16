@@ -2538,9 +2538,8 @@
         dataAll.forEach((obj) => {
           const dynamicKey = this.getDynamicKey(obj);
 
-          // Проверка на случай, если dynamicKey не найден
           if (!dynamicKey) {
-            return; // Пропускаем объект, если ключ не найден
+            return; 
           }
 
           const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
@@ -2587,36 +2586,81 @@
     }
 
     hasSortedProducts(filteredData) {
+
       if (filteredData) {
-        filteredData.forEach((item) => {
+        for (let item of filteredData) {
+
           let dynamicKey = this.getDynamicKey(item);
           if (dynamicKey) {
             let dynamicValue = item[dynamicKey];
-            if (dynamicValue.length > 0) {
-              return true;
+
+            for (let keyObj in dynamicValue) {
+
+              if (dynamicValue[keyObj].length > 0) {
+
+                return true; // Возвращаем true, если найден объект
+              }
             }
           }
-        });
+        }
       }
-
       return false; // Возвращаем false, если отсортированных объектов нет
     }
 
     create_parts(data) {
-      // перенесла вобщий фильтр
-      console.log("data", data);
+
+      let _this = this;
+      let catalog = $("#catalog");
+      let catalog__wrapper = catalog.find(".catalog__wrapper");
+
+      let filteredData = data;
+      let engine = _this.$engine.val();
+      let submodel = _this.$submodel.val();
+
+      // let filteredData = _this.needToSortProduct(withoutFilterData);
+
+      const processedFilteredResults = filteredData.map((item) => {
+        if (item) {
+
+          let dynamicKey = _this.getDynamicKey(item); // Получаем динамический ключ
+          let dynamicValue = item[dynamicKey]; // Получаем массив по динамическому ключу
+
+          if (Array.isArray(dynamicValue) && dynamicValue.length > 0) {
+            let sortedObj = this.sortByQualifierProduct(dynamicValue);
+            dynamicValue = sortedObj;
+
+            return { [dynamicKey]: sortedObj };
+           
+          }
+        }
+        return item; // Возвращаем оригинальный объект, если нет изменений
+      });
+
+      const cleanedData = this.removeNonExactMatches(processedFilteredResults);
+
+      catalog__wrapper.html("");
+
+      let validfilteredMatches = null;
+
+      if (_this.$submodel.val() !== "" || _this.$engine.val() !== "") {
+        validfilteredMatches = processedFilteredResults;
+      } else {
+        validfilteredMatches = cleanedData;
+      }
+
 
       function sortGroupsByPartNumber(groups, orderData) {
+
         // Функция для извлечения буквенной части из part_number
         function getLetterPart(partNumber) {
           return partNumber.match(/[A-Za-z]+/)[0];
         }
-
         //Получение списка сортировок для группы
         function getLabeling(data, name) {
           if (data.hasOwnProperty(name)) {
             let combinedLabeling = [];
             data[name].forEach((item) => {
+
               combinedLabeling = combinedLabeling.concat(item.labeling || []);
             });
             return combinedLabeling;
@@ -2630,8 +2674,8 @@
           return getLabeling(orderData, group).indexOf(letterPart);
         }
 
-        // Сортировка элементов внутри каждой группы
         groups.forEach((group) => {
+
           for (let key of Object.keys(group)) {
             if (Array.isArray(group[key])) {
               group[key].sort((a, b) => {
@@ -2649,55 +2693,59 @@
         return groups;
       }
 
-      data = sortGroupsByPartNumber(data, this.groupedData);
+      validfilteredMatches = sortGroupsByPartNumber(
+        validfilteredMatches,
+        this.groupedData
+      );
 
-      let _this = this;
-      let catalog = $("#catalog");
-      let catalog__wrapper = catalog.find(".catalog__wrapper");
-      // let catalog_auto_title = $("#catalog_auto_title");
-      // let withoutFilterData = _this.exactMatchFilterData(data);
-      let filteredData = data;
+      let ifhasSortedProducts = _this.hasSortedProducts(validfilteredMatches);
 
-      // let filteredData = _this.needToSortProduct(withoutFilterData);
-
-      const map1 = filteredData.map((item) => {
-        if (item) {
-          let dynamicKey = _this.getDynamicKey(item);
-          let dynamicValue = item[dynamicKey];
-
-          if (dynamicValue) {
-            if (dynamicValue.length > 0) {
-              let sortedObj = this.sortByqualifierProduct(dynamicValue);
-              return (item[dynamicKey] = sortedObj);
-            }
-          }
-        }
-      });
-
-      console.log("map1", map1);
-      
-      const cleanedData = this.exactMatchFilterData(map1);
-
-      console.log("cleanedData", cleanedData.exactMatches);
-
-      let ifhasSortedProducts = _this.hasSortedProducts(filteredData);
-      console.log("ifhasSortedProducts", ifhasSortedProducts);
-
-      // _this.exactMatchFilterData(data) = {
-      //   exactMatches: exactMatches,
-      //   nonExactMatches: nonExactMatches,
-      // };
-      catalog__wrapper.html("");
-      ifhasSortedProducts = true;
-
-      console.log("filteredData", filteredData);
       if (ifhasSortedProducts) {
-        this.renderParts(filteredData);
+        this.renderParts(validfilteredMatches);
         // this.renderParts(filteredDataExactMatches, filteredDataNonExactMatches);
       } else {
         this.renderNoData(catalog);
       }
     }
+
+    removeNonExactMatches = (data) => {
+
+      return data
+        .map((group) => {
+          // Получаем ключ группы и её содержимое
+          const groupKey = Object.keys(group)[0];
+          const groupValue = group[groupKey];
+
+          // Фильтруем элементы в группе по exact_match
+          const filteredItems = Object.keys(groupValue).reduce(
+            (acc, subKey) => {
+
+              if (
+                Array.isArray(groupValue[subKey]) &&
+                groupValue[subKey].length > 0
+              ) {
+                const items = groupValue[subKey].filter(
+                  (item) => item.exact_match === true
+                );
+                if (items.length > 0) {
+                  acc[subKey] = items;
+                }
+              }
+              return acc;
+            },
+            {}
+          );
+
+          return {
+            [groupKey]: filteredItems,
+          };
+        })
+        .filter((group) => {
+          // Удаляем группы, где нет элементов
+          const groupKey = Object.keys(group)[0];
+          return Object.keys(group[groupKey]).length > 0;
+        });
+    };
 
     renderParts(filteredData) {
       let _this = this;
@@ -2706,7 +2754,7 @@
       let catalog_auto_title = $("#catalog_auto_title");
 
       catalog_auto_title.fadeIn().css("display", "flex");
-      if (!catalog__wrapper) {
+      if (!catalog__wrapper[0]) {
         const catalog__wrapper = document.createElement("div");
         catalog__wrapper.classList.add("catalog__wrapper");
         catalog[0].append(catalog__wrapper);
@@ -2725,11 +2773,12 @@
       if (filteredData) {
         filteredData.forEach((obj) => {
           if (obj) {
-            // let filterFonExam =this.exactMatchFilterData(dataAll)
+
             this.renderPartContainer(obj, fullContainer);
           }
         });
       }
+      console.log("fullContainer", fullContainer);
 
       catalog__wrapper.append(fullContainer);
     }
@@ -2741,12 +2790,11 @@
     }
 
     createPartContainer(dataAllCategory) {
-
       const dynamicValue = this.getDynamicValue(dataAllCategory);
       const dynamicKey = this.getDynamicKey(dataAllCategory);
 
       const sorteddataForFender = dynamicValue;
-      // const sorteddataForFender = this.sortByqualifierProduct(dynamicValue);
+      // const sorteddataForFender = this.sortByQualifierProduct(dynamicValue);
       let partContainer = document.createElement("div");
       partContainer.classList.add("container-catalog");
 
@@ -2845,9 +2893,12 @@
       let partElement = document.createElement("div");
       partElement.classList.add("item-catalog");
       partElement.setAttribute("data-part_id", part.part_id);
-      if (!part.exact_match) {
-        partElement.classList.add("item-catalog-non-exact_match");
+      if (part.exact_match === true) {
+        partElement.classList.add("item-catalog-exact_match");
       }
+      // if (!part.exact_match) {
+      //   partElement.classList.add("item-catalog-non-exact_match");
+      // }
 
       let part_icon = document.createElement("div");
       part_icon.classList.add("item-catalog__header-icons");
@@ -2944,7 +2995,7 @@
         '<div class="catalog_nodata">No data available</div>'
       );
       // Скрытие заголовка, если существует
-      if (catalog_auto_title.length) {
+      if (catalog_auto_title[0]) {
         catalog_auto_title.fadeOut(); // Изменено на fadeOut
       }
 
@@ -3027,13 +3078,13 @@
       part_footer.classList.add("item-catalog__footer");
       part_footer.style.textAlign = "center";
       part_footer.innerHTML =
-        '<a href="/product?part_id=' + nameCategory + '">Сравнить линейки</a>';
+        '<a href="/product?part_id=' + nameCategory + '">Product lines</a>';
       // part_footer.innerHTML = "Сравнить линейки";
       partOptions.append(part_footer);
       return partOptions;
     }
 
-    sortByqualifierProduct(dataProducts) {
+    sortByQualifierProduct(dataProducts) {
       const objQualifier = {};
       let catalog = $("#catalog"); // Контейнер всех продуктов
 
@@ -3130,8 +3181,6 @@
 
     checkEngineFromUrl(year, make, model, engine, submodel) {
       let _this = this;
-
-      console.log(engine);
 
       if (engine != "" && submodel != "") {
         _this.partsSearch(year, make, model, engine, submodel);
