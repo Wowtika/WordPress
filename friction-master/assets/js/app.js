@@ -1923,8 +1923,9 @@
           
           function findClosestMatch(input, list) {
             let closestMatch = null;
-            let minDistance = Infinity;
+            let minDistance = 3;
         
+
             list.forEach(item => {
                 const distance = levenshteinDistance(input.toLowerCase(), item.toLowerCase());
                 if (distance < minDistance) {
@@ -1938,8 +1939,9 @@
 
           const carData = getUrlParameter("carData").toLowerCase().replace(/\s/g, '+');
           const car = carData.split('+');
-          const carName = carData.replace(/\+/g, ' ');
           getYear = car[car.length - 1];
+          const carName = carData.replace(/\+/g, ' ').replace(getYear, '');
+          console.log("carName " + carName);
           
           let xhrMakes = new XMLHttpRequest();
           xhrMakes.open('GET', `https://catalog.loopautomotive.com/catalog/makes?filter={"year":"${getYear}"}`, false);
@@ -1948,7 +1950,20 @@
           const makes = JSON.parse(xhrMakes.responseText);
 
           function findField(carName, fields) {
-            return findClosestMatch(carName, fields);
+            let wordBuff = ""
+            for (let word of carName) {
+              wordBuff += word;
+              const match = findClosestMatch(wordBuff, fields);
+              if (match) {
+                return match;
+              }
+            }
+            return null;
+          }
+
+          function findModel(modelName, fields) {
+              const match = findClosestMatch(modelName, fields);
+              return match;
           }
 
           function removeManufacturer(carName, manufacturer) {
@@ -1956,9 +1971,9 @@
             return carName.replace(regex, '').trim();
           }
 
-          getMake = findField(carName, makes);
+          getMake = findField(carName.split(' '), makes);
+          const carNameWithoutMake = removeManufacturer(carName, getMake).replace();
 
-          const carNameWithoutMake = removeManufacturer(carName, getMake);
 
           let xhrModels = new XMLHttpRequest();
           xhrModels.open('GET', `https://catalog.loopautomotive.com/catalog/models?filter={"year":"${getYear}", "make":"${getMake}"}`, false)
@@ -1966,7 +1981,11 @@
 
           const models = JSON.parse(xhrModels.responseText);
 
-          getModel = findField(carNameWithoutMake, models);
+          getModel = findModel(carNameWithoutMake, models);
+
+          if (!getModel) {
+            getModel = models[0];
+          }
 
           getRegion = 1;
 
