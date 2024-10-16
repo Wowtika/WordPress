@@ -1234,11 +1234,13 @@
     groupedData;
     searchUrl =
       "https://catalog.loopautomotive.com/catalog/part-search?part_number=";
+    filterFull = null;
 
-    constructor(block, Select) {
+    constructor(block, Select, filterFull) {
       super(block, Select);
 
       let _this = this;
+      this.filterFull = filterFull;
 
       this.$partName = this.$block.find('[data-filter="partName"]');
       this.$button = this.$partName.next(".search-form__button");
@@ -1353,6 +1355,7 @@
     }
 
     doSearch(partNumber) {
+      this.filterFull.$currentData = null;
       let _this = this;
       let load_catalog = $("#load_catalog");
       this.loadingBlock(load_catalog);
@@ -1826,6 +1829,7 @@
     $currentData = null; // Переменная для хранения актуальных данных
     groupedData;
     lastSubModel;
+    order = [];
 
     constructor(block, Select) {
       super(block, Select);
@@ -1833,6 +1837,7 @@
       //Получить линейки
       const url = "/wp-json/wp/v2/product-lines?per_page=20";
       let groupedData;
+      let _this = this;
 
       fetch(url)
         .then((response) => {
@@ -1872,6 +1877,9 @@
             data[group].sort(
               (a, b) => order.indexOf(a.line) - order.indexOf(b.line)
             );
+            data[group].forEach((line) => {
+              _this.order = _this.order.concat(line.labeling);
+            })
           });
           this.groupedData = data;
         })
@@ -1882,7 +1890,7 @@
           );
         });
 
-      let _this = this;
+
       if (this.$block.length) {
         _this.filterProductsAllGroups(); // общий подфильтр продуктов а именно тип применимости(Product lines), категории (Category), сторона(Side), линейки(Lines)
       }
@@ -1917,6 +1925,8 @@
         let getModel = getUrlParameter("md");
         let getRegion = getUrlParameter("rg");
         let getType = getUrlParameter("tp");
+
+        getRegion = 1;
 
         if (getUrlParameter("carData")) {
           function levenshteinDistance(a, b) {
@@ -2574,7 +2584,7 @@
                   combinedBrakePads;
               }
 
-              _this.$currentData = _this.exactMatchFilterData(
+              _this.$currentData = _this.modifyFilteredData(
                 res.data.part_applications
               );
 
@@ -2931,6 +2941,10 @@
       for (const key in dataForFender) {
         let allProductsKeys = key;
         let allProductsValues = dataForFender[key];
+
+        allProductsValues.sort((a, b) => {
+          return this.order.indexOf(a.part_number.match(/[A-Za-z]+/)[0]) - this.order.indexOf(b.part_number.match(/[A-Za-z]+/)[0]);
+        })
 
         let categoryContainer = document.createElement("div");
         categoryContainer.classList.add("category-container");
@@ -3428,6 +3442,52 @@
             })
             .filter((obj) => obj !== null); // Удаляем null значения
         }
+
+        if (activeLinesPads) {
+          filteredData = filteredData
+            .map((row) => {
+              const dynamicKey = this.getDynamicKey(row);
+              const dynamicValue = this.getDynamicValue(row);
+              if (typeof dynamicValue === "object" && dynamicValue !== null) {
+                const filteredItems = {};
+
+                // Перебираем ключи в dynamicValue
+                for (const key in dynamicValue) {
+                  if (dynamicValue.hasOwnProperty(key)) {
+                    const items = dynamicValue[key];
+
+                    // Проверяем, что items - это массив и фильтруем его
+                    if (Array.isArray(items)) {
+                      const matchingItems = items.filter(
+                        (item) => {
+                          if (this.groupedData[dynamicKey]) {
+                            for (let group of this.groupedData[dynamicKey]) {
+                              if (group.line.toLowerCase().includes(activeLinesPads.toLowerCase())) {
+                                if (group.labeling.includes(item.part_number.match(/[A-Za-z]+/)[0]))
+                                  return true;
+                              }
+                            }
+                          }
+                          return false;
+                        }
+                      );
+                      if (matchingItems.length > 0) {
+                        filteredItems[key] = matchingItems; // Сохраняем отфильтрованные элементы
+                      }
+                    }
+                  }
+                }
+                if (Object.keys(filteredItems).length > 0) {
+                  return {
+                    ...row,
+                    [dynamicKey]: filteredItems, // Сохраняем отфильтрованные элементы в объекте
+                  };
+                }
+              }
+              })
+            .filter((obj) => obj !== null && obj !== undefined); // Удаляем null значения
+            console.log(filteredData);
+          }
 
         // Возвращаем отфильтрованные данные
         return filteredData;
@@ -4230,7 +4290,8 @@
   );
   modules_flsModules.filter_name = new FilterName(
     '[data-filter="full"]',
-    modules_flsModules.select
+    modules_flsModules.select,
+    modules_flsModules.filter_full
   );
 
   function getWindow_getWindow(node) {
