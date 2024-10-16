@@ -1297,6 +1297,18 @@
       };
 
       if (getUrlParameter("searchdata")) {
+        const tabsActiveTitle = document.querySelector(
+          "[data-tabs-titles]>._tab-active"
+        );
+        const tabsNonActiveTitle = document.getElementsByClassName("tabs__title")[1];
+        console.log(tabsActiveTitle);
+        console.log(tabsNonActiveTitle);
+        tabsActiveTitle
+          ? tabsActiveTitle.classList.remove("_tab-active")
+          : null;
+        tabsNonActiveTitle
+          ? tabsNonActiveTitle.classList.add("_tab-active")
+          : null;
         this.doSearch(getUrlParameter("searchdata"));
       }
 
@@ -1988,7 +2000,22 @@
           }
 
           getRegion = 1;
+          getType = 1;
 
+          let url = window.location.href;
+          let urlParts = url.split('?');
+          let baseUrl = urlParts[0];
+          let queryParams = urlParts[1].split('&').filter(param => !param.startsWith('carData=')).join('&');
+          let newUrl = baseUrl + (queryParams ? '?' + queryParams : '');
+
+          let params = new URLSearchParams();
+          params.append('tp', 1);
+          params.append('yr', getYear);
+          params.append('mk', getMake);
+          params.append('md', getModel);
+
+          newUrl = newUrl + '?' + params.toString();
+          window.history.pushState({}, '', newUrl);
         }
 
         this.$region
