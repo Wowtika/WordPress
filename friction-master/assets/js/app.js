@@ -2574,7 +2574,7 @@
                   combinedBrakePads;
               }
 
-              _this.$currentData = _this.exactMatchFilterData(
+              _this.$currentData = _this.modifyFilteredData(
                 res.data.part_applications
               );
 
@@ -3428,6 +3428,52 @@
             })
             .filter((obj) => obj !== null); // Удаляем null значения
         }
+
+        if (activeLinesPads) {
+          filteredData = filteredData
+            .map((row) => {
+              const dynamicKey = this.getDynamicKey(row);
+              const dynamicValue = this.getDynamicValue(row);
+              if (typeof dynamicValue === "object" && dynamicValue !== null) {
+                const filteredItems = {};
+
+                // Перебираем ключи в dynamicValue
+                for (const key in dynamicValue) {
+                  if (dynamicValue.hasOwnProperty(key)) {
+                    const items = dynamicValue[key];
+
+                    // Проверяем, что items - это массив и фильтруем его
+                    if (Array.isArray(items)) {
+                      const matchingItems = items.filter(
+                        (item) => {
+                          if (this.groupedData[dynamicKey]) {
+                            for (let group of this.groupedData[dynamicKey]) {
+                              if (group.line.toLowerCase().includes(activeLinesPads.toLowerCase())) {
+                                if (group.labeling.includes(item.part_number.match(/[A-Za-z]+/)[0]))
+                                  return true;
+                              }
+                            }
+                          }
+                          return false;
+                        }
+                      );
+                      if (matchingItems.length > 0) {
+                        filteredItems[key] = matchingItems; // Сохраняем отфильтрованные элементы
+                      }
+                    }
+                  }
+                }
+                if (Object.keys(filteredItems).length > 0) {
+                  return {
+                    ...row,
+                    [dynamicKey]: filteredItems, // Сохраняем отфильтрованные элементы в объекте
+                  };
+                }
+              }
+              })
+            .filter((obj) => obj !== null && obj !== undefined); // Удаляем null значения
+            console.log(filteredData);
+          }
 
         // Возвращаем отфильтрованные данные
         return filteredData;
