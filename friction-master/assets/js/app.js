@@ -2843,9 +2843,34 @@
 
       catalog_auto_title.fadeIn().css("display", "flex");
       if (!catalog__wrapper[0]) {
-        const catalog__wrapper = document.createElement("div");
+        let catalog__container = document.createElement("div");
+        catalog__container.classList.add("catalog__container");
+
+        let catalog__clear = document.createElement("div");
+        catalog__clear.classList.add("catalog__clear");
+
+        let clearButton = document.createElement("button");
+        clearButton.classList.add("clear");
+
+        let clear__value = document.createElement("span");
+        clear__value.classList.add("clear__value");
+
+        let clear__content = document.createElement("span");
+        clear__content.classList.add("clear__content");
+        clear__content.innerHTML = "Clear filter";
+
+        clear__value.append(clear__content);
+        clearButton.append(clear__value);
+        catalog__clear.append(clearButton);
+
+
+        catalog__wrapper = document.createElement("div");
         catalog__wrapper.classList.add("catalog__wrapper");
-        catalog[0].append(catalog__wrapper);
+
+        catalog__container.append(catalog__clear);
+        catalog__container.append(catalog__wrapper);
+
+        catalog[0].append(catalog__container);
       }
       // if (catalog_auto_title) {
       //   catalog_auto_title.fadeIn().css("display", "flex");
