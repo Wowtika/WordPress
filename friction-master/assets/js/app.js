@@ -1941,7 +1941,6 @@
           const car = carData.split('+');
           getYear = car[car.length - 1];
           const carName = carData.replace(/\+/g, ' ').replace(getYear, '');
-          console.log("carName " + carName);
           
           let xhrMakes = new XMLHttpRequest();
           xhrMakes.open('GET', `https://catalog.loopautomotive.com/catalog/makes?filter={"year":"${getYear}"}`, false);
@@ -2485,6 +2484,7 @@
               // Находим все массивы Brake Pads и объединяем их
               let combinedBrakePads = [];
               let firstBrakePadsIndex = -1;
+              let deletedIndex = -1;
 
               res.data.part_applications.forEach((app, index) => {
                 if (app["Brake Pads"]) {
@@ -2495,8 +2495,11 @@
                     firstBrakePadsIndex = index;
                   }
                   delete app["Brake Pads"];
+                  deletedIndex = index;
                 }
               });
+
+              delete res.data.part_applications[deletedIndex];
 
               // Вставляем объединенный массив Brake Pads в первый найденный объект
               if (firstBrakePadsIndex !== -1) {
