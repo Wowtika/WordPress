@@ -1297,6 +1297,18 @@
       };
 
       if (getUrlParameter("searchdata")) {
+        const tabsActiveTitle = document.querySelector(
+          "[data-tabs-titles]>._tab-active"
+        );
+        const tabsNonActiveTitle = document.getElementsByClassName("tabs__title")[1];
+        console.log(tabsActiveTitle);
+        console.log(tabsNonActiveTitle);
+        tabsActiveTitle
+          ? tabsActiveTitle.classList.remove("_tab-active")
+          : null;
+        tabsNonActiveTitle
+          ? tabsNonActiveTitle.classList.add("_tab-active")
+          : null;
         this.doSearch(getUrlParameter("searchdata"));
       }
 
@@ -1798,6 +1810,7 @@
     $model = null;
     $currentData = null; // Переменная для хранения актуальных данных
     groupedData;
+    lastSubModel;
 
     constructor(block, Select) {
       super(block, Select);
@@ -1941,7 +1954,6 @@
           const car = carData.split('+');
           getYear = car[car.length - 1];
           const carName = carData.replace(/\+/g, ' ').replace(getYear, '');
-          console.log("carName " + carName);
           
           let xhrMakes = new XMLHttpRequest();
           xhrMakes.open('GET', `https://catalog.loopautomotive.com/catalog/makes?filter={"year":"${getYear}"}`, false);
@@ -1988,7 +2000,22 @@
           }
 
           getRegion = 1;
+          getType = 1;
 
+          let url = window.location.href;
+          let urlParts = url.split('?');
+          let baseUrl = urlParts[0];
+          let queryParams = urlParts[1].split('&').filter(param => !param.startsWith('carData=')).join('&');
+          let newUrl = baseUrl + (queryParams ? '?' + queryParams : '');
+
+          let params = new URLSearchParams();
+          params.append('tp', 1);
+          params.append('yr', getYear);
+          params.append('mk', getMake);
+          params.append('md', getModel);
+
+          newUrl = newUrl + '?' + params.toString();
+          window.history.pushState({}, '', newUrl);
         }
 
         this.$region
@@ -2030,10 +2057,19 @@
           _this.loadModels(year, make);
         });
 
+        let lastModel = "";
+
         this.$model.on("change", function () {
           let year = _this.$year.val();
           let make = _this.$make.val();
           let model = _this.$model.val();
+          _this.$submodel.val("");
+          _this.$engine.val("");
+
+          if (model === lastModel) return;
+          lastModel = model;
+
+          console.log(model);
 
           let params = $.param({
             yr: year,
@@ -2322,8 +2358,10 @@
 
       _this.hideInfotitle();
 
-      _this.$submodel.html('<option value="" selected>Submodel</option>');
-      _this.rebuildSelect(_this.$submodel);
+      if (!submodel) {
+        _this.$submodel.html('<option value="" selected>Submodel</option>');
+        _this.rebuildSelect(_this.$submodel);
+      }
       _this.$engine.html('<option value="" selected>Engine</option>');
       _this.rebuildSelect(_this.$engine);
 
@@ -2360,7 +2398,7 @@
                 // let submodel = _this.$submodel ? _this.$submodel.val() : "";
 
                 let engineBlock = document.querySelector('[data-id="7"]');
-                if (res.data.engines) {
+                if (res.data.engines && (!res.data.vehicles || submodel )) {
                   if (engineBlock) {
                     engineBlock.style.display = "block";
                   }
@@ -2371,8 +2409,9 @@
                       res.data.engines,
                       _this.$engine,
                       res.data.engines[0]
-                    );
+                    );  
                     engine = res.data.engines[0];
+                    engineBlock.style.display = "none";
                     _this.$engine.attr("disabled", true);
                     // _this.partsSearch(year, make, model, engine, submodel);
                   }
@@ -2380,6 +2419,7 @@
                   engineBlock.style.display = "none";
                 }
 
+                if (!submodel) {
                 let submodelBlock = document.querySelector('[data-id="6"]');
                 if (res.data.vehicles) {
                   if (submodelBlock) {
@@ -2396,6 +2436,7 @@
                       _this.$submodel,
                       res.data.vehicles[0]
                     );
+                    submodelBlock.style.display = "none";
                     submodel = res.data.vehicles[0].submodel;
                     _this.$submodel.attr("disabled", true);
                   }
@@ -2408,6 +2449,7 @@
                 // $("#catalog_row").html("");
                 // $("#inner1").fadeIn().css("display", "grid");
                 // catalogAutoTitleBlock.style.display = "flex";
+              }
               }
 
               // если нет подмодели и двигателя
@@ -2478,6 +2520,7 @@
               // Находим все массивы Brake Pads и объединяем их
               let combinedBrakePads = [];
               let firstBrakePadsIndex = -1;
+              let deletedIndex = -1;
 
               res.data.part_applications.forEach((app, index) => {
                 if (app["Brake Pads"]) {
@@ -2488,8 +2531,13 @@
                     firstBrakePadsIndex = index;
                   }
                   delete app["Brake Pads"];
+                  deletedIndex = index;
                 }
               });
+
+              if (deletedIndex !== -1 && deletedIndex != firstBrakePadsIndex) {
+                delete res.data.part_applications[deletedIndex];
+              }
 
               // Вставляем объединенный массив Brake Pads в первый найденный объект
               if (firstBrakePadsIndex !== -1) {
@@ -2869,10 +2917,21 @@
           productCategory,
           productsSide
         );
+
+        document.body.appendChild(optionsContainer);
+
+        optionsContainer.style.display = "flex";
+
+        const height = optionsContainer.getBoundingClientRect().height;
+
+        optionsContainer.style.display = "";
+
+        document.body.removeChild(optionsContainer);
+
         categoryContainer.append(optionsContainer);
 
         allProductsValues.forEach((part) => {
-          this.createProduct(part, productsContainer);
+          this.createProduct(part, productsContainer, height);
           categoryContainer.append(productsContainer);
         });
         partContainerBasic.append(categoryContainer);
@@ -2886,13 +2945,16 @@
       return images;
     }
 
-    createProduct(part, productsContainer) {
+    createProduct(part, productsContainer, height = 0) {
       let _this = this;
       // Создаем элемент для части
 
       let partElement = document.createElement("div");
       partElement.classList.add("item-catalog");
       partElement.setAttribute("data-part_id", part.part_id);
+      if (height != 0) {
+        partElement.style.height = height + "px";
+      }
       if (part.exact_match === true) {
         partElement.classList.add("item-catalog-exact_match");
       }
@@ -3149,6 +3211,11 @@
       if (submodel != "") {
         _this.partsSearch(year, make, model, engine, submodel);
       }
+
+      if (submodel != this.lastSubModel) {
+        _this.checkModel(year, make, model);
+      }
+      this.lastSubModel = submodel;
     }
 
     checkSubModelFromUrl(year, make, model, engine, submodel) {
