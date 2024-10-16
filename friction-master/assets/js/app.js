@@ -1234,11 +1234,13 @@
     groupedData;
     searchUrl =
       "https://catalog.loopautomotive.com/catalog/part-search?part_number=";
+    filterFull = null;
 
-    constructor(block, Select) {
+    constructor(block, Select, filterFull) {
       super(block, Select);
 
       let _this = this;
+      this.filterFull = filterFull;
 
       this.$partName = this.$block.find('[data-filter="partName"]');
       this.$button = this.$partName.next(".search-form__button");
@@ -1353,6 +1355,7 @@
     }
 
     doSearch(partNumber) {
+      this.filterFull.$currentData = null;
       let _this = this;
       let load_catalog = $("#load_catalog");
       this.loadingBlock(load_catalog);
@@ -1826,6 +1829,7 @@
     $currentData = null; // Переменная для хранения актуальных данных
     groupedData;
     lastSubModel;
+    order = [];
 
     constructor(block, Select) {
       super(block, Select);
@@ -1833,6 +1837,7 @@
       //Получить линейки
       const url = "/wp-json/wp/v2/product-lines?per_page=20";
       let groupedData;
+      let _this = this;
 
       fetch(url)
         .then((response) => {
@@ -1872,6 +1877,9 @@
             data[group].sort(
               (a, b) => order.indexOf(a.line) - order.indexOf(b.line)
             );
+            data[group].forEach((line) => {
+              _this.order = _this.order.concat(line.labeling);
+            })
           });
           this.groupedData = data;
         })
@@ -1882,7 +1890,7 @@
           );
         });
 
-      let _this = this;
+
       if (this.$block.length) {
         _this.filterProductsAllGroups(); // общий подфильтр продуктов а именно тип применимости(Product lines), категории (Category), сторона(Side), линейки(Lines)
       }
@@ -1917,6 +1925,8 @@
         let getModel = getUrlParameter("md");
         let getRegion = getUrlParameter("rg");
         let getType = getUrlParameter("tp");
+
+        getRegion = 1;
 
         if (getUrlParameter("carData")) {
           function levenshteinDistance(a, b) {
@@ -2931,6 +2941,10 @@
       for (const key in dataForFender) {
         let allProductsKeys = key;
         let allProductsValues = dataForFender[key];
+
+        allProductsValues.sort((a, b) => {
+          return this.order.indexOf(a.part_number.match(/[A-Za-z]+/)[0]) - this.order.indexOf(b.part_number.match(/[A-Za-z]+/)[0]);
+        })
 
         let categoryContainer = document.createElement("div");
         categoryContainer.classList.add("category-container");
@@ -4276,7 +4290,8 @@
   );
   modules_flsModules.filter_name = new FilterName(
     '[data-filter="full"]',
-    modules_flsModules.select
+    modules_flsModules.select,
+    modules_flsModules.filter_full
   );
 
   function getWindow_getWindow(node) {
