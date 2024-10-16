@@ -1798,6 +1798,7 @@
     $model = null;
     $currentData = null; // Переменная для хранения актуальных данных
     groupedData;
+    lastSubModel;
 
     constructor(block, Select) {
       super(block, Select);
@@ -2035,6 +2036,8 @@
           let year = _this.$year.val();
           let make = _this.$make.val();
           let model = _this.$model.val();
+          _this.$submodel.val("");
+          _this.$engine.val("");
 
           if (model === lastModel) return;
           lastModel = model;
@@ -2328,8 +2331,10 @@
 
       _this.hideInfotitle();
 
-      _this.$submodel.html('<option value="" selected>Submodel</option>');
-      _this.rebuildSelect(_this.$submodel);
+      if (!submodel) {
+        _this.$submodel.html('<option value="" selected>Submodel</option>');
+        _this.rebuildSelect(_this.$submodel);
+      }
       _this.$engine.html('<option value="" selected>Engine</option>');
       _this.rebuildSelect(_this.$engine);
 
@@ -2366,7 +2371,7 @@
                 // let submodel = _this.$submodel ? _this.$submodel.val() : "";
 
                 let engineBlock = document.querySelector('[data-id="7"]');
-                if (res.data.engines) {
+                if (res.data.engines && (!res.data.vehicles || submodel )) {
                   if (engineBlock) {
                     engineBlock.style.display = "block";
                   }
@@ -2377,8 +2382,9 @@
                       res.data.engines,
                       _this.$engine,
                       res.data.engines[0]
-                    );
+                    );  
                     engine = res.data.engines[0];
+                    engineBlock.style.display = "none";
                     _this.$engine.attr("disabled", true);
                     // _this.partsSearch(year, make, model, engine, submodel);
                   }
@@ -2386,6 +2392,7 @@
                   engineBlock.style.display = "none";
                 }
 
+                if (!submodel) {
                 let submodelBlock = document.querySelector('[data-id="6"]');
                 if (res.data.vehicles) {
                   if (submodelBlock) {
@@ -2402,6 +2409,7 @@
                       _this.$submodel,
                       res.data.vehicles[0]
                     );
+                    submodelBlock.style.display = "none";
                     submodel = res.data.vehicles[0].submodel;
                     _this.$submodel.attr("disabled", true);
                   }
@@ -2414,6 +2422,7 @@
                 // $("#catalog_row").html("");
                 // $("#inner1").fadeIn().css("display", "grid");
                 // catalogAutoTitleBlock.style.display = "flex";
+              }
               }
 
               // если нет подмодели и двигателя
@@ -3159,6 +3168,11 @@
       if (submodel != "") {
         _this.partsSearch(year, make, model, engine, submodel);
       }
+
+      if (submodel != this.lastSubModel) {
+        _this.checkModel(year, make, model);
+      }
+      this.lastSubModel = submodel;
     }
 
     checkSubModelFromUrl(year, make, model, engine, submodel) {
