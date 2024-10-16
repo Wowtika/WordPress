@@ -2508,7 +2508,9 @@
                 }
               });
 
-              delete res.data.part_applications[deletedIndex];
+              if (deletedIndex !== -1 && deletedIndex != firstBrakePadsIndex) {
+                delete res.data.part_applications[deletedIndex];
+              }
 
               // Вставляем объединенный массив Brake Pads в первый найденный объект
               if (firstBrakePadsIndex !== -1) {
