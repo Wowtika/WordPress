@@ -2890,10 +2890,21 @@
           productCategory,
           productsSide
         );
+
+        document.body.appendChild(optionsContainer);
+
+        optionsContainer.style.display = "flex";
+
+        const height = optionsContainer.getBoundingClientRect().height;
+
+        optionsContainer.style.display = "";
+
+        document.body.removeChild(optionsContainer);
+
         categoryContainer.append(optionsContainer);
 
         allProductsValues.forEach((part) => {
-          this.createProduct(part, productsContainer);
+          this.createProduct(part, productsContainer, height);
           categoryContainer.append(productsContainer);
         });
         partContainerBasic.append(categoryContainer);
@@ -2907,13 +2918,16 @@
       return images;
     }
 
-    createProduct(part, productsContainer) {
+    createProduct(part, productsContainer, height = 0) {
       let _this = this;
       // Создаем элемент для части
 
       let partElement = document.createElement("div");
       partElement.classList.add("item-catalog");
       partElement.setAttribute("data-part_id", part.part_id);
+      if (height != 0) {
+        partElement.style.height = height + "px";
+      }
       if (part.exact_match === true) {
         partElement.classList.add("item-catalog-exact_match");
       }
