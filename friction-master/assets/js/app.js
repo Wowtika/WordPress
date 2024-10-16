@@ -2030,10 +2030,17 @@
           _this.loadModels(year, make);
         });
 
+        let lastModel = "";
+
         this.$model.on("change", function () {
           let year = _this.$year.val();
           let make = _this.$make.val();
           let model = _this.$model.val();
+
+          if (model === lastModel) return;
+          lastModel = model;
+
+          console.log(model);
 
           let params = $.param({
             yr: year,
