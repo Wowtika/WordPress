@@ -2727,18 +2727,19 @@
 
         optionsContainer.style.display = "flex";
 
-        requestAnimationFrame(() => {
-          document.body.appendChild(optionsContainer);
-          const height = optionsContainer.getBoundingClientRect().height;
-          document.body.removeChild(optionsContainer);
-          console.log(height); // Выводим высоту для проверки
-          categoryContainer.append(optionsContainer);
+        document.body.append(optionsContainer);
 
-          allProductsValues.forEach((part) => {
-            this.createProduct(part, productsContainer, height);
-            categoryContainer.append(productsContainer);
-          });
-          partContainerBasic.append(categoryContainer);
+        requestAnimationFrame(() => {
+            const height = optionsContainer.getBoundingClientRect().height;
+            document.body.removeChild(optionsContainer);
+
+            categoryContainer.append(optionsContainer);
+
+            allProductsValues.forEach((part) => {
+                this.createProduct(part, productsContainer, height);
+                categoryContainer.append(productsContainer);
+            });
+            partContainerBasic.append(categoryContainer);
         });
       }
 
