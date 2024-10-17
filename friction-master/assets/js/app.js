@@ -1153,6 +1153,39 @@
       this.rebuildSelect($select);
     }
 
+    setOptionsTransmission(data, $select, selected = false) {
+      $select = $($select);
+      // transmission
+      for (let i = 0; i < data.length; i++) {
+        let val = data[i];
+        let opt = document.createElement("option");
+        opt.value = val.transmission;
+        opt.innerHTML = val.transmission;
+
+        if (selected && selected == val) {
+          opt.setAttribute("selected", "selected");
+        }
+
+        $select.append(opt);
+      }
+
+      if (data.length === 1) {
+        // Устанавливаем селект как disabled
+        $select.attr("disabled", true);
+        // тут показывается один двигатель и блокируется блок чтобы не было выбора
+        let selectOptionButtonAll = $select[0].querySelectorAll("option");
+        let selectOption = selectOptionButtonAll[0];
+        let selectOptionButton = selectOptionButtonAll[1];
+        let dataValue = selectOptionButton.textContent;
+        selectOption.textContent = dataValue;
+      } else if (data.length > 1) {
+        // Если больше одного элемента, разрешаем выбор
+        $select.attr("disabled", false);
+      }
+      $select.attr("disabled", false);
+      this.rebuildSelect($select);
+    }
+
     rebuildSelect(select) {
       let _this = this;
       let $select = $(select);
@@ -1317,7 +1350,8 @@
         const tabsActiveTitle = document.querySelector(
           "[data-tabs-titles]>._tab-active"
         );
-        const tabsNonActiveTitle = document.getElementsByClassName("tabs__title")[1];
+        const tabsNonActiveTitle =
+          document.getElementsByClassName("tabs__title")[1];
         console.log(tabsActiveTitle);
         console.log(tabsNonActiveTitle);
         tabsActiveTitle
@@ -1508,7 +1542,6 @@
     }
 
     createProduct(part, productsContainer) {
-
       let _this = this;
 
       let partElement = document.createElement("div");
@@ -1826,6 +1859,7 @@
     $year = null;
     $make = null;
     $model = null;
+    $transmissions = null;
     $currentData = null; // Переменная для хранения актуальных данных
     groupedData;
     lastSubModel;
@@ -1879,7 +1913,7 @@
             );
             data[group].forEach((line) => {
               _this.order = _this.order.concat(line.labeling);
-            })
+            });
           });
           this.groupedData = data;
         })
@@ -1889,7 +1923,6 @@
             error
           );
         });
-
 
       if (this.$block.length) {
         _this.filterProductsAllGroups(); // общий подфильтр продуктов а именно тип применимости(Product lines), категории (Category), сторона(Side), линейки(Lines)
@@ -1903,6 +1936,8 @@
 
         this.$engine = this.$block.find('[data-filter="engine"]');
         this.$submodel = this.$block.find('[data-filter="submodel"]');
+
+        this.$transmissions = this.$block.find('[data-filter="transmissions"]');
 
         let getUrlParameter = function getUrlParameter(sParam) {
           let sPageURL = window.location.search.substring(1),
@@ -1982,8 +2017,8 @@
           const car = carData.split("+");
           getYear = car[car.length - 1];
 
-          const carName = carData.replace(/\+/g, ' ').replace(getYear, '');
-          
+          const carName = carData.replace(/\+/g, " ").replace(getYear, "");
+
           let xhrMakes = new XMLHttpRequest();
           xhrMakes.open(
             "GET",
@@ -2043,19 +2078,22 @@
           getType = 1;
 
           let url = window.location.href;
-          let urlParts = url.split('?');
+          let urlParts = url.split("?");
           let baseUrl = urlParts[0];
-          let queryParams = urlParts[1].split('&').filter(param => !param.startsWith('carData=')).join('&');
-          let newUrl = baseUrl + (queryParams ? '?' + queryParams : '');
+          let queryParams = urlParts[1]
+            .split("&")
+            .filter((param) => !param.startsWith("carData="))
+            .join("&");
+          let newUrl = baseUrl + (queryParams ? "?" + queryParams : "");
 
           let params = new URLSearchParams();
-          params.append('tp', 1);
-          params.append('yr', getYear);
-          params.append('mk', getMake);
-          params.append('md', getModel);
+          params.append("tp", 1);
+          params.append("yr", getYear);
+          params.append("mk", getMake);
+          params.append("md", getModel);
 
-          newUrl = newUrl + '?' + params.toString();
-          window.history.pushState({}, '', newUrl);
+          newUrl = newUrl + "?" + params.toString();
+          window.history.pushState({}, "", newUrl);
         }
 
         this.$region
@@ -2124,8 +2162,13 @@
         this.$engine.on("change", function () {
           _this.checkEngine(); //checkEngine()
         });
+
         this.$submodel.on("change", function () {
           _this.checkSubModel();
+        });
+
+        this.$transmissions.on("change", function () {
+          _this.checkTransmissions();
         });
 
         if (getYear && getMake && getModel && getRegion && getType) {
@@ -2396,6 +2439,8 @@
       let engine = _this.$engine.val();
       let submodel = _this.$submodel.val();
 
+      let transmissions = _this.$transmissions.val();
+
       _this.hideInfotitle();
 
       if (!submodel) {
@@ -2404,6 +2449,11 @@
       }
       _this.$engine.html('<option value="" selected>Engine</option>');
       _this.rebuildSelect(_this.$engine);
+
+      _this.$transmissions.html(
+        '<option value="" selected>Transmissions</option>'
+      );
+      _this.rebuildSelect(_this.$transmissions);
 
       _this.loadingBlock(load_catalog, true);
 
@@ -2436,7 +2486,7 @@
                 $("#inner1").fadeIn().css("display", "grid");
 
                 let engineBlock = document.querySelector('[data-id="7"]');
-                if (res.data.engines && (!res.data.vehicles || submodel )) {
+                if (res.data.engines && (!res.data.vehicles || submodel)) {
                   if (engineBlock) {
                     engineBlock.style.display = "block";
                   }
@@ -2447,7 +2497,7 @@
                       res.data.engines,
                       _this.$engine,
                       res.data.engines[0]
-                    );  
+                    );
                     engine = res.data.engines[0];
                     engineBlock.style.display = "none";
                     _this.$engine.attr("disabled", true);
@@ -2458,38 +2508,48 @@
                 }
 
                 if (!submodel) {
-                let submodelBlock = document.querySelector('[data-id="6"]');
-                if (res.data.vehicles) {
-                  if (submodelBlock) {
-                    submodelBlock.style.display = "block";
-                  }
-                  if (res.data.vehicles.length > 1) {
-                    _this.setOptionsSubmodels(
-                      res.data.vehicles,
-                      _this.$submodel
-                    );
-                  } else if (res.data.vehicles.length === 1) {
-                    _this.setOptionsSubmodels(
-                      res.data.vehicles,
-                      _this.$submodel,
-                      res.data.vehicles[0]
-                    );
+                  let submodelBlock = document.querySelector('[data-id="6"]');
+                  if (res.data.vehicles) {
+                    if (submodelBlock) {
+                      submodelBlock.style.display = "block";
+                    }
+                    if (res.data.vehicles.length > 1) {
+                      _this.setOptionsSubmodels(
+                        res.data.vehicles,
+                        _this.$submodel
+                      );
+                    } else if (res.data.vehicles.length === 1) {
+                      _this.setOptionsSubmodels(
+                        res.data.vehicles,
+                        _this.$submodel,
+                        res.data.vehicles[0]
+                      );
+                      submodelBlock.style.display = "none";
+                      submodel = res.data.vehicles[0].submodel;
+                      _this.$submodel.attr("disabled", true);
+                    }
+                  } else {
                     submodelBlock.style.display = "none";
-                    submodel = res.data.vehicles[0].submodel;
-                    _this.$submodel.attr("disabled", true);
                   }
-                } else {
-                  submodelBlock.style.display = "none";
+
+                  _this.partsSearch(year, make, model, engine, submodel);
+                  // load_catalog.html("");
+                  // $("#catalog_row").html("");
+                  // $("#inner1").fadeIn().css("display", "grid");
+                  // catalogAutoTitleBlock.style.display = "flex";
                 }
-
-                _this.partsSearch(year, make, model, engine, submodel);
-                // load_catalog.html("");
-                // $("#catalog_row").html("");
-                // $("#inner1").fadeIn().css("display", "grid");
-                // catalogAutoTitleBlock.style.display = "flex";
-              }
               }
 
+              if (res.data.transmissions) {
+                // transmissions
+                // setOptionsTransmission
+                if (res.data.transmissions.length > 1) {
+                  _this.setOptionsTransmission(
+                    res.data.transmissions,
+                    _this.$transmissions
+                  );
+                }
+              }
               // если нет подмодели и двигателя
               if (!res.data.engines && !res.data.vehicles) {
                 if (res.data.part_applications.length) {
@@ -2538,11 +2598,16 @@
         // Проверяем, что engine не пустой
         engine = _this.$engine.val();
       }
+
       if (submodel) {
         // Проверяем, что submodel не пустой
         submodel = _this.$submodel.val();
       }
-
+      // // transmissions
+      // if (transmissions) {
+      //   // Проверяем, что submodel не пустой
+      //   transmissions = _this.$transmissions.val();
+      // }
       return $.ajax({
         url: ApiCatalog.url,
         type: "GET",
@@ -2554,7 +2619,6 @@
                 "Данные поиска для группы продуктовых линий:",
                 res.data
               );
-
 
               // Находим все массивы Brake Pads и объединяем их
               let combinedBrakePads = [];
@@ -2617,60 +2681,72 @@
         },
       });
     }
+    transmissionCompatibleParts(dataFulled) {
+      let _this = this;
+      let submodel = _this.$submodel.val();
+      let transmission = _this.$transmissions.val();
+      if (transmission !== "") {
+        if (!dataFulled) {
+          dataFulled = _this.$currentData;
+          console.log(dataFulled);
+        }
 
-    exactMatchFilterData(dataAll) {
-      if (Array.isArray(dataAll)) {
-        // Создаем массивы для двух групп
-        const exactMatches = [];
-        const nonExactMatches = [];
+        if (dataFulled) {
+          console.log(dataFulled);
+          dataFulled.forEach((item) => {
+            // console.log(item);
+            let fitment_type = item.fitment_type;
+            let dynamicKey = _this.getDynamicKey(item);
 
-        dataAll.forEach((obj) => {
-          const dynamicKey = this.getDynamicKey(obj);
-
-          if (!dynamicKey) {
-            return;
-          }
-
-          const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
-
-          // Фильтруем массив внутри объекта
-          const filteredItemsExactMatchTrue = dynamicValue.filter(
-            (item) => item.exact_match === true
-          );
-          const filteredItemsExactMatchFalse = dynamicValue.filter(
-            (item) =>
-              item.exact_match === undefined || item.exact_match === false
-          );
-
-          // Если есть совпадения, добавляем в группу exactMatches
-          if (filteredItemsExactMatchTrue.length > 0) {
-            exactMatches.push({
-              ...obj,
-              [dynamicKey]: filteredItemsExactMatchTrue, // Обновляем только массив под динамическим ключом
-            });
-          }
-
-          // Если нет совпадений exact_match === true, но есть non-exact matches
-          if (filteredItemsExactMatchFalse.length > 0) {
-            nonExactMatches.push({
-              ...obj,
-              [dynamicKey]: filteredItemsExactMatchFalse, // Обновляем только массив под динамическим ключом
-            });
-          }
-        });
-
-        // // Сохраняем отфильтрованные данные
-        // this.$currentData = {
-        //   exactMatches: exactMatches,
-        //   nonExactMatches: nonExactMatches,
-        // };
-
-        return {
-          exactMatches: exactMatches,
-          nonExactMatches: nonExactMatches,
-        };
-      } else {
-        return null; // Возвращаем null, если dataAll не массив
+            if (dynamicKey) {
+              let dynamicValue = item[dynamicKey];
+              if (typeof dynamicValue === "object" && dynamicValue !== null) {
+                for (let keyObj in dynamicValue) {
+                  let nameCategory = keyObj;
+                  console.log("nameCategory", nameCategory);
+                  console.log(dynamicValue[keyObj]);
+                  let allProductInfo = dynamicValue[keyObj];
+                  allProductInfo.forEach((product) => {
+                    console.log("product", product);
+                    if (product.applications) {
+                      // product.applications = [
+                      //   {
+                      //     "submodel": {
+                      //         "value": "SE",
+                      //         "submodel_id": 49
+                      //     },
+                      //     "transmission": {
+                      //         "value": "Automatic CVT",
+                      //         "transmission_base_id": 20,
+                      //         "transmission_control_type_id": 9
+                      //     }
+                      // } ]
+                      console.log("product.applications", product.applications);
+                      product.applications.forEach((app) => {
+                        let submodelValue = app.submodel;
+                        console.log("app submodel", submodelValue);
+                        if (submodelValue) {
+                          if (submodelValue.value === submodel) {
+                            // app.transmission = {
+                            //   value: transmission,
+                            //   transmission_base_id: 20,
+                            //   transmission_control_type_id: 9,
+                            // };
+                            console.log("app.transmission", app.transmission);
+                            console.log(
+                              "подходящий объект со свойством transmission",
+                              app
+                            );
+                          }
+                        }
+                      });
+                    }
+                  });
+                }
+              }
+            }
+          });
+        }
       }
     }
 
@@ -2792,7 +2868,6 @@
       let ifhasSortedProducts = _this.hasSortedProducts(validfilteredMatches);
 
       if (ifhasSortedProducts) {
-
         this.renderParts(validfilteredMatches);
       } else {
         this.renderNoData(catalog);
@@ -2862,7 +2937,6 @@
         clear__value.append(clear__content);
         clearButton.append(clear__value);
         catalog__clear.append(clearButton);
-
 
         catalog__wrapper = document.createElement("div");
         catalog__wrapper.classList.add("catalog__wrapper");
@@ -2968,8 +3042,11 @@
         let allProductsValues = dataForFender[key];
 
         allProductsValues.sort((a, b) => {
-          return this.order.indexOf(a.part_number.match(/[A-Za-z]+/)[0]) - this.order.indexOf(b.part_number.match(/[A-Za-z]+/)[0]);
-        })
+          return (
+            this.order.indexOf(a.part_number.match(/[A-Za-z]+/)[0]) -
+            this.order.indexOf(b.part_number.match(/[A-Za-z]+/)[0])
+          );
+        });
 
         let categoryContainer = document.createElement("div");
         categoryContainer.classList.add("category-container");
@@ -3223,7 +3300,6 @@
 
     sortByQualifierProduct(dataProducts) {
       const objQualifier = {};
-      let catalog = $("#catalog"); // Контейнер всех продуктов
 
       // Группируем продукты по комбинации position и qualifier
       if (dataProducts) {
@@ -3262,10 +3338,42 @@
           }
         });
 
-        return sortedObjQualifier; // Возврат собранных данных
+        let objWithCategory = {};
+
+        // Обработка для группировки по part_number
+        Object.keys(sortedObjQualifier).forEach((key) => {
+          const itemsCategory = sortedObjQualifier[key];
+          let nameCategory = key;
+          const resultSorted = {};
+
+          itemsCategory.forEach((productObj) => {
+            const partNumber = productObj.part_number;
+            const numberMatch = partNumber.match(/\d+/g);
+            const numbers = numberMatch ? numberMatch[0] : "unknown";
+
+            if (!resultSorted[numbers]) {
+              resultSorted[numbers] = [];
+            }
+            resultSorted[numbers].push(productObj);
+          });
+
+          // Добавление в objWithCategory с префиксом, если необходимо
+          Object.keys(resultSorted).forEach((numberKey) => {
+            if (!objWithCategory.hasOwnProperty(nameCategory)) {
+              objWithCategory[nameCategory] = resultSorted[numberKey];
+            } else {
+              let newNameCategory = nameCategory + " | " + numberKey;
+              objWithCategory[newNameCategory] = resultSorted[numberKey];
+            }
+          });
+        });
+
+        // console.log("после сортировки sortedObjQualifier", objWithCategory);
+        return objWithCategory;
       }
       return null;
     }
+
     checkSubModel() {
       let _this = this;
       let year = _this.$year.val();
@@ -3324,6 +3432,26 @@
       }
       if (engine != "") {
         _this.partsSearch(year, make, model, engine);
+      }
+    }
+
+    checkTransmissions() {
+      let _this = this;
+      // let year = _this.$year.val();
+      // let make = _this.$make.val();
+      // let model = _this.$model.val();
+      // let engine = _this.$engine.val();
+      // let submodel = _this.$submodel.val();
+
+      let transmissions = _this.$transmissions.val();
+
+      // if (transmissions != "" && transmissions != "") {
+      //   _this.partsSearch(year, make, model, engine, submodel, transmissions);
+      // }
+      if (transmissions != "") {
+        // _this.partsSearch(year, make, model, engine, submodel, transmissions);
+        console.log("transmissions", transmissions);
+        this.transmissionCompatibleParts();
       }
     }
 
@@ -3412,7 +3540,6 @@
         if (activeCategory) {
           filteredData = filteredData
             .map((item) => {
-
               if (item[activeCategory]) {
                 return {
                   fitment_type: item.fitment_type,
@@ -3483,19 +3610,25 @@
 
                     // Проверяем, что items - это массив и фильтруем его
                     if (Array.isArray(items)) {
-                      const matchingItems = items.filter(
-                        (item) => {
-                          if (this.groupedData[dynamicKey]) {
-                            for (let group of this.groupedData[dynamicKey]) {
-                              if (group.line.toLowerCase().includes(activeLinesPads.toLowerCase())) {
-                                if (group.labeling.includes(item.part_number.match(/[A-Za-z]+/)[0]))
-                                  return true;
-                              }
+                      const matchingItems = items.filter((item) => {
+                        if (this.groupedData[dynamicKey]) {
+                          for (let group of this.groupedData[dynamicKey]) {
+                            if (
+                              group.line
+                                .toLowerCase()
+                                .includes(activeLinesPads.toLowerCase())
+                            ) {
+                              if (
+                                group.labeling.includes(
+                                  item.part_number.match(/[A-Za-z]+/)[0]
+                                )
+                              )
+                                return true;
                             }
                           }
-                          return false;
                         }
-                      );
+                        return false;
+                      });
                       if (matchingItems.length > 0) {
                         filteredItems[key] = matchingItems; // Сохраняем отфильтрованные элементы
                       }
@@ -3509,10 +3642,10 @@
                   };
                 }
               }
-              })
+            })
             .filter((obj) => obj !== null && obj !== undefined); // Удаляем null значения
-            console.log(filteredData);
-          }
+          console.log(filteredData);
+        }
 
         // Возвращаем отфильтрованные данные
         return filteredData;
