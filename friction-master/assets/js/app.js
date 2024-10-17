@@ -2724,23 +2724,22 @@
           productsSide
         );
 
-        document.body.appendChild(optionsContainer);
 
         optionsContainer.style.display = "flex";
 
-        const height = optionsContainer.getBoundingClientRect().height;
+        requestAnimationFrame(() => {
+          document.body.appendChild(optionsContainer);
+          const height = optionsContainer.getBoundingClientRect().height;
+          document.body.removeChild(optionsContainer);
+          console.log(height); // Выводим высоту для проверки
+          categoryContainer.append(optionsContainer);
 
-        optionsContainer.style.display = "";
-
-        document.body.removeChild(optionsContainer);
-
-        categoryContainer.append(optionsContainer);
-
-        allProductsValues.forEach((part) => {
-          this.createProduct(part, productsContainer, height);
-          categoryContainer.append(productsContainer);
+          allProductsValues.forEach((part) => {
+            this.createProduct(part, productsContainer, height);
+            categoryContainer.append(productsContainer);
+          });
+          partContainerBasic.append(categoryContainer);
         });
-        partContainerBasic.append(categoryContainer);
       }
 
       return partContainerBasic;
