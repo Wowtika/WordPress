@@ -60,6 +60,9 @@ get_header() ?>
 									<select data-filter="engine" name="engine" data-class-modif="form">
 										<option value="" selected>Engine</option>
 									</select>
+									<select data-filter="transmissions" name="transmissions" data-class-modif="form">
+										<option value="" selected>Transmissions</option>
+									</select>
 								</div>
 							</div>
 						</div>
