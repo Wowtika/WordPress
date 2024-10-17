@@ -41,7 +41,7 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
           repository: ${{ github.repository }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/yougile-esit-task
+      - uses: actions/yougile-edit-task
         with:
           task-body: |
             { "completed": ${{ github.event.action == 'closed' }} }
@@ -58,7 +58,7 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
           repository: ${{ github.repository }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/yougile-esit-task
+      - uses: actions/yougile-edit-task
         with:
           task-body: |
             { "title": ${{ toJson(github.event.issue.title) }} }
