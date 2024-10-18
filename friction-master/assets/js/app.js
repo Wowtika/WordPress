@@ -1497,7 +1497,8 @@
           return response.json();
         })
         .then((data) => {
-          groupedData = data.reduce((acc, item) => {
+          const acc = {};
+          const fetchImagePromises = data.map((item) => {
             const [group, line] = item.title.rendered.split(" &#8211; ");
             if (!acc[group]) {
               acc[group] = [];
@@ -1506,10 +1507,28 @@
               ? item.acf.labeling.map((label) => label.label)
               : [];
             const imgId = item.acf.img;
-            acc[group].push({ line, labeling, imgId });
-            return acc;
-          }, {});
-          return groupedData;
+
+            let imgPathPromise = Promise.resolve("");
+            if (imgId) {
+              imgPathPromise = fetch(`/wp-json/wp/v2/media/${imgId}`)
+                .then((imgResponse) => {
+                  if (!imgResponse.ok) {
+                    throw new Error("Network response was not ok " + imgResponse.statusText);
+                  }
+                  return imgResponse.json();
+                })
+                .then((imgData) => imgData.source_url)
+                .catch((error) => {
+                  return "/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg";
+                });
+            }
+
+            return imgPathPromise.then((imgPath) => {
+              acc[group].push({ line, labeling, imgPath });
+            });
+          });
+
+          return Promise.all(fetchImagePromises).then(() => acc);
         })
         .then((data) => {
           const order = [
@@ -2698,6 +2717,7 @@
     }
 
     createCategoryContainer(dataForFender) {
+      let _this = this;
       let partContainerBasic = document.createElement("div");
       partContainerBasic.classList.add("container-catalog");
 
@@ -2718,60 +2738,52 @@
         const productCategory = allProductsValues[0].product_group;
         const productsSide = allProductsValues[0].position;
 
-        let foundImage = false;
-        let productScheme = "";
-
-        allProductsValues.forEach(part => {
-            if (!foundImage) {
-              const url = `https://catalog.loopautomotive.com/catalog/part-images?part_ids=${part.part_id}`;
-              const xhr = new XMLHttpRequest();
-              xhr.open('GET', url, false);
-              xhr.send(null);
-      
-              if (xhr.status === 200) {
-                  const data = JSON.parse(xhr.responseText);
-                  if (data.length > 0 && data[0].tech_drawings.length > 0) {
-                      productScheme = data[0].tech_drawings[0];
-                      foundImage = true;
-                  }
-              }
-            }
-        });
-
-        let optionsContainer = this.createOptionsContainer(
+        
+        let optionsContainer = _this.createOptionsContainer(
           allProductsKeys,
           productCategory,
           productsSide,
-          productScheme
+          allProductsValues[0].part_id
         );
 
 
-        document.body.append(optionsContainer);
+        async function loadImage(image) {
+          return new Promise((resolve) => {
+              if (image.complete && image.src) {
+                  resolve();
+              } else {
+                  image.onload = resolve;
+                  image.onerror = resolve; // В случае ошибки загрузки изображения
+              }
+          });
+        }
 
-        const images = optionsContainer.querySelectorAll('img');
-        const imagePromises = Array.from(images).map(img => {
-            return new Promise((resolve) => {
-                if (img.complete) {
-                    resolve();
-                } else {
-                    img.onload = resolve;
-                    img.onerror = resolve; // В случае ошибки загрузки изображения
-                }
+        //Ждём прогрузки фото, достаём высоту, меняем высоту продуктов
+        async function processImages() {
+          const image = optionsContainer.querySelectorAll('img')[1];
+
+          loadImage(image)
+            .then(() => {
+              const height = optionsContainer.getBoundingClientRect().height;
+    
+              productsContainer.querySelectorAll(".item-catalog")
+                .forEach(
+                  (partElement) => {
+                    partElement.style.height = `${height}px`;
+                  }
+                )
             });
+        }
+
+        categoryContainer.append(optionsContainer);
+      
+        allProductsValues.forEach((part) => {
+            _this.createProduct(part, productsContainer);
+            categoryContainer.append(productsContainer);
         });
-
-        Promise.all(imagePromises).then(() => {
-            const height = optionsContainer.getBoundingClientRect().height;
-            document.body.removeChild(optionsContainer);
-
-            categoryContainer.append(optionsContainer);
-
-            allProductsValues.forEach((part) => {
-                this.createProduct(part, productsContainer, height);
-                categoryContainer.append(productsContainer);
-            });
-            partContainerBasic.append(categoryContainer);
-        });
+        partContainerBasic.append(categoryContainer);
+        
+        processImages();
       }
 
       return partContainerBasic;
@@ -2782,16 +2794,13 @@
       return images;
     }
 
-    createProduct(part, productsContainer, height = 0) {
+    createProduct(part, productsContainer) {
       let _this = this;
       // Создаем элемент для части
 
       let partElement = document.createElement("div");
       partElement.classList.add("item-catalog");
       partElement.setAttribute("data-part_id", part.part_id);
-      if (height != 0) {
-        partElement.style.height = height + "px";
-      }
       if (part.exact_match === true) {
         partElement.classList.add("item-catalog-exact_match");
       }
@@ -2819,35 +2828,28 @@
       part_img.classList.add("item-catalog__image");
 
       // _this.getImagesForProducts(productIds);
-      async function getImage() {
-        let imgPath = "";
-        if (_this.groupedData[part.product_group]) {
-          const partGroupData = _this.groupedData[part.product_group];
-          const match = part.part_number.match(/[A-Za-z]+/);
-          let letterPart;
-          if (match) {
-            letterPart = match[0];
-          } else {
-            letterPart = "D";
-          }
-
-          let result = Object.values(partGroupData).find((item) =>
-            item.labeling.includes(letterPart)
-          );
-          if (result && result.imgId) {
-            const response = await fetch(
-              `/wp-json/wp/v2/media/${result.imgId}`
-            );
-            const data = await response.json();
-            imgPath = data.source_url;
-            part_img.innerHTML = `<img src="${imgPath}" alt="product image" />`;
-          }
+      let imgPath = "";
+      if (_this.groupedData[part.product_group]) {
+        const partGroupData = _this.groupedData[part.product_group];
+        const match = part.part_number.match(/[A-Za-z]+/);
+        let letterPart;
+        if (match) {
+          letterPart = match[0];
+        } else {
+          letterPart = "D";
         }
-        if (!imgPath || imgPath === "") {
-          part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
+
+        let result = Object.values(partGroupData).find((item) =>
+          item.labeling.includes(letterPart) 
+        );
+        if (result && result.imgPath) {
+          imgPath = result.imgPath;
+          part_img.innerHTML = `<img src="${result.imgPath}" alt="product image" />`;
         }
       }
-      getImage();
+      if (!imgPath || imgPath === "") {
+        part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
+      }
 
       let part_footer = document.createElement("div");
       part_footer.classList.add("item-catalog__footer");
@@ -2885,6 +2887,7 @@
 
       console.log("No data found");
 
+      //Чтобы не было такого, что вылазит что детали найдены, а потом сразу пропадает
       catalog_auto_title.hide();
       // Очистка каталога
       $("#catalog_row").html("");
@@ -2913,7 +2916,7 @@
       }
     }
 
-    createOptionsContainer(nameCategory, productCategory, productCategorySide, productScheme) {
+    createOptionsContainer(nameCategory, productCategory, productCategorySide, productId) {
       let _this = this;
       // Создаем элемент для части
       let partOptions = document.createElement("div");
@@ -2957,13 +2960,28 @@
       // item-catalog__header-icons
       partOptionsSxema.classList.add("item-catalog__image");
 
-      let indexSxema = productScheme ? productScheme : "/wp-content/themes/friction-master/assets/img/catalog/catalog-sxem.jpg"; // Значение по умолчанию
-
-      // Создаём элемент <img> и устанавливаем его атрибуты
       const imgElement = document.createElement("img");
-      imgElement.src = indexSxema;
-      imgElement.alt = "Sxema";
-      imgElement.style.width = "165px";
+
+      //Получаем чертёж
+      const url = `https://catalog.loopautomotive.com/catalog/part-images?part_ids=${productId}`;
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.send();
+
+      xhr.onload = function () {
+        let productScheme = "";
+        if (xhr.status === 200) {
+          const data = JSON.parse(xhr.responseText);
+          if (data.length > 0 && data[0].tech_drawings.length > 0) {
+              productScheme = data[0].tech_drawings[0];
+          }
+        }
+        //Если чертежа нет, то по умолчаниюё
+        let indexSxema = productScheme ? productScheme : "/wp-content/themes/friction-master/assets/img/catalog/catalog-sxem.jpg"; // Значение по умолчанию
+        imgElement.src = indexSxema;
+        imgElement.alt = "Sxema";
+        imgElement.style.width = "165px";
+      }
 
       // Добавляем <img> в div
       partOptionsSxema.appendChild(imgElement);
