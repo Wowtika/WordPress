@@ -109,9 +109,10 @@ get_header() ?>
 	curl_close($ch);
 
 	foreach ($partApp as $car) {
-		$make = $car["make"];
-		unset($car["make"]);
-		$groupedData[$make][] = $car;
+		if (isset($car["make"])) {
+			$make = $car["make"];
+			$groupedData[$make][] = $car;
+		}
 	}
 
 
@@ -137,10 +138,10 @@ get_header() ?>
 	//выполнить поиск
 	$parsed_url = parse_url($url);
 	parse_str($parsed_url['query'], $query_params);
-	$car = explode('_', $query_params['car']);
-	$make = $car[0];
-	$model = $car[1];
-	$year = $car[2]; 	
+	$carName = explode('_', $query_params['car']);
+	$make = $carName[0];
+	$model = $carName[1];
+	$year = $carName[2]; 	
 	$urlToSearch = 'https://catalog.loopautomotive.com/catalog/search?filter=' . urlencode(json_encode([
 		'make' => $make,
 		'model' => $model,
@@ -570,6 +571,8 @@ get_header() ?>
 
 				<div class="card-tabs__wrapper">
 
+					<?php if (count($partAttribute) > 0) { ?>
+
 					<div class="card-tabs__item">
 
 						<div class="card-tabs__header">
@@ -597,6 +600,10 @@ get_header() ?>
 							</div>
 					</div>
 
+					<?php } ?>
+
+					<?php if (isset($car["make"])) { ?>
+
 					<div class="card-tabs__item">
 						<div class="card-tabs__header">
 							<?php the_field('suitable_for_vehicles','option');?>
@@ -619,6 +626,9 @@ get_header() ?>
 						</div>
 						<?php } ?>
 					</div>
+
+					<?php } ?>
+
 				</div>
 			</div>
 		</div>
