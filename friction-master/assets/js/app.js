@@ -1153,6 +1153,39 @@
       this.rebuildSelect($select);
     }
 
+    setOptionsTransmissions(data, $select, selected = false) {
+      $select = $($select);
+
+      for (let i = 0; i < data.length; i++) {
+        let val = data[i];
+        let opt = document.createElement("option");
+        opt.value = val.transmission;
+        opt.innerHTML = val.transmission;
+
+        if (selected && selected == val) {
+          opt.setAttribute("selected", "selected");
+        }
+
+        $select.append(opt);
+      }
+
+      if (data.length === 1) {
+        // Устанавливаем селект как disabled
+        $select.attr("disabled", true);
+        // тут показывается один двигатель и блокируется блок чтобы не было выбора
+        let selectOptionButtonAll = $select[0].querySelectorAll("option");
+        let selectOption = selectOptionButtonAll[0];
+        let selectOptionButton = selectOptionButtonAll[1];
+        let dataValue = selectOptionButton.textContent;
+        selectOption.textContent = dataValue;
+      } else if (data.length > 1) {
+        // Если больше одного элемента, разрешаем выбор
+        $select.attr("disabled", false);
+      }
+      $select.attr("disabled", false);
+      this.rebuildSelect($select);
+    }
+
     rebuildSelect(select) {
       let _this = this;
       let $select = $(select);
@@ -1516,7 +1549,9 @@
               imgPathPromise = fetch(`/wp-json/wp/v2/media/${imgId}`)
                 .then((imgResponse) => {
                   if (!imgResponse.ok) {
-                    throw new Error("Network response was not ok " + imgResponse.statusText);
+                    throw new Error(
+                      "Network response was not ok " + imgResponse.statusText
+                    );
                   }
                   return imgResponse.json();
                 })
@@ -1549,7 +1584,7 @@
             );
             data[group].forEach((line) => {
               _this.order = _this.order.concat(line.labeling);
-            })
+            });
           });
           this.groupedData = data;
         })
@@ -1559,7 +1594,6 @@
             error
           );
         });
-
 
       if (this.$block.length) {
         _this.filterProductsAllGroups(); // общий подфильтр продуктов а именно тип применимости(Product lines), категории (Category), сторона(Side), линейки(Lines)
@@ -1655,8 +1689,8 @@
           const car = carData.split("+");
           getYear = car[car.length - 1];
 
-          const carName = carData.replace(/\+/g, ' ').replace(getYear, '');
-          
+          const carName = carData.replace(/\+/g, " ").replace(getYear, "");
+
           let xhrMakes = new XMLHttpRequest();
           xhrMakes.open(
             "GET",
@@ -1716,30 +1750,31 @@
           getType = 1;
 
           let url = window.location.href;
-          let urlParts = url.split('?');
+          let urlParts = url.split("?");
           let baseUrl = urlParts[0];
-          let queryParams = urlParts[1].split('&').filter(param => !param.startsWith('carData=')).join('&');
-          let newUrl = baseUrl + (queryParams ? '?' + queryParams : '');
+          let queryParams = urlParts[1]
+            .split("&")
+            .filter((param) => !param.startsWith("carData="))
+            .join("&");
+          let newUrl = baseUrl + (queryParams ? "?" + queryParams : "");
 
           let params = new URLSearchParams();
-          params.append('tp', 1);
-          params.append('yr', getYear);
-          params.append('mk', getMake);
-          params.append('md', getModel);
+          params.append("tp", 1);
+          params.append("yr", getYear);
+          params.append("mk", getMake);
+          params.append("md", getModel);
 
-          newUrl = newUrl + '?' + params.toString();
-          window.history.pushState({}, '', newUrl);
+          newUrl = newUrl + "?" + params.toString();
+          window.history.pushState({}, "", newUrl);
         }
 
-        this.$partName
-          .on("keypress", (event) => {
+        this.$partName.on("keypress", (event) => {
           if (event.key === "Enter") {
             this.partSearch(this.$partName.val());
           }
         });
-  
-        this.$button
-          .on("click", () => {
+
+        this.$button.on("click", () => {
           this.partSearch(this.$partName.val());
         });
 
@@ -1784,7 +1819,6 @@
           _this.clearSelects("make");
           _this.loadModels(year, make);
         });
-
 
         this.$model.on("change", function () {
           let year = _this.$year.val();
@@ -2128,7 +2162,7 @@
                 $("#inner1").fadeIn().css("display", "grid");
 
                 let engineBlock = document.querySelector('[data-id="7"]');
-                if (res.data.engines && (!res.data.vehicles || submodel )) {
+                if (res.data.engines && (!res.data.vehicles || submodel)) {
                   if (engineBlock) {
                     engineBlock.style.display = "block";
                   }
@@ -2139,7 +2173,7 @@
                       res.data.engines,
                       _this.$engine,
                       res.data.engines[0]
-                    );  
+                    );
                     engine = res.data.engines[0];
                     engineBlock.style.display = "none";
                     _this.$engine.attr("disabled", true);
@@ -2149,36 +2183,36 @@
                 }
 
                 if (!submodel) {
-                let submodelBlock = document.querySelector('[data-id="6"]');
-                if (res.data.vehicles) {
-                  if (submodelBlock) {
-                    submodelBlock.style.display = "block";
-                  }
-                  if (res.data.vehicles.length > 1) {
-                    _this.setOptionsSubmodels(
-                      res.data.vehicles,
-                      _this.$submodel
-                    );
-                  } else if (res.data.vehicles.length === 1) {
-                    _this.setOptionsSubmodels(
-                      res.data.vehicles,
-                      _this.$submodel,
-                      res.data.vehicles[0]
-                    );
+                  let submodelBlock = document.querySelector('[data-id="6"]');
+                  if (res.data.vehicles) {
+                    if (submodelBlock) {
+                      submodelBlock.style.display = "block";
+                    }
+                    if (res.data.vehicles.length > 1) {
+                      _this.setOptionsSubmodels(
+                        res.data.vehicles,
+                        _this.$submodel
+                      );
+                    } else if (res.data.vehicles.length === 1) {
+                      _this.setOptionsSubmodels(
+                        res.data.vehicles,
+                        _this.$submodel,
+                        res.data.vehicles[0]
+                      );
+                      submodelBlock.style.display = "none";
+                      submodel = res.data.vehicles[0].submodel;
+                      _this.$submodel.attr("disabled", true);
+                    }
+                  } else {
                     submodelBlock.style.display = "none";
-                    submodel = res.data.vehicles[0].submodel;
-                    _this.$submodel.attr("disabled", true);
                   }
-                } else {
-                  submodelBlock.style.display = "none";
-                }
 
-                _this.partsSearch(year, make, model, engine, submodel);
-                // load_catalog.html("");
-                // $("#catalog_row").html("");
-                // $("#inner1").fadeIn().css("display", "grid");
-                // catalogAutoTitleBlock.style.display = "flex";
-              }
+                  _this.partsSearch(year, make, model, engine, submodel);
+                  // load_catalog.html("");
+                  // $("#catalog_row").html("");
+                  // $("#inner1").fadeIn().css("display", "grid");
+                  // catalogAutoTitleBlock.style.display = "flex";
+                }
               }
 
               // если нет подмодели и двигателя
@@ -2223,9 +2257,9 @@
       xhr.setRequestHeader("Accept", "application/json");
       xhr.onload = () => {
         if (xhr.status != 200) {
-        let loadCatalogBlock = document.querySelector("#load_catalog");
+          let loadCatalogBlock = document.querySelector("#load_catalog");
           loadCatalogBlock.innerHTML =
-          '<div class="catalog_nodata">No data available</div>';
+            '<div class="catalog_nodata">No data available</div>';
           $(loadCatalogBlock).fadeIn().css("display", "flex");
           return;
         }
@@ -2233,39 +2267,38 @@
         if (!response) {
           return;
         }
-        const qualifierString = response.position + ' | ' + 'Dont have qualifier';
+        const qualifierString =
+          response.position + " | " + "Dont have qualifier";
 
         const formattedResponse = {
-          fitment_type: 'OE Replacement',
+          fitment_type: "OE Replacement",
           [response.pg_name]: {
-            [qualifierString] : [
+            [qualifierString]: [
               {
-              description: response.description,
-              exact_match: true,
-              fitment_type: 0,
-              make_id: response.make_id,
-              part_app_ids: 0,
-              part_id: response.id,
-              part_number: response.number,
-              part_type_id: 0,
-              position: response.position,
-              position_id: 0,
-              product_group: response.pg_name,
-              product_group_id: response.product_group_id,
-              qualifier: null,
-              quantity: 2,
-              specification_group: response.specification_group,
-              vehicle_ids: 0
-              }
-            ]
-          }
+                description: response.description,
+                exact_match: true,
+                fitment_type: 0,
+                make_id: response.make_id,
+                part_app_ids: 0,
+                part_id: response.id,
+                part_number: response.number,
+                part_type_id: 0,
+                position: response.position,
+                position_id: 0,
+                product_group: response.pg_name,
+                product_group_id: response.product_group_id,
+                qualifier: null,
+                quantity: 2,
+                specification_group: response.specification_group,
+                vehicle_ids: 0,
+              },
+            ],
+          },
         };
 
         _this.$currentData = [formattedResponse];
 
-        catalog_auto_title.html(
-          "Found 1 part"
-        );
+        catalog_auto_title.html("Found 1 part");
         catalog_auto_title.fadeIn().css("display", "flex");
         _this.create_parts(_this.$currentData);
 
@@ -2403,7 +2436,7 @@
       let transmissionsBlock = document.querySelector('[data-id="8"]');
 
       _this.$transmission.html(
-        '<option value="" selected>Transmissions</option>'
+        '<option value="" selected>Transmission</option>'
       );
       _this.rebuildSelect(_this.$transmission);
 
@@ -2426,12 +2459,12 @@
             transmissionsBlock.style.display = "block";
           }
           if (dataOnTransmissions.length > 1) {
-            _this.setOptionsTransmission(
+            _this.setOptionsTransmissions(
               dataOnTransmissions,
               _this.$transmission
             );
           } else if (dataOnTransmissions.length === 1) {
-            _this.setOptionsTransmission(
+            _this.setOptionsTransmissions(
               dataOnTransmissions,
               _this.$transmission,
               findTransmissionsByVehicleId[0]
@@ -2742,7 +2775,6 @@
 
       console.log("validfilteredMatches", validfilteredMatches);
       if (ifhasSortedProducts) {
-
         this.renderParts(validfilteredMatches);
       } else {
         this.renderNoData(catalog);
@@ -2812,7 +2844,6 @@
         clear__value.append(clear__content);
         clearButton.append(clear__value);
         catalog__clear.append(clearButton);
-
 
         catalog__wrapper = document.createElement("div");
         catalog__wrapper.classList.add("catalog__wrapper");
@@ -2916,8 +2947,11 @@
         let allProductsValues = dataForFender[key];
 
         allProductsValues.sort((a, b) => {
-          return this.order.indexOf(a.part_number.match(/[A-Za-z]+/)[0]) - this.order.indexOf(b.part_number.match(/[A-Za-z]+/)[0]);
-        })
+          return (
+            this.order.indexOf(a.part_number.match(/[A-Za-z]+/)[0]) -
+            this.order.indexOf(b.part_number.match(/[A-Za-z]+/)[0])
+          );
+        });
 
         let categoryContainer = document.createElement("div");
         categoryContainer.classList.add("category-container");
@@ -2928,7 +2962,6 @@
         const productCategory = allProductsValues[0].product_group;
         const productsSide = allProductsValues[0].position;
 
-        
         let optionsContainer = _this.createOptionsContainer(
           allProductsKeys,
           productCategory,
@@ -2936,43 +2969,40 @@
           allProductsValues[0].part_id
         );
 
-
         async function loadImage(image) {
           return new Promise((resolve) => {
-              if (image.complete && image.src) {
-                  resolve();
-              } else {
-                  image.onload = resolve;
-                  image.onerror = resolve; // В случае ошибки загрузки изображения
-              }
+            if (image.complete && image.src) {
+              resolve();
+            } else {
+              image.onload = resolve;
+              image.onerror = resolve; // В случае ошибки загрузки изображения
+            }
           });
         }
 
         //Ждём прогрузки фото, достаём высоту, меняем высоту продуктов
         async function processImages() {
-          const image = optionsContainer.querySelectorAll('img')[1];
+          const image = optionsContainer.querySelectorAll("img")[1];
 
-          loadImage(image)
-            .then(() => {
-              const height = optionsContainer.getBoundingClientRect().height;
-    
-              productsContainer.querySelectorAll(".item-catalog")
-                .forEach(
-                  (partElement) => {
-                    partElement.style.height = `${height}px`;
-                  }
-                )
-            });
+          loadImage(image).then(() => {
+            const height = optionsContainer.getBoundingClientRect().height;
+
+            productsContainer
+              .querySelectorAll(".item-catalog")
+              .forEach((partElement) => {
+                partElement.style.height = `${height}px`;
+              });
+          });
         }
 
         categoryContainer.append(optionsContainer);
-      
+
         allProductsValues.forEach((part) => {
-            _this.createProduct(part, productsContainer);
-            categoryContainer.append(productsContainer);
+          _this.createProduct(part, productsContainer);
+          categoryContainer.append(productsContainer);
         });
         partContainerBasic.append(categoryContainer);
-        
+
         processImages();
       }
 
@@ -3030,7 +3060,7 @@
         }
 
         let result = Object.values(partGroupData).find((item) =>
-          item.labeling.includes(letterPart) 
+          item.labeling.includes(letterPart)
         );
         if (result && result.imgPath) {
           imgPath = result.imgPath;
@@ -3106,7 +3136,12 @@
       }
     }
 
-    createOptionsContainer(nameCategory, productCategory, productCategorySide, productId) {
+    createOptionsContainer(
+      nameCategory,
+      productCategory,
+      productCategorySide,
+      productId
+    ) {
       let _this = this;
       // Создаем элемент для части
       let partOptions = document.createElement("div");
@@ -3155,7 +3190,7 @@
       //Получаем чертёж
       const url = `https://catalog.loopautomotive.com/catalog/part-images?part_ids=${productId}`;
       const xhr = new XMLHttpRequest();
-      xhr.open('GET', url, true);
+      xhr.open("GET", url, true);
       xhr.send();
 
       xhr.onload = function () {
@@ -3163,15 +3198,17 @@
         if (xhr.status === 200) {
           const data = JSON.parse(xhr.responseText);
           if (data.length > 0 && data[0].tech_drawings.length > 0) {
-              productScheme = data[0].tech_drawings[0];
+            productScheme = data[0].tech_drawings[0];
           }
         }
         //Если чертежа нет, то по умолчаниюё
-        let indexSxema = productScheme ? productScheme : "/wp-content/themes/friction-master/assets/img/catalog/catalog-sxem.jpg"; // Значение по умолчанию
+        let indexSxema = productScheme
+          ? productScheme
+          : "/wp-content/themes/friction-master/assets/img/catalog/catalog-sxem.jpg"; // Значение по умолчанию
         imgElement.src = indexSxema;
         imgElement.alt = "Sxema";
         imgElement.style.width = "165px";
-      }
+      };
 
       // Добавляем <img> в div
       partOptionsSxema.appendChild(imgElement);
@@ -3400,7 +3437,6 @@
         if (activeCategory) {
           filteredData = filteredData
             .map((item) => {
-
               if (item[activeCategory]) {
                 return {
                   fitment_type: item.fitment_type,
@@ -3471,19 +3507,25 @@
 
                     // Проверяем, что items - это массив и фильтруем его
                     if (Array.isArray(items)) {
-                      const matchingItems = items.filter(
-                        (item) => {
-                          if (this.groupedData[dynamicKey]) {
-                            for (let group of this.groupedData[dynamicKey]) {
-                              if (group.line.toLowerCase().includes(activeLinesPads.toLowerCase())) {
-                                if (group.labeling.includes(item.part_number.match(/[A-Za-z]+/)[0]))
-                                  return true;
-                              }
+                      const matchingItems = items.filter((item) => {
+                        if (this.groupedData[dynamicKey]) {
+                          for (let group of this.groupedData[dynamicKey]) {
+                            if (
+                              group.line
+                                .toLowerCase()
+                                .includes(activeLinesPads.toLowerCase())
+                            ) {
+                              if (
+                                group.labeling.includes(
+                                  item.part_number.match(/[A-Za-z]+/)[0]
+                                )
+                              )
+                                return true;
                             }
                           }
-                          return false;
                         }
-                      );
+                        return false;
+                      });
                       if (matchingItems.length > 0) {
                         filteredItems[key] = matchingItems; // Сохраняем отфильтрованные элементы
                       }
@@ -3497,10 +3539,10 @@
                   };
                 }
               }
-              })
+            })
             .filter((obj) => obj !== null && obj !== undefined); // Удаляем null значения
-            console.log(filteredData);
-          }
+          console.log(filteredData);
+        }
 
         // Возвращаем отфильтрованные данные
         return filteredData;
