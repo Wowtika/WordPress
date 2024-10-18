@@ -1859,7 +1859,7 @@
     $year = null;
     $make = null;
     $model = null;
-    $transmissions = null;
+    $transmission = null;
     $currentData = null; // Переменная для хранения актуальных данных
     $apiResponseData = null; // тут все данные с запроса partsSearch
     $vehicleIdSubmodule = null; // Переменная для хранения актуальных данных
@@ -1939,7 +1939,7 @@
         this.$engine = this.$block.find('[data-filter="engine"]');
         this.$submodel = this.$block.find('[data-filter="submodel"]');
 
-        this.$transmissions = this.$block.find('[data-filter="transmissions"]');
+        this.$transmission = this.$block.find('[data-filter="transmission"]');
 
         let getUrlParameter = function getUrlParameter(sParam) {
           let sPageURL = window.location.search.substring(1),
@@ -2169,7 +2169,7 @@
           _this.checkSubModel();
         });
 
-        this.$transmissions.on("change", function () {
+        this.$transmission.on("change", function () {
           _this.checkTransmissions();
         });
 
@@ -2337,6 +2337,10 @@
             }
           });
       }
+
+      $("#inner1").on("change", function () {
+        _this.updateCurrentData();
+      });
     }
 
     clearSelects(type) {
@@ -2441,8 +2445,6 @@
       let engine = _this.$engine.val();
       let submodel = _this.$submodel.val();
 
-      let transmissions = _this.$transmissions.val();
-
       _this.hideInfotitle();
 
       if (!submodel) {
@@ -2451,11 +2453,6 @@
       }
       _this.$engine.html('<option value="" selected>Engine</option>');
       _this.rebuildSelect(_this.$engine);
-
-      _this.$transmissions.html(
-        '<option value="" selected>Transmissions</option>'
-      );
-      _this.rebuildSelect(_this.$transmissions);
 
       _this.loadingBlock(load_catalog, true);
 
@@ -2493,16 +2490,7 @@
                     engineBlock.style.display = "block";
                   }
                   if (res.data.engines.length > 1) {
-                    if (submodel) {
-                      let valueEngineWithSubmodel =
-                        _this.findEnginesByVehicleId(_this.$vehicleIdSubmodule);
-                      _this.setOptionsEngines(
-                        valueEngineWithSubmodel,
-                        _this.$engine
-                      );
-                    } else {
-                      _this.setOptionsEngines(res.data.engines, _this.$engine);
-                    }
+                    _this.setOptionsEngines(res.data.engines, _this.$engine);
                   } else if (res.data.engines.length === 1) {
                     _this.setOptionsEngines(
                       res.data.engines,
@@ -2512,7 +2500,6 @@
                     engine = res.data.engines[0];
                     engineBlock.style.display = "none";
                     _this.$engine.attr("disabled", true);
-                    // _this.partsSearch(year, make, model, engine, submodel);
                   }
                 } else {
                   engineBlock.style.display = "none";
@@ -2544,30 +2531,9 @@
                   }
 
                   _this.partsSearch(year, make, model, engine, submodel);
-                  // load_catalog.html("");
-                  // $("#catalog_row").html("");
-                  // $("#inner1").fadeIn().css("display", "grid");
-                  // catalogAutoTitleBlock.style.display = "flex";
                 }
               }
 
-              if (res.data.transmissions) {
-                // transmissions
-                // setOptionsTransmission
-                if (_this.$vehicleIdSubmodule) {
-                  const findTransmissionsByVehicleId =
-                    _this.findTransmissionsByVehicleId(
-                      _this.$vehicleIdSubmodule
-                    );
-                  if (res.data.transmissions.length > 1) {
-                    _this.setOptionsTransmission(
-                      // res.data.transmissions,
-                      findTransmissionsByVehicleId,
-                      _this.$transmissions
-                    );
-                  }
-                }
-              }
               // если нет подмодели и двигателя
               if (!res.data.engines && !res.data.vehicles) {
                 if (res.data.part_applications.length) {
@@ -2621,11 +2587,7 @@
         // Проверяем, что submodel не пустой
         submodel = _this.$submodel.val();
       }
-      // // transmissions
-      // if (transmissions) {
-      //   // Проверяем, что submodel не пустой
-      //   transmissions = _this.$transmissions.val();
-      // }
+
       return $.ajax({
         url: ApiCatalog.url,
         type: "GET",
@@ -2641,11 +2603,11 @@
 
               if (res.data.vehicles) {
                 const allVehicles = res.data.vehicles;
-                // const vehicleId = _this.getVehicleIdIntoSubmodel(allVehicles);
+
                 _this.$vehicleIdSubmodule =
                   _this.getVehicleIdIntoSubmodel(allVehicles);
-                console.log("vehicleId", _this.$vehicleIdSubmodule);
-                // _this.getProductForSubmoduleValue();
+
+                _this.showSelectedInnerParts();
               }
               // Находим все массивы Brake Pads и объединяем их
               let combinedBrakePads = [];
@@ -2709,23 +2671,96 @@
       });
     }
 
+    showSelectedInnerParts() {
+      let _this = this;
+      let engine = _this.$engine.val();
+      let submodel = _this.$submodel.val();
+
+      let transmission = _this.$transmission.val();
+
+      let transmissionsBlock = document.querySelector('[data-id="8"]');
+
+      _this.$transmission.html(
+        '<option value="" selected>Transmissions</option>'
+      );
+      _this.rebuildSelect(_this.$transmission);
+
+      let requestData = _this.$apiResponseData;
+
+      if (submodel !== "") {
+        const findTransmissionsByVehicleId = _this.findTransmissionsByVehicleId(
+          _this.$vehicleIdSubmodule
+        );
+
+        if (requestData.transmissions) {
+          const findTransmissionsByVehicleId =
+            _this.findTransmissionsByVehicleId(_this.$vehicleIdSubmodule);
+
+          let dataOnTransmissions = findTransmissionsByVehicleId
+            ? findTransmissionsByVehicleId
+            : requestData.transmissions;
+
+          if (transmissionsBlock) {
+            transmissionsBlock.style.display = "block";
+          }
+          if (dataOnTransmissions.length > 1) {
+            _this.setOptionsTransmission(
+              dataOnTransmissions,
+              _this.$transmission
+            );
+          } else if (dataOnTransmissions.length === 1) {
+            _this.setOptionsTransmission(
+              dataOnTransmissions,
+              _this.$transmission,
+              findTransmissionsByVehicleId[0]
+            );
+            transmissionsBlock.style.display = "none";
+            transmission = dataOnTransmissions[0].value;
+            _this.$transmission.attr("disabled", true);
+          }
+        } else {
+          transmissionsBlock.style.display = "none";
+        }
+      } else {
+        transmissionsBlock.style.display = "none";
+      }
+    }
+    updateCurrentData() {
+      let _this = this;
+      let data = _this.$currentData;
+
+      let engine = _this.$engine.val();
+      let submodel = _this.$submodel.val();
+      let transmission = _this.$transmission.val();
+
+      if (submodel !== "") {
+        let newdata = _this.getProductForSubmoduleValue();
+        _this.$currentData = newdata;
+        _this.create_parts(newdata);
+        console.log(newdata);
+      }
+
+      if (submodel !== "" && transmission !== "") {
+        let newdata = _this.getProductForTransitionValue();
+        _this.$currentData = newdata;
+        _this.create_parts(newdata);
+        console.log(newdata);
+      }
+    }
     // getVehicleIdIntoSubmodel(allVehicles)
     getVehicleIdIntoSubmodel(allVehicles) {
       let _this = this;
       let submodel = _this.$submodel.val();
-      // let dataall = _this.$currentData ? _this.$currentData : null;
       if (allVehicles) {
-        // console.log("allVehicles", allVehicles);
         if (submodel) {
           let vehiclesId = null;
-          // console.log("submodel", submodel);
+
           allVehicles.forEach((item) => {
             if (item.submodel === submodel) {
-              // _this.$vehicleId.val(item.id);
               vehiclesId = item.vehicle_id;
             }
           });
-          // console.log("vehiclesId", vehiclesId);
+
           return vehiclesId;
         }
       }
@@ -2742,16 +2777,11 @@
         if (apiResponseData.transmissions) {
           let allTransmissions = apiResponseData.transmissions;
 
-          // Убедитесь, что vehiclesId имеет правильный тип
-          const parsedVehiclesId = Number(vehiclesId); // Преобразуем в число, если это строка
+          const parsedVehiclesId = Number(vehiclesId);
 
           allTransmissions.forEach((item) => {
             if (item.vehicle_ids) {
-              // console.log("Checking item:", item);
-
-              // Проверяем наличие parsedVehiclesId
               if (item.vehicle_ids.includes(parsedVehiclesId)) {
-                // console.log("Matching item:", item);
                 resultArr.push(item);
               }
             }
@@ -2773,16 +2803,11 @@
         if (apiResponseData.transmissions) {
           let allengines = apiResponseData.engines;
 
-          // Убедитесь, что vehiclesId имеет правильный тип
-          const parsedVehiclesId = Number(vehiclesId); // Преобразуем в число, если это строка
+          const parsedVehiclesId = Number(vehiclesId);
 
           allengines.forEach((item) => {
             if (item.vehicle_ids) {
-              console.log("Checking item:", item);
-
-              // Проверяем наличие parsedVehiclesId
               if (item.vehicle_ids.includes(parsedVehiclesId)) {
-                console.log("Matching item:", item);
                 resultArr.push(item);
               }
             }
@@ -2801,18 +2826,16 @@
       let productAll = this.$currentData ? this.$currentData : null;
 
       let result = [];
-      // console.log("productAll", productAll);
+
       let submodule = _this.$submodel.val();
 
       if (productAll) {
         productAll.forEach((itemCategory) => {
-          // console.log("Processing category:", itemCategory);
           let fitmentTypeValue = itemCategory.fitment_type; // fitment_type
           let dynamicKey = _this.getDynamicKey(itemCategory);
 
           if (dynamicKey) {
             let itemQualifierGroup = itemCategory[dynamicKey];
-            // console.log("itemQualifierGroup", itemQualifierGroup);
 
             let objWithFilter = {};
 
@@ -2822,37 +2845,24 @@
             ) {
               for (let key in itemQualifierGroup) {
                 let productsIntoQualifierGroup = itemQualifierGroup[key];
-                // console.log(
-                //   "productsIntoQualifierGroup",
-                //   productsIntoQualifierGroup
-                // );
 
                 let filteredProducts = [];
 
                 productsIntoQualifierGroup.forEach((itemProduct) => {
-                  // console.log("itemProduct", itemProduct);
-
                   let options = itemProduct.applications;
-                  // console.log("options", options);
+
+                  if (!options) {
+                    return;
+                  }
                   options.forEach((itemOption) => {
-                    // console.log("itemOption", itemOption);
-
-                    // console.log("submodule value", submodule);
                     if (itemOption.submodel) {
-                      // console.log("itemOption.submodel", itemOption.submodel);
-
                       if (itemOption.submodel.value === submodule) {
-                        // console.log(
-                        //   "itemOption.submodel.value ",
-                        //   itemOption.submodel.value
-                        // );
-                        // console.log("подходящий продукт", itemProduct);
                         filteredProducts.push(itemProduct);
                       }
                     }
                   });
                 });
-                // console.log("filteredProducts", filteredProducts);
+
                 if (filteredProducts.length > 0) {
                   objWithFilter[key] = filteredProducts;
                 }
@@ -2868,13 +2878,73 @@
           }
         });
 
-        // console.log("Final result:", result);
         return result.length > 0 ? result : null;
       }
 
       return null;
     }
 
+    getProductForTransitionValue() {
+      let _this = this;
+      let productAll = this.$currentData ? this.$currentData : null;
+      let result = [];
+      let submodule = _this.$submodel.val();
+      let transmission = _this.$transmission.val();
+
+      if (productAll) {
+        productAll.forEach((itemCategory) => {
+          let fitmentTypeValue = itemCategory.fitment_type; // fitment_type
+          let dynamicKey = _this.getDynamicKey(itemCategory);
+
+          if (dynamicKey) {
+            let itemQualifierGroup = itemCategory[dynamicKey];
+            let objWithFilter = {};
+
+            if (
+              typeof itemQualifierGroup === "object" &&
+              itemQualifierGroup !== null
+            ) {
+              for (let key in itemQualifierGroup) {
+                let productsIntoQualifierGroup = itemQualifierGroup[key];
+                let filteredProducts = [];
+
+                productsIntoQualifierGroup.forEach((itemProduct) => {
+                  let options = itemProduct.applications;
+                  let isAdded = false; // Флаг для отслеживания добавления
+
+                  options.forEach((itemOption) => {
+                    if (itemOption.transmission) {
+                      if (
+                        itemOption.transmission.value === transmission &&
+                        !isAdded
+                      ) {
+                        filteredProducts.push(itemProduct);
+                        isAdded = true;
+                      }
+                    }
+                  });
+                });
+
+                if (filteredProducts.length > 0) {
+                  objWithFilter[key] = filteredProducts;
+                }
+              }
+            }
+
+            if (Object.keys(objWithFilter).length > 0) {
+              result.push({
+                fitment_type: fitmentTypeValue,
+                [dynamicKey]: objWithFilter,
+              });
+            }
+          }
+        });
+
+        return result.length > 0 ? result : null;
+      }
+
+      return null;
+    }
     hasSortedProducts(filteredData) {
       if (filteredData) {
         for (let item of filteredData) {
@@ -2924,77 +2994,31 @@
     }
 
     create_parts(data) {
-      console.log("create_parts data", data);
       let _this = this;
       let catalog = $("#catalog");
       let catalog__wrapper = catalog.find(".catalog__wrapper");
 
       // Сортируем продукты при клике по категориям, положению и линиям
       data = _this.needToSortProduct(data);
+      let cleanedData = data;
 
-      // тут все со значением examact_match === true
-      const cleanedData = this.removeNonExactMatches(data);
+      if (!_this.$submodel.val() && !_this.$engine.val()) {
+        // тут все со значением examact_match === true
+        cleanedData = this.removeNonExactMatches(data);
+      }
       catalog__wrapper.html("");
 
       let validfilteredMatches = null;
 
-      if (_this.$submodel.val() !== "") {
-        validfilteredMatches = _this.getProductForSubmoduleValue();
-        // if (_this.$submodel.val() !== "" || _this.$engine.val() !== "") {
-      } else if (_this.$engine.val() !== "") {
+      if (_this.$submodel.val() !== "" || _this.$engine.val() !== "") {
         validfilteredMatches = data;
       } else {
         validfilteredMatches = cleanedData;
       }
 
-      // function sortGroupsByPartNumber(groups, orderData) {
-      //   // Функция для извлечения буквенной части из part_number
-      //   function getLetterPart(partNumber) {
-      //     return partNumber.match(/[A-Za-z]+/)[0];
-      //   }
-      //   //Получение списка сортировок для группы
-      //   function getLabeling(data, name) {
-      //     if (data.hasOwnProperty(name)) {
-      //       let combinedLabeling = [];
-      //       data[name].forEach((item) => {
-      //         combinedLabeling = combinedLabeling.concat(item.labeling || []);
-      //       });
-      //       return combinedLabeling;
-      //     } else {
-      //       return [];
-      //     }
-      //   }
-
-      //   // Функция для получения индекса из массива порядков
-      //   function getOrderIndex(group, letterPart) {
-      //     return getLabeling(orderData, group).indexOf(letterPart);
-      //   }
-
-      //   groups.forEach((group) => {
-      //     for (let key of Object.keys(group)) {
-      //       if (Array.isArray(group[key])) {
-      //         group[key].sort((a, b) => {
-      //           const aLetterPart = getLetterPart(a.part_number);
-      //           const bLetterPart = getLetterPart(b.part_number);
-      //           return (
-      //             getOrderIndex(key, aLetterPart) -
-      //             getOrderIndex(key, bLetterPart)
-      //           );
-      //         });
-      //       }
-      //     }
-      //   });
-
-      //   return groups;
-      // }
-
-      // validfilteredMatches = sortGroupsByPartNumber(
-      //   validfilteredMatches,
-      //   this.groupedData
-      // );
-
       let ifhasSortedProducts = _this.hasSortedProducts(validfilteredMatches);
 
+      console.log("validfilteredMatches", validfilteredMatches);
       if (ifhasSortedProducts) {
         this.renderParts(validfilteredMatches);
       } else {
@@ -3074,9 +3098,7 @@
 
         catalog[0].append(catalog__container);
       }
-      // if (catalog_auto_title) {
-      //   catalog_auto_title.fadeIn().css("display", "flex");
-      // }
+
       let catalogNodata = $(".catalog_nodata")[0];
       if (catalogNodata) {
         catalogNodata.style.display = "none";
@@ -3092,7 +3114,6 @@
           }
         });
       }
-      console.log("fullContainer", fullContainer);
 
       catalog__wrapper.append(fullContainer);
     }
@@ -3512,6 +3533,7 @@
 
       if (engine != "" && submodel != "") {
         _this.partsSearch(year, make, model, engine, submodel);
+        // _this.updateCurrentData();
       }
 
       if (submodel != "") {
@@ -3523,6 +3545,8 @@
       }
 
       this.lastSubModel = submodel;
+
+      _this.showSelectedInnerParts();
     }
 
     checkSubModelFromUrl(year, make, model, engine, submodel) {
@@ -3566,21 +3590,11 @@
 
     checkTransmissions() {
       let _this = this;
-      // let year = _this.$year.val();
-      // let make = _this.$make.val();
-      // let model = _this.$model.val();
-      // let engine = _this.$engine.val();
-      // let submodel = _this.$submodel.val();
+      let transmission = _this.$transmission.val();
 
-      let transmissions = _this.$transmissions.val();
-
-      // if (transmissions != "" && transmissions != "") {
-      //   _this.partsSearch(year, make, model, engine, submodel, transmissions);
-      // }
-      if (transmissions != "") {
-        // _this.partsSearch(year, make, model, engine, submodel, transmissions);
-        console.log("transmissions", transmissions);
-        this.transmissionCompatibleParts();
+      if (transmission != "") {
+        console.log("transmission", transmission);
+        // _this.showSelectedInnerParts();
       }
     }
 
