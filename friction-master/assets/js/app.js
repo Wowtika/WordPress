@@ -1474,7 +1474,10 @@
     $year = null;
     $make = null;
     $model = null;
+    $transmission = null;
     $currentData = null; // Переменная для хранения актуальных данных
+    $apiResponseData = null; // тут все данные с запроса partsSearch
+    $vehicleIdSubmodule = null; // Переменная для хранения актуальных данных
     groupedData;
     lastSubModel;
     order = [];
@@ -1572,6 +1575,7 @@
 
         this.$engine = this.$block.find('[data-filter="engine"]');
         this.$submodel = this.$block.find('[data-filter="submodel"]');
+        this.$transmission = this.$block.find('[data-filter="transmission"]');
 
         let getUrlParameter = function getUrlParameter(sParam) {
           let sPageURL = window.location.search.substring(1),
@@ -1808,6 +1812,9 @@
         this.$submodel.on("change", function () {
           _this.checkSubModel();
         });
+        this.$transmission.on("change", function () {
+          _this.checkTransmissions();
+        });
 
         if (getYear && getMake && getModel && getRegion && getType) {
           _this.loadMakes(getYear, getMake);
@@ -1973,6 +1980,10 @@
             }
           });
       }
+
+      $("#inner1").on("change", function () {
+        _this.updateCurrentData();
+      });
     }
 
     clearSelects(type) {
@@ -2132,7 +2143,6 @@
                     engine = res.data.engines[0];
                     engineBlock.style.display = "none";
                     _this.$engine.attr("disabled", true);
-                    // _this.partsSearch(year, make, model, engine, submodel);
                   }
                 } else {
                   engineBlock.style.display = "none";
@@ -2311,7 +2321,15 @@
                 "Данные поиска для группы продуктовых линий:",
                 res.data
               );
+              _this.$apiResponseData = res.data;
 
+              if (res.data.vehicles) {
+                const allVehicles = res.data.vehicles;
+                _this.$vehicleIdSubmodule =
+                  _this.getVehicleIdIntoSubmodel(allVehicles);
+
+                _this.showSelectedInnerParts();
+              }
 
               // Находим все массивы Brake Pads и объединяем их
               let combinedBrakePads = [];
@@ -2375,62 +2393,280 @@
       });
     }
 
-    exactMatchFilterData(dataAll) {
-      if (Array.isArray(dataAll)) {
-        // Создаем массивы для двух групп
-        const exactMatches = [];
-        const nonExactMatches = [];
+    showSelectedInnerParts() {
+      let _this = this;
+      let engine = _this.$engine.val();
+      let submodel = _this.$submodel.val();
 
-        dataAll.forEach((obj) => {
-          const dynamicKey = this.getDynamicKey(obj);
+      let transmission = _this.$transmission.val();
 
-          if (!dynamicKey) {
-            return;
+      let transmissionsBlock = document.querySelector('[data-id="8"]');
+
+      _this.$transmission.html(
+        '<option value="" selected>Transmissions</option>'
+      );
+      _this.rebuildSelect(_this.$transmission);
+
+      let requestData = _this.$apiResponseData;
+
+      if (submodel !== "") {
+        const findTransmissionsByVehicleId = _this.findTransmissionsByVehicleId(
+          _this.$vehicleIdSubmodule
+        );
+
+        if (requestData.transmissions) {
+          const findTransmissionsByVehicleId =
+            _this.findTransmissionsByVehicleId(_this.$vehicleIdSubmodule);
+
+          let dataOnTransmissions = findTransmissionsByVehicleId
+            ? findTransmissionsByVehicleId
+            : requestData.transmissions;
+
+          if (transmissionsBlock) {
+            transmissionsBlock.style.display = "block";
           }
-
-          const dynamicValue = obj[dynamicKey]; // Значение под динамическим ключом
-
-          // Фильтруем массив внутри объекта
-          const filteredItemsExactMatchTrue = dynamicValue.filter(
-            (item) => item.exact_match === true
-          );
-          const filteredItemsExactMatchFalse = dynamicValue.filter(
-            (item) =>
-              item.exact_match === undefined || item.exact_match === false
-          );
-
-          // Если есть совпадения, добавляем в группу exactMatches
-          if (filteredItemsExactMatchTrue.length > 0) {
-            exactMatches.push({
-              ...obj,
-              [dynamicKey]: filteredItemsExactMatchTrue, // Обновляем только массив под динамическим ключом
-            });
+          if (dataOnTransmissions.length > 1) {
+            _this.setOptionsTransmission(
+              dataOnTransmissions,
+              _this.$transmission
+            );
+          } else if (dataOnTransmissions.length === 1) {
+            _this.setOptionsTransmission(
+              dataOnTransmissions,
+              _this.$transmission,
+              findTransmissionsByVehicleId[0]
+            );
+            transmissionsBlock.style.display = "none";
+            transmission = dataOnTransmissions[0].value;
+            _this.$transmission.attr("disabled", true);
           }
-
-          // Если нет совпадений exact_match === true, но есть non-exact matches
-          if (filteredItemsExactMatchFalse.length > 0) {
-            nonExactMatches.push({
-              ...obj,
-              [dynamicKey]: filteredItemsExactMatchFalse, // Обновляем только массив под динамическим ключом
-            });
-          }
-        });
-
-        // // Сохраняем отфильтрованные данные
-        // this.$currentData = {
-        //   exactMatches: exactMatches,
-        //   nonExactMatches: nonExactMatches,
-        // };
-
-        return {
-          exactMatches: exactMatches,
-          nonExactMatches: nonExactMatches,
-        };
+        } else {
+          transmissionsBlock.style.display = "none";
+        }
       } else {
-        return null; // Возвращаем null, если dataAll не массив
+        transmissionsBlock.style.display = "none";
+      }
+    }
+    updateCurrentData() {
+      let _this = this;
+      let data = _this.$currentData;
+
+      let engine = _this.$engine.val();
+      let submodel = _this.$submodel.val();
+      let transmission = _this.$transmission.val();
+
+      if (submodel !== "") {
+        let newdata = _this.getProductForSubmoduleValue();
+        _this.$currentData = newdata;
+        _this.create_parts(newdata);
+        console.log(newdata);
+      }
+
+      if (submodel !== "" && transmission !== "") {
+        let newdata = _this.getProductForTransitionValue();
+        _this.$currentData = newdata;
+        _this.create_parts(newdata);
+        console.log(newdata);
+      }
+    }
+    // getVehicleIdIntoSubmodel(allVehicles)
+    getVehicleIdIntoSubmodel(allVehicles) {
+      let _this = this;
+      let submodel = _this.$submodel.val();
+      if (allVehicles) {
+        if (submodel) {
+          let vehiclesId = null;
+
+          allVehicles.forEach((item) => {
+            if (item.submodel === submodel) {
+              vehiclesId = item.vehicle_id;
+            }
+          });
+
+          return vehiclesId;
+        }
       }
     }
 
+    findTransmissionsByVehicleId(vehiclesId) {
+      let _this = this;
+      let apiResponseData = _this.$apiResponseData
+        ? _this.$apiResponseData
+        : null;
+      let resultArr = [];
+
+      if (apiResponseData) {
+        if (apiResponseData.transmissions) {
+          let allTransmissions = apiResponseData.transmissions;
+
+          const parsedVehiclesId = Number(vehiclesId);
+
+          allTransmissions.forEach((item) => {
+            if (item.vehicle_ids) {
+              if (item.vehicle_ids.includes(parsedVehiclesId)) {
+                resultArr.push(item);
+              }
+            }
+          });
+        }
+      }
+
+      return resultArr.length > 0 ? resultArr : null;
+    }
+
+    findEnginesByVehicleId(vehiclesId) {
+      let _this = this;
+      let apiResponseData = _this.$apiResponseData
+        ? _this.$apiResponseData
+        : null;
+      let resultArr = [];
+
+      if (apiResponseData) {
+        if (apiResponseData.transmissions) {
+          let allengines = apiResponseData.engines;
+
+          const parsedVehiclesId = Number(vehiclesId);
+
+          allengines.forEach((item) => {
+            if (item.vehicle_ids) {
+              if (item.vehicle_ids.includes(parsedVehiclesId)) {
+                resultArr.push(item);
+              }
+            }
+          });
+        }
+      }
+
+      return resultArr.length > 0 ? resultArr : null;
+    }
+
+    getProductForSubmoduleValue() {
+      // тут продукты только те которые имеют свойство
+      // [1]["Brake Rotors"]["Front | Dont have qualifier | 0591"][0] путь до продукта одного из
+      // .applications тут хранятся параметры submodel
+      let _this = this;
+      let productAll = this.$currentData ? this.$currentData : null;
+
+      let result = [];
+
+      let submodule = _this.$submodel.val();
+
+      if (productAll) {
+        productAll.forEach((itemCategory) => {
+          let fitmentTypeValue = itemCategory.fitment_type; // fitment_type
+          let dynamicKey = _this.getDynamicKey(itemCategory);
+
+          if (dynamicKey) {
+            let itemQualifierGroup = itemCategory[dynamicKey];
+
+            let objWithFilter = {};
+
+            if (
+              typeof itemQualifierGroup === "object" &&
+              itemQualifierGroup !== null
+            ) {
+              for (let key in itemQualifierGroup) {
+                let productsIntoQualifierGroup = itemQualifierGroup[key];
+
+                let filteredProducts = [];
+
+                productsIntoQualifierGroup.forEach((itemProduct) => {
+                  let options = itemProduct.applications;
+
+                  if (!options) {
+                    return;
+                  }
+                  options.forEach((itemOption) => {
+                    if (itemOption.submodel) {
+                      if (itemOption.submodel.value === submodule) {
+                        filteredProducts.push(itemProduct);
+                      }
+                    }
+                  });
+                });
+
+                if (filteredProducts.length > 0) {
+                  objWithFilter[key] = filteredProducts;
+                }
+              }
+            }
+
+            if (Object.keys(objWithFilter).length > 0) {
+              result.push({
+                fitment_type: fitmentTypeValue,
+                [dynamicKey]: objWithFilter,
+              });
+            }
+          }
+        });
+
+        return result.length > 0 ? result : null;
+      }
+
+      return null;
+    }
+
+    getProductForTransitionValue() {
+      let _this = this;
+      let productAll = this.$currentData ? this.$currentData : null;
+      let result = [];
+      let submodule = _this.$submodel.val();
+      let transmission = _this.$transmission.val();
+
+      if (productAll) {
+        productAll.forEach((itemCategory) => {
+          let fitmentTypeValue = itemCategory.fitment_type; // fitment_type
+          let dynamicKey = _this.getDynamicKey(itemCategory);
+
+          if (dynamicKey) {
+            let itemQualifierGroup = itemCategory[dynamicKey];
+            let objWithFilter = {};
+
+            if (
+              typeof itemQualifierGroup === "object" &&
+              itemQualifierGroup !== null
+            ) {
+              for (let key in itemQualifierGroup) {
+                let productsIntoQualifierGroup = itemQualifierGroup[key];
+                let filteredProducts = [];
+
+                productsIntoQualifierGroup.forEach((itemProduct) => {
+                  let options = itemProduct.applications;
+                  let isAdded = false; // Флаг для отслеживания добавления
+
+                  options.forEach((itemOption) => {
+                    if (itemOption.transmission) {
+                      if (
+                        itemOption.transmission.value === transmission &&
+                        !isAdded
+                      ) {
+                        filteredProducts.push(itemProduct);
+                        isAdded = true;
+                      }
+                    }
+                  });
+                });
+
+                if (filteredProducts.length > 0) {
+                  objWithFilter[key] = filteredProducts;
+                }
+              }
+            }
+
+            if (Object.keys(objWithFilter).length > 0) {
+              result.push({
+                fitment_type: fitmentTypeValue,
+                [dynamicKey]: objWithFilter,
+              });
+            }
+          }
+        });
+
+        return result.length > 0 ? result : null;
+      }
+
+      return null;
+    }
     hasSortedProducts(filteredData) {
       if (filteredData) {
         for (let item of filteredData) {
@@ -2480,16 +2716,18 @@
     }
 
     create_parts(data) {
-      console.log("create_parts data", data);
       let _this = this;
       let catalog = $("#catalog");
       let catalog__wrapper = catalog.find(".catalog__wrapper");
 
       // Сортируем продукты при клике по категориям, положению и линиям
       data = _this.needToSortProduct(data);
+      let cleanedData = data;
 
-      // тут все со значением examact_match === true
-      const cleanedData = this.removeNonExactMatches(data);
+      if (!_this.$submodel.val() && !_this.$engine.val()) {
+        // тут все со значением examact_match === true
+        cleanedData = this.removeNonExactMatches(data);
+      }
       catalog__wrapper.html("");
 
       let validfilteredMatches = null;
@@ -2500,54 +2738,9 @@
         validfilteredMatches = cleanedData;
       }
 
-      // function sortGroupsByPartNumber(groups, orderData) {
-      //   // Функция для извлечения буквенной части из part_number
-      //   function getLetterPart(partNumber) {
-      //     return partNumber.match(/[A-Za-z]+/)[0];
-      //   }
-      //   //Получение списка сортировок для группы
-      //   function getLabeling(data, name) {
-      //     if (data.hasOwnProperty(name)) {
-      //       let combinedLabeling = [];
-      //       data[name].forEach((item) => {
-      //         combinedLabeling = combinedLabeling.concat(item.labeling || []);
-      //       });
-      //       return combinedLabeling;
-      //     } else {
-      //       return [];
-      //     }
-      //   }
-
-      //   // Функция для получения индекса из массива порядков
-      //   function getOrderIndex(group, letterPart) {
-      //     return getLabeling(orderData, group).indexOf(letterPart);
-      //   }
-
-      //   groups.forEach((group) => {
-      //     for (let key of Object.keys(group)) {
-      //       if (Array.isArray(group[key])) {
-      //         group[key].sort((a, b) => {
-      //           const aLetterPart = getLetterPart(a.part_number);
-      //           const bLetterPart = getLetterPart(b.part_number);
-      //           return (
-      //             getOrderIndex(key, aLetterPart) -
-      //             getOrderIndex(key, bLetterPart)
-      //           );
-      //         });
-      //       }
-      //     }
-      //   });
-
-      //   return groups;
-      // }
-
-      // validfilteredMatches = sortGroupsByPartNumber(
-      //   validfilteredMatches,
-      //   this.groupedData
-      // );
-
       let ifhasSortedProducts = _this.hasSortedProducts(validfilteredMatches);
 
+      console.log("validfilteredMatches", validfilteredMatches);
       if (ifhasSortedProducts) {
 
         this.renderParts(validfilteredMatches);
@@ -2629,9 +2822,7 @@
 
         catalog[0].append(catalog__container);
       }
-      // if (catalog_auto_title) {
-      //   catalog_auto_title.fadeIn().css("display", "flex");
-      // }
+
       let catalogNodata = $(".catalog_nodata")[0];
       if (catalogNodata) {
         catalogNodata.style.display = "none";
@@ -2647,7 +2838,6 @@
           }
         });
       }
-      console.log("fullContainer", fullContainer);
 
       catalog__wrapper.append(fullContainer);
     }
@@ -3060,6 +3250,7 @@
 
       if (engine != "" && submodel != "") {
         _this.partsSearch(year, make, model, engine, submodel);
+        // _this.updateCurrentData();
       }
 
       if (submodel != "") {
@@ -3069,7 +3260,10 @@
       if (submodel != this.lastSubModel) {
         _this.checkModel(year, make, model);
       }
+
       this.lastSubModel = submodel;
+
+      _this.showSelectedInnerParts();
     }
 
     checkSubModelFromUrl(year, make, model, engine, submodel) {
@@ -3108,6 +3302,16 @@
       }
       if (engine != "") {
         _this.partsSearch(year, make, model, engine);
+      }
+    }
+
+    checkTransmissions() {
+      let _this = this;
+      let transmission = _this.$transmission.val();
+
+      if (transmission != "") {
+        console.log("transmission", transmission);
+        // _this.showSelectedInnerParts();
       }
     }
 
