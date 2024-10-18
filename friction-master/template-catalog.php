@@ -611,6 +611,7 @@ get_header() ?>
 jQuery(document).ready(function($) {
 	let searchParams = new URLSearchParams(window.location.search);
 	let searchdata = searchParams.get('searchdata');
+	let carData = searchParams.get('carData');
 
 	let year = searchParams.get('yr'); // 2017
     let make = searchParams.get('mk'); // Audi
@@ -650,6 +651,7 @@ jQuery(document).ready(function($) {
 	{
 		$("#catalog_search").find(".tabs__title:nth-child(2)").trigger("click");
 		$("#searchdata").val(searchdata);
+		$('[data-filter="partName"]').next(".search-form__button").trigger("click");
 	}
 
 	$("#catalog_search").find(".tabs__title").click(function(){
@@ -710,6 +712,7 @@ jQuery(document).ready(function($) {
 			
 			//убираем заголовок
 			$("#catalog_auto_title").html("").hide();
+			$("#load_catalog").html("");
 			
 			//убираем каталог
 			$("#catalog_row").html("");
