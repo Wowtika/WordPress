@@ -1861,6 +1861,8 @@
     $model = null;
     $transmissions = null;
     $currentData = null; // Переменная для хранения актуальных данных
+    $apiResponseData = null; // тут все данные с запроса partsSearch
+    $vehicleIdSubmodule = null; // Переменная для хранения актуальных данных
     groupedData;
     lastSubModel;
     order = [];
@@ -2491,7 +2493,16 @@
                     engineBlock.style.display = "block";
                   }
                   if (res.data.engines.length > 1) {
-                    _this.setOptionsEngines(res.data.engines, _this.$engine);
+                    if (submodel) {
+                      let valueEngineWithSubmodel =
+                        _this.findEnginesByVehicleId(_this.$vehicleIdSubmodule);
+                      _this.setOptionsEngines(
+                        valueEngineWithSubmodel,
+                        _this.$engine
+                      );
+                    } else {
+                      _this.setOptionsEngines(res.data.engines, _this.$engine);
+                    }
                   } else if (res.data.engines.length === 1) {
                     _this.setOptionsEngines(
                       res.data.engines,
@@ -2543,11 +2554,18 @@
               if (res.data.transmissions) {
                 // transmissions
                 // setOptionsTransmission
-                if (res.data.transmissions.length > 1) {
-                  _this.setOptionsTransmission(
-                    res.data.transmissions,
-                    _this.$transmissions
-                  );
+                if (_this.$vehicleIdSubmodule) {
+                  const findTransmissionsByVehicleId =
+                    _this.findTransmissionsByVehicleId(
+                      _this.$vehicleIdSubmodule
+                    );
+                  if (res.data.transmissions.length > 1) {
+                    _this.setOptionsTransmission(
+                      // res.data.transmissions,
+                      findTransmissionsByVehicleId,
+                      _this.$transmissions
+                    );
+                  }
                 }
               }
               // если нет подмодели и двигателя
@@ -2619,7 +2637,16 @@
                 "Данные поиска для группы продуктовых линий:",
                 res.data
               );
+              _this.$apiResponseData = res.data;
 
+              if (res.data.vehicles) {
+                const allVehicles = res.data.vehicles;
+                // const vehicleId = _this.getVehicleIdIntoSubmodel(allVehicles);
+                _this.$vehicleIdSubmodule =
+                  _this.getVehicleIdIntoSubmodel(allVehicles);
+                console.log("vehicleId", _this.$vehicleIdSubmodule);
+                // _this.getProductForSubmoduleValue();
+              }
               // Находим все массивы Brake Pads и объединяем их
               let combinedBrakePads = [];
               let firstBrakePadsIndex = -1;
@@ -2681,73 +2708,171 @@
         },
       });
     }
-    transmissionCompatibleParts(dataFulled) {
+
+    // getVehicleIdIntoSubmodel(allVehicles)
+    getVehicleIdIntoSubmodel(allVehicles) {
       let _this = this;
       let submodel = _this.$submodel.val();
-      let transmission = _this.$transmissions.val();
-      if (transmission !== "") {
-        if (!dataFulled) {
-          dataFulled = _this.$currentData;
-          console.log(dataFulled);
+      // let dataall = _this.$currentData ? _this.$currentData : null;
+      if (allVehicles) {
+        // console.log("allVehicles", allVehicles);
+        if (submodel) {
+          let vehiclesId = null;
+          // console.log("submodel", submodel);
+          allVehicles.forEach((item) => {
+            if (item.submodel === submodel) {
+              // _this.$vehicleId.val(item.id);
+              vehiclesId = item.vehicle_id;
+            }
+          });
+          // console.log("vehiclesId", vehiclesId);
+          return vehiclesId;
         }
+      }
+    }
 
-        if (dataFulled) {
-          console.log(dataFulled);
-          dataFulled.forEach((item) => {
-            // console.log(item);
-            let fitment_type = item.fitment_type;
-            let dynamicKey = _this.getDynamicKey(item);
+    findTransmissionsByVehicleId(vehiclesId) {
+      let _this = this;
+      let apiResponseData = _this.$apiResponseData
+        ? _this.$apiResponseData
+        : null;
+      let resultArr = [];
 
-            if (dynamicKey) {
-              let dynamicValue = item[dynamicKey];
-              if (typeof dynamicValue === "object" && dynamicValue !== null) {
-                for (let keyObj in dynamicValue) {
-                  let nameCategory = keyObj;
-                  console.log("nameCategory", nameCategory);
-                  console.log(dynamicValue[keyObj]);
-                  let allProductInfo = dynamicValue[keyObj];
-                  allProductInfo.forEach((product) => {
-                    console.log("product", product);
-                    if (product.applications) {
-                      // product.applications = [
-                      //   {
-                      //     "submodel": {
-                      //         "value": "SE",
-                      //         "submodel_id": 49
-                      //     },
-                      //     "transmission": {
-                      //         "value": "Automatic CVT",
-                      //         "transmission_base_id": 20,
-                      //         "transmission_control_type_id": 9
-                      //     }
-                      // } ]
-                      console.log("product.applications", product.applications);
-                      product.applications.forEach((app) => {
-                        let submodelValue = app.submodel;
-                        console.log("app submodel", submodelValue);
-                        if (submodelValue) {
-                          if (submodelValue.value === submodel) {
-                            // app.transmission = {
-                            //   value: transmission,
-                            //   transmission_base_id: 20,
-                            //   transmission_control_type_id: 9,
-                            // };
-                            console.log("app.transmission", app.transmission);
-                            console.log(
-                              "подходящий объект со свойством transmission",
-                              app
-                            );
-                          }
-                        }
-                      });
-                    }
-                  });
-                }
+      if (apiResponseData) {
+        if (apiResponseData.transmissions) {
+          let allTransmissions = apiResponseData.transmissions;
+
+          // Убедитесь, что vehiclesId имеет правильный тип
+          const parsedVehiclesId = Number(vehiclesId); // Преобразуем в число, если это строка
+
+          allTransmissions.forEach((item) => {
+            if (item.vehicle_ids) {
+              // console.log("Checking item:", item);
+
+              // Проверяем наличие parsedVehiclesId
+              if (item.vehicle_ids.includes(parsedVehiclesId)) {
+                // console.log("Matching item:", item);
+                resultArr.push(item);
               }
             }
           });
         }
       }
+
+      return resultArr.length > 0 ? resultArr : null;
+    }
+
+    findEnginesByVehicleId(vehiclesId) {
+      let _this = this;
+      let apiResponseData = _this.$apiResponseData
+        ? _this.$apiResponseData
+        : null;
+      let resultArr = [];
+
+      if (apiResponseData) {
+        if (apiResponseData.transmissions) {
+          let allengines = apiResponseData.engines;
+
+          // Убедитесь, что vehiclesId имеет правильный тип
+          const parsedVehiclesId = Number(vehiclesId); // Преобразуем в число, если это строка
+
+          allengines.forEach((item) => {
+            if (item.vehicle_ids) {
+              console.log("Checking item:", item);
+
+              // Проверяем наличие parsedVehiclesId
+              if (item.vehicle_ids.includes(parsedVehiclesId)) {
+                console.log("Matching item:", item);
+                resultArr.push(item);
+              }
+            }
+          });
+        }
+      }
+
+      return resultArr.length > 0 ? resultArr : null;
+    }
+
+    getProductForSubmoduleValue() {
+      // тут продукты только те которые имеют свойство
+      // [1]["Brake Rotors"]["Front | Dont have qualifier | 0591"][0] путь до продукта одного из
+      // .applications тут хранятся параметры submodel
+      let _this = this;
+      let productAll = this.$currentData ? this.$currentData : null;
+
+      let result = [];
+      // console.log("productAll", productAll);
+      let submodule = _this.$submodel.val();
+
+      if (productAll) {
+        productAll.forEach((itemCategory) => {
+          // console.log("Processing category:", itemCategory);
+          let fitmentTypeValue = itemCategory.fitment_type; // fitment_type
+          let dynamicKey = _this.getDynamicKey(itemCategory);
+
+          if (dynamicKey) {
+            let itemQualifierGroup = itemCategory[dynamicKey];
+            // console.log("itemQualifierGroup", itemQualifierGroup);
+
+            let objWithFilter = {};
+
+            if (
+              typeof itemQualifierGroup === "object" &&
+              itemQualifierGroup !== null
+            ) {
+              for (let key in itemQualifierGroup) {
+                let productsIntoQualifierGroup = itemQualifierGroup[key];
+                // console.log(
+                //   "productsIntoQualifierGroup",
+                //   productsIntoQualifierGroup
+                // );
+
+                let filteredProducts = [];
+
+                productsIntoQualifierGroup.forEach((itemProduct) => {
+                  // console.log("itemProduct", itemProduct);
+
+                  let options = itemProduct.applications;
+                  // console.log("options", options);
+                  options.forEach((itemOption) => {
+                    // console.log("itemOption", itemOption);
+
+                    // console.log("submodule value", submodule);
+                    if (itemOption.submodel) {
+                      // console.log("itemOption.submodel", itemOption.submodel);
+
+                      if (itemOption.submodel.value === submodule) {
+                        // console.log(
+                        //   "itemOption.submodel.value ",
+                        //   itemOption.submodel.value
+                        // );
+                        // console.log("подходящий продукт", itemProduct);
+                        filteredProducts.push(itemProduct);
+                      }
+                    }
+                  });
+                });
+                // console.log("filteredProducts", filteredProducts);
+                if (filteredProducts.length > 0) {
+                  objWithFilter[key] = filteredProducts;
+                }
+              }
+            }
+
+            if (Object.keys(objWithFilter).length > 0) {
+              result.push({
+                fitment_type: fitmentTypeValue,
+                [dynamicKey]: objWithFilter,
+              });
+            }
+          }
+        });
+
+        // console.log("Final result:", result);
+        return result.length > 0 ? result : null;
+      }
+
+      return null;
     }
 
     hasSortedProducts(filteredData) {
@@ -2813,7 +2938,10 @@
 
       let validfilteredMatches = null;
 
-      if (_this.$submodel.val() !== "" || _this.$engine.val() !== "") {
+      if (_this.$submodel.val() !== "") {
+        validfilteredMatches = _this.getProductForSubmoduleValue();
+        // if (_this.$submodel.val() !== "" || _this.$engine.val() !== "") {
+      } else if (_this.$engine.val() !== "") {
         validfilteredMatches = data;
       } else {
         validfilteredMatches = cleanedData;
@@ -3393,6 +3521,7 @@
       if (submodel != this.lastSubModel) {
         _this.checkModel(year, make, model);
       }
+
       this.lastSubModel = submodel;
     }
 
