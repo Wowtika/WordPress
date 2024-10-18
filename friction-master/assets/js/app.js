@@ -2718,18 +2718,49 @@
         const productCategory = allProductsValues[0].product_group;
         const productsSide = allProductsValues[0].position;
 
+        let foundImage = false;
+        let productScheme = "";
+
+        allProductsValues.forEach(part => {
+            if (!foundImage) {
+              const url = `https://catalog.loopautomotive.com/catalog/part-images?part_ids=${part.part_id}`;
+              const xhr = new XMLHttpRequest();
+              xhr.open('GET', url, false);
+              xhr.send(null);
+      
+              if (xhr.status === 200) {
+                  const data = JSON.parse(xhr.responseText);
+                  if (data.length > 0 && data[0].tech_drawings.length > 0) {
+                      productScheme = data[0].tech_drawings[0];
+                      foundImage = true;
+                  }
+              }
+            }
+        });
+
         let optionsContainer = this.createOptionsContainer(
           allProductsKeys,
           productCategory,
-          productsSide
+          productsSide,
+          productScheme
         );
 
 
-        optionsContainer.style.display = "flex";
-
         document.body.append(optionsContainer);
 
-        requestAnimationFrame(() => {
+        const images = optionsContainer.querySelectorAll('img');
+        const imagePromises = Array.from(images).map(img => {
+            return new Promise((resolve) => {
+                if (img.complete) {
+                    resolve();
+                } else {
+                    img.onload = resolve;
+                    img.onerror = resolve; // В случае ошибки загрузки изображения
+                }
+            });
+        });
+
+        Promise.all(imagePromises).then(() => {
             const height = optionsContainer.getBoundingClientRect().height;
             document.body.removeChild(optionsContainer);
 
@@ -2882,7 +2913,7 @@
       }
     }
 
-    createOptionsContainer(nameCategory, productCategory, productCategorySide) {
+    createOptionsContainer(nameCategory, productCategory, productCategorySide, productScheme) {
       let _this = this;
       // Создаем элемент для части
       let partOptions = document.createElement("div");
@@ -2926,17 +2957,13 @@
       // item-catalog__header-icons
       partOptionsSxema.classList.add("item-catalog__image");
 
-      let indexSxema = "catalog-sxem.jpg"; // Значение по умолчанию
-      if (productCategory === "Brake Kits") {
-        indexSxema = "catalog-sxem1.jpg"; // Для категории "Brake kits"
-      } else if (productCategory === "Brake Pads") {
-        indexSxema = "catalog-sxem2.jpg"; // Для категории "Brake Pads"
-      }
+      let indexSxema = productScheme ? productScheme : "/wp-content/themes/friction-master/assets/img/catalog/catalog-sxem.jpg"; // Значение по умолчанию
 
       // Создаём элемент <img> и устанавливаем его атрибуты
       const imgElement = document.createElement("img");
-      imgElement.src = `/wp-content/themes/friction-master/assets/img/catalog/${indexSxema}`;
+      imgElement.src = indexSxema;
       imgElement.alt = "Sxema";
+      imgElement.style.width = "165px";
 
       // Добавляем <img> в div
       partOptionsSxema.appendChild(imgElement);
