@@ -63,6 +63,15 @@ get_header() ?>
 									<select data-filter="transmission" name="transmission" data-class-modif="form">
 										<option value="" selected>Transmission</option>
 									</select>
+									<select data-filter="bodytype" name="bodytype" data-class-modif="form">
+										<option value="" selected>Body Type</option>
+									</select>
+									<select data-filter="brake" name="brake" data-class-modif="form">
+										<option value="" selected>Brake</option>
+									</select>
+									<select data-filter="drivetype" name="drivetype" data-class-modif="form">
+										<option value="" selected>Drive Type</option>
+									</select>
 								</div>
 							</div>
 						</div>
