@@ -1845,6 +1845,7 @@
         });
         this.$submodel.on("change", function () {
           _this.checkSubModel();
+          // _this.updateCurrentData();
         });
         this.$transmission.on("change", function () {
           _this.checkTransmissions();
@@ -1993,6 +1994,7 @@
               event.target.closest(".item-category__link")
             ) {
               _this.filterProductsAllGroups();
+
               _this.create_parts(_this.$currentData);
             }
 
@@ -2010,6 +2012,7 @@
               );
 
               _this.filterProductsAllGroups();
+
               _this.create_parts(_this.$currentData);
             }
           });
@@ -2152,9 +2155,9 @@
           if (res && res.success) {
             if (res.data) {
               console.log("checkModel отрабатывает", res.data);
-              let catalogAutoTitleBlock = document.querySelector(
-                "#catalog_auto_title"
-              );
+              // let catalogAutoTitleBlock = document.querySelector(
+              //   "#catalog_auto_title"
+              // );
 
               if (res.data.engines || res.data.vehicles) {
                 load_catalog.html("");
@@ -2298,8 +2301,11 @@
 
         _this.$currentData = [formattedResponse];
 
+        _this.$currentData = _this.modifyFilteredData(_this.$currentData);
+
         catalog_auto_title.html("Found 1 part");
         catalog_auto_title.fadeIn().css("display", "flex");
+
         _this.create_parts(_this.$currentData);
 
         catalog.fadeIn();
@@ -2356,6 +2362,40 @@
               );
               _this.$apiResponseData = res.data;
 
+              // Находим все массивы Brake Pads и объединяем их
+              // let combinedBrakePads = [];
+              // let firstBrakePadsIndex = -1;
+              // let deletedIndex = -1;
+
+              // res.data.part_applications.forEach((app, index) => {
+              //   if (app["Brake Pads"]) {
+              //     combinedBrakePads = combinedBrakePads.concat(
+              //       app["Brake Pads"]
+              //     );
+              //     if (firstBrakePadsIndex === -1) {
+              //       firstBrakePadsIndex = index;
+              //     }
+              //     delete app["Brake Pads"];
+              //     deletedIndex = index;
+              //   }
+              // });
+
+              // if (deletedIndex !== -1 && deletedIndex != firstBrakePadsIndex) {
+              //   delete res.data.part_applications[deletedIndex];
+              // }
+
+              // // Вставляем объединенный массив Brake Pads в первый найденный объект
+              // if (firstBrakePadsIndex !== -1) {
+              //   res.data.part_applications[firstBrakePadsIndex]["Brake Pads"] =
+              //     combinedBrakePads;
+              // }
+
+
+
+              _this.$currentData = _this.modifyFilteredData(
+                res.data.part_applications
+              );
+
               if (res.data.vehicles) {
                 const allVehicles = res.data.vehicles;
                 _this.$vehicleIdSubmodule =
@@ -2363,38 +2403,6 @@
 
                 _this.showSelectedInnerParts();
               }
-
-              // Находим все массивы Brake Pads и объединяем их
-              let combinedBrakePads = [];
-              let firstBrakePadsIndex = -1;
-              let deletedIndex = -1;
-
-              res.data.part_applications.forEach((app, index) => {
-                if (app["Brake Pads"]) {
-                  combinedBrakePads = combinedBrakePads.concat(
-                    app["Brake Pads"]
-                  );
-                  if (firstBrakePadsIndex === -1) {
-                    firstBrakePadsIndex = index;
-                  }
-                  delete app["Brake Pads"];
-                  deletedIndex = index;
-                }
-              });
-
-              if (deletedIndex !== -1 && deletedIndex != firstBrakePadsIndex) {
-                delete res.data.part_applications[deletedIndex];
-              }
-
-              // Вставляем объединенный массив Brake Pads в первый найденный объект
-              if (firstBrakePadsIndex !== -1) {
-                res.data.part_applications[firstBrakePadsIndex]["Brake Pads"] =
-                  combinedBrakePads;
-              }
-
-              _this.$currentData = _this.modifyFilteredData(
-                res.data.part_applications
-              );
 
               catalog_auto_title.html(
                 make +
@@ -2408,6 +2416,7 @@
                   year
               );
               catalog_auto_title.fadeIn().css("display", "flex");
+
               _this.create_parts(_this.$currentData);
 
               catalog.fadeIn();
@@ -2430,78 +2439,67 @@
       let _this = this;
       let engine = _this.$engine.val();
       let submodel = _this.$submodel.val();
-
-      let transmission = _this.$transmission.val();
-
       let transmissionsBlock = document.querySelector('[data-id="8"]');
 
+      // Сброс выпадающего списка трансмиссий
       _this.$transmission.html(
         '<option value="" selected>Transmission</option>'
       );
       _this.rebuildSelect(_this.$transmission);
 
-      let requestData = _this.$apiResponseData;
-
-      if (submodel !== "") {
-        const findTransmissionsByVehicleId = _this.findTransmissionsByVehicleId(
-          _this.$vehicleIdSubmodule
-        );
-
-        if (requestData.transmissions) {
-          const findTransmissionsByVehicleId =
-            _this.findTransmissionsByVehicleId(_this.$vehicleIdSubmodule);
-
-          let dataOnTransmissions = findTransmissionsByVehicleId
-            ? findTransmissionsByVehicleId
-            : requestData.transmissions;
-
-          if (transmissionsBlock) {
-            transmissionsBlock.style.display = "block";
-          }
-          if (dataOnTransmissions.length > 1) {
-            _this.setOptionsTransmissions(
-              dataOnTransmissions,
-              _this.$transmission
-            );
-          } else if (dataOnTransmissions.length === 1) {
-            _this.setOptionsTransmissions(
-              dataOnTransmissions,
-              _this.$transmission,
-              findTransmissionsByVehicleId[0]
-            );
-            transmissionsBlock.style.display = "none";
-            transmission = dataOnTransmissions[0].value;
-            _this.$transmission.attr("disabled", true);
-          }
-        } else {
-          transmissionsBlock.style.display = "none";
-        }
-      } else {
+      // Проверка наличия подмодели
+      if (submodel === "") {
         transmissionsBlock.style.display = "none";
+        return;
       }
-    }
+
+      // Получение данных трансмиссий
+      let requestData = _this.$apiResponseData;
+      let dataOnTransmissions =
+        _this.findTransmissionsByVehicleId(_this.$vehicleIdSubmodule) ||
+        requestData.transmissions;
+
+      if (!dataOnTransmissions || dataOnTransmissions.length === 0) {
+        transmissionsBlock.style.display = "none";
+        return;
+      }
+  
+      // Отображение блока трансмиссий
+      transmissionsBlock.style.display = "block";
+  
+      // Установка опций в выпадающий список
+      if (dataOnTransmissions.length > 1) {
+          _this.setOptionsTransmissions(dataOnTransmissions, _this.$transmission);
+      } else {
+          _this.setOptionsTransmissions(dataOnTransmissions, _this.$transmission, dataOnTransmissions[0]);
+          _this.$transmission.attr("disabled", true);
+      }
+  }
+
     updateCurrentData() {
       let _this = this;
-      let data = _this.$currentData;
-
+      let dataWithResponse = _this.$apiResponseData.part_applications;
       let engine = _this.$engine.val();
       let submodel = _this.$submodel.val();
       let transmission = _this.$transmission.val();
-
+  
+      // Проверяем наличие подмодели
       if (submodel !== "") {
-        let newdata = _this.getProductForSubmoduleValue();
-        _this.$currentData = newdata;
-        _this.create_parts(newdata);
-        console.log(newdata);
+          let newData;
+  
+          // Получаем данные в зависимости от наличия трансмиссии
+          if (transmission !== "") {
+              newData = _this.getProductForTransitionValue();
+          } else {
+              newData = _this.getProductForSubmoduleValue();
+          }
+  
+          // Обновляем текущие данные и создаем части
+          let updatedData = _this.modifyFilteredData(newData);
+          _this.$currentData = updatedData;
+          _this.create_parts(newData);
       }
-
-      if (submodel !== "" && transmission !== "") {
-        let newdata = _this.getProductForTransitionValue();
-        _this.$currentData = newdata;
-        _this.create_parts(newdata);
-        console.log(newdata);
-      }
-    }
+  }
     // getVehicleIdIntoSubmodel(allVehicles)
     getVehicleIdIntoSubmodel(allVehicles) {
       let _this = this;
@@ -2523,6 +2521,10 @@
 
     findTransmissionsByVehicleId(vehiclesId) {
       let _this = this;
+      // let apiResponseDataDontFilter = _this.$apiResponseData
+      //   ? _this.$apiResponseData.part_applications
+      //   : null;
+      // let apiResponseData = _this.modifyFilteredData(apiResponseDataDontFilter);
       let apiResponseData = _this.$apiResponseData
         ? _this.$apiResponseData
         : null;
@@ -2578,7 +2580,8 @@
       // [1]["Brake Rotors"]["Front | Dont have qualifier | 0591"][0] путь до продукта одного из
       // .applications тут хранятся параметры submodel
       let _this = this;
-      let productAll = this.$currentData ? this.$currentData : null;
+      let productGet = this.$currentData ? this.$currentData : null;
+      let productAll = this.modifyFilteredData(productGet);
 
       let result = [];
 
@@ -2642,6 +2645,7 @@
     getProductForTransitionValue() {
       let _this = this;
       let productAll = this.$currentData ? this.$currentData : null;
+
       let result = [];
       let submodule = _this.$submodel.val();
       let transmission = _this.$transmission.val();
@@ -2727,6 +2731,10 @@
     }
 
     modifyFilteredData(filteredData) {
+
+      if (!filteredData) {
+        return null;
+      }
       return filteredData.map((item) => {
         if (item) {
           let fitmentTypeValue = item.fitment_type;
@@ -2750,6 +2758,7 @@
 
     create_parts(data) {
       let _this = this;
+      data = _this.modifyFilteredData(data);
       let catalog = $("#catalog");
       let catalog__wrapper = catalog.find(".catalog__wrapper");
 
@@ -2774,6 +2783,7 @@
       let ifhasSortedProducts = _this.hasSortedProducts(validfilteredMatches);
 
       console.log("validfilteredMatches", validfilteredMatches);
+      validfilteredMatches = this.modifyFilteredData(validfilteredMatches);
       if (ifhasSortedProducts) {
         this.renderParts(validfilteredMatches);
       } else {
@@ -3273,7 +3283,34 @@
           }
         });
 
-        return sortedObjQualifier; // Возврат собранных данных
+        // return sortedObjQualifier; // Возврат собранных данных
+        let objWithCategory = {};
+        // Обработка для группировки по part_number
+        Object.keys(sortedObjQualifier).forEach((key) => {
+          const itemsCategory = sortedObjQualifier[key];
+          let nameCategory = key;
+          const resultSorted = {};
+          itemsCategory.forEach((productObj) => {
+            const partNumber = productObj.part_number;
+            const numberMatch = partNumber.match(/\d+/g);
+            const numbers = numberMatch ? numberMatch[0] : "unknown";
+            if (!resultSorted[numbers]) {
+              resultSorted[numbers] = [];
+            }
+            resultSorted[numbers].push(productObj);
+          });
+          // Добавление в objWithCategory с префиксом, если необходимо
+          Object.keys(resultSorted).forEach((numberKey) => {
+            if (!objWithCategory.hasOwnProperty(nameCategory)) {
+              objWithCategory[nameCategory] = resultSorted[numberKey];
+            } else {
+              let newNameCategory = nameCategory + " | " + numberKey;
+              objWithCategory[newNameCategory] = resultSorted[numberKey];
+            }
+          });
+        });
+
+        return objWithCategory;
       }
       return null;
     }
@@ -3300,7 +3337,7 @@
 
       this.lastSubModel = submodel;
 
-      _this.showSelectedInnerParts();
+      // _this.showSelectedInnerParts();
     }
 
     checkSubModelFromUrl(year, make, model, engine, submodel) {
@@ -3541,7 +3578,7 @@
               }
             })
             .filter((obj) => obj !== null && obj !== undefined); // Удаляем null значения
-          console.log(filteredData);
+
         }
 
         // Возвращаем отфильтрованные данные
