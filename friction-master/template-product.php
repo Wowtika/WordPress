@@ -778,46 +778,29 @@ get_header() ?>
 					<h2 class="small-header-gray1 _card"><?php the_field('related_products','option');?></h2>
 				</div>
 
-				<div class="catalog__row">
-					<?php foreach ($allItems as $item) { ?>
-
-					<?php
-						$img = "";
-						$url = 'https://catalog.loopautomotive.com/catalog/part-images?part_ids=' . $item['part_id'];
-						$headers = array(
-							'Content-Type: application/json',
-						);
-					
-						$ch = curl_init($url);
-					
-						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-					
-						$response = curl_exec($ch);
-					
-						if (curl_errno($ch)) {
-							echo 'Ошибка cURL: ' . curl_error($ch);
-						} else {
-							$data = json_decode($response, true);
-							$partImage = $data;
-						}
-						curl_close($ch);
-
-						foreach ($partImages as $partImage) {
-							if (is_array($partImage) && isset($partImage['images'])) {
-								foreach ($partImage['images'] as $image) {
-									$img = $image;
-									break;
-								}
-								if ($img == "") {
-									foreach ($partImage['tech_drawings'] as $image) {
-										$img = $image;
-										break;
-									}
+				<?php wp_reset_postdata() ?>
+				<?php
+					$img = "";
+					$imgArray;
+					$query->rewind_posts();
+					if ( $query->have_posts() ) { 
+						while ( $query->have_posts() ) { 
+							$query->the_post(); 
+							if (have_rows('labeling')) {
+								while (have_rows('labeling')) {
+									the_row();
+									$label = get_sub_field('label');
+									$img = get_field('img');
+									$imgArray[$label] = $img;
 								}
 							}
 						}
-					?>
+					}
+				?>
+
+				<div class="catalog__row">
+					<?php foreach ($allItems as $item) { ?>
+
 						
 					<div class="catalog__item item-catalog">
 
@@ -831,6 +814,17 @@ get_header() ?>
 								<?= $item['part_number'] ?>
 							</div>
 						</div>
+
+						<?php
+							$numberType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
+							if (isset($imgArray[$numberType])) {
+								$img = $imgArray[$numberType]; //Проверка
+							}
+							else
+							{
+								$img = '/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg';
+							}
+						?>
 
 						<div class="item-catalog__image">
 							<img src="<?= $img ?>" alt="Без фото">
@@ -856,40 +850,13 @@ get_header() ?>
 					<?php foreach ($allItems as $item) { ?>
 
 					<?php
-						$img = "";
-						$url = 'https://catalog.loopautomotive.com/catalog/part-images?part_ids=' . $item['part_id'];
-						$headers = array(
-							'Content-Type: application/json',
-						);
-					
-						$ch = curl_init($url);
-					
-						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-					
-						$response = curl_exec($ch);
-					
-						if (curl_errno($ch)) {
-							echo 'Ошибка cURL: ' . curl_error($ch);
-						} else {
-							$data = json_decode($response, true);
-							$partImage = $data;
+						$numberType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
+						if (isset($imgArray[$numberType])) {
+							$img = $imgArray[$numberType]; //Проверка
 						}
-						curl_close($ch);
-
-						foreach ($partImages as $partImage) {
-							if (is_array($partImage) && isset($partImage['images'])) {
-								foreach ($partImage['images'] as $image) {
-									$img = $image;
-									break;
-								}
-								if ($img == "") {
-									foreach ($partImage['tech_drawings'] as $image) {
-										$img = $image;
-										break;
-									}
-								}
-							}
+						else
+						{
+							$img = '/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg';
 						}
 					?>
 						
