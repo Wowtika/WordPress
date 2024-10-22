@@ -3462,7 +3462,6 @@
       part_img.classList.add("item-catalog__image");
 
       // _this.getImagesForProducts(productIds);
-      let imgPath = "";
       if (_this.groupedData[part.product_group]) {
         const partGroupData = _this.groupedData[part.product_group];
         const match = part.part_number.match(/[A-Za-z]+/);
@@ -3476,35 +3475,60 @@
         let result = Object.values(partGroupData).find((item) =>
           item.labeling.includes(letterPart)
         );
+
         if (result && result.imgId) {
-          if (_this.imgCache[result.imgId]) {
-            console.log(_this.imgCache[result.imgId]);
-            part_img.innerHTML = `<img src="${_this.imgCache[result.imgId]}" alt="product image" />`;
-          } 
-          else {
-            let imgPathPromise = Promise.resolve("");
-            imgPathPromise = fetch(`/wp-json/wp/v2/media/${result.imgId}`)
-              .then((imgResponse) => {
-                if (!imgResponse.ok) {
-                  throw new Error(
-                    "Network response was not ok " + imgResponse.statusText
-                  );
-                }
-                return imgResponse.json();
-              })
-              .then((imgData) => imgData.source_url)
-              .then((url) => {
-                _this.imgCache[result.imgId] = url;
+          _this.imgCache = _this.imgCache || {};
+          _this.imgPromises = _this.imgPromises || {};
+
+          function loadImage(result) {
+            if (_this.imgCache[result.imgId]) {
+              console.log(_this.imgCache[result.imgId]);
+              part_img.innerHTML = `<img src="${_this.imgCache[result.imgId]}" alt="product image" />`;
+            } else if (_this.imgPromises[result.imgId]) {
+              _this.imgPromises[result.imgId].then((url) => {
                 part_img.innerHTML = `<img src="${url}" alt="product image" />`;
-              })
-              .catch((error) => {
-                return "/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg";
               });
+            } else {
+              _this.imgPromises[result.imgId] = fetch(`/wp-json/wp/v2/media/${result.imgId}`)
+                .then((imgResponse) => {
+                  if (!imgResponse.ok) {
+                    throw new Error("Network response was not ok " + imgResponse.statusText);
+                  }
+                  return imgResponse.json();
+                })
+                .then((imgData) => {
+                  const url = imgData.source_url;
+                  _this.imgCache[result.imgId] = url;
+                  delete _this.imgPromises[result.imgId]; // Удаляем промис после завершения
+                  if (url === "") {
+                    part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
+                  } else {
+                    part_img.innerHTML = `<img src="${url}" alt="product image" />`;
+                  }
+                  return url;
+                })
+                .catch((error) => {
+                  delete _this.imgPromises[result.imgId]; // Удаляем промис в случае ошибки
+                    part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
+                });
+            }
           }
-        } else {
-        part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
+
+          // Пример использования
+          loadImage(result);
+
+        } 
+        else {
+          part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
         }
       }
+
+      //Для wheel hubs почему-то не ставит картинку по умолчанию, сделал так
+      if (part_img.innerHTML === "") {
+        part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
+      }
+
+      console.log(part_img);
 
       let part_footer = document.createElement("div");
       part_footer.classList.add("item-catalog__footer");
