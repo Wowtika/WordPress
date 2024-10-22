@@ -1920,6 +1920,10 @@
           let model = _this.$model.val();
           _this.$submodel.val("");
           _this.$engine.val("");
+          _this.$brake.val("");
+          _this.$transmission.val("");
+          _this.$bodyType.val("");
+          _this.$driveType.val("");
 
           if (model === lastModel) return;
           lastModel = model;
@@ -1931,6 +1935,7 @@
           });
 
           $("#inner1").fadeOut();
+          _this.hideBlocks();
           _this.checkModel(year, make, model);
         });
         this.$submodel.on("change", function () {
@@ -2535,14 +2540,7 @@
       let dataOnBrakes =  requestData.brakes || [];
       let dataOnDriveTypes = requestData.drive_types || [];
 
-
       // Отображение блока трансмиссий
-      submodelBlock.style.display = "block";
-      engineBlock.style.display = "block";
-      transmissionsBlock.style.display = "block";
-      bodyTypesBlock.style.display = "block";
-      brakesBlock.style.display = "block";
-      driveTypeBlock.style.display = "block";
 
       const intersections = this.findIntersection();
 
@@ -2631,7 +2629,6 @@
       );
 
       const selectedBrake = dataOnBrakes.filter(brake => brake.brake === brakeVal)[0];
-
       if (dataOnBrakes && dataOnBrakes.length > 1) {
         _this.setOptionsBrakes(dataOnBrakes, _this.$brake, selectedBrake);
       } else {
@@ -2661,6 +2658,77 @@
         }
         driveTypeBlock.style.display = "none";
       } 
+
+      _this.showAfterSelection();
+  }
+
+  hideBlocks() {
+    let blocks = [
+      document.querySelector('[data-id="6"]'),
+      document.querySelector('[data-id="7"]'),
+      document.querySelector('[data-id="8"]'),
+      document.querySelector('[data-id="9"]'),
+      document.querySelector('[data-id="10"]'),
+      document.querySelector('[data-id="11"]')
+    ];
+
+    blocks.forEach(
+      block => {
+        block.style.display = "none";
+      }
+    )
+  }
+
+  showAfterSelection() {
+    let _this = this;
+
+    let blocks = [
+      document.querySelector('[data-id="6"]'),
+      document.querySelector('[data-id="7"]'),
+      document.querySelector('[data-id="8"]'),
+      document.querySelector('[data-id="9"]'),
+      document.querySelector('[data-id="10"]'),
+      document.querySelector('[data-id="11"]')
+    ];
+    
+    let values = [
+        _this.$submodel.val(),
+        _this.$engine.val(),
+        _this.$transmission.val(),
+        _this.$bodyType.val(),
+        _this.$brake.val(),
+        _this.$driveType.val()
+    ];
+    
+    // Сначала сохраняем индексы блоков, которые нужно удалить
+    let indicesToRemove = [];
+    blocks.forEach((block, index) => {
+        if (block.querySelectorAll("option").length <= 1) {
+            indicesToRemove.push(index);
+        }
+    });
+    
+    // Удаляем блоки и значения по сохраненным индексам
+    indicesToRemove.reverse().forEach(index => {
+        blocks.splice(index, 1);
+        values.splice(index, 1);
+    });
+
+    for (let i = 0; i < blocks.length; i++) {
+        let block = blocks[i];
+        let previousBlock = blocks[i - 1];
+        let previousValue = values[i - 1];
+        if (block.style.display === 'none') {
+            if ((i === 0 || this.getLength(previousBlock) <= 1 || previousValue) && this.getLength(block) > 2) {
+              block.style.display = 'block';
+              return;
+            }
+        }
+    }
+  }
+
+  getLength(block) {
+    return block.querySelectorAll("option").length;
   }
 
   //Создаем список всех связаных деталей
