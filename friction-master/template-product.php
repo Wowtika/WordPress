@@ -291,7 +291,7 @@ get_header() ?>
 															 '&md=' . $model . 
 															 $submodelWithParm . 
 															 $engineWithParm . 
-															 '&rg=' . $region ?>" class="item-category__link" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: #000000"><?php the_field('back_to_catalog') ?></a>
+															 '&rg=' . $region ?>" class="item-category__link" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: #000000"><?php the_field('back_to_catalog', 'option') ?></a>
 			<img class="card-header__image" src="<?=get_template_directory_uri();?>/assets/img/card/card-bg.svg" alt="">
 			<!-- <img class="card-header__image-mobile" src="<?=get_template_directory_uri();?>/assets/img/catalog/header-bg-mobile.svg" alt=""> -->
 		</div>
@@ -528,25 +528,14 @@ get_header() ?>
 					 	$linkToMarket = ""
 					 ?>
 						<?php 
-							wp_reset_postdata();
-							if (have_rows('online_retailers')) {
-								while (have_rows('online_retailers')) {
+							if (have_rows('items_marketplaces', 'option')) {
+								while (have_rows('items_marketplaces', 'option')) {
 									the_row();
-									$linkToMarket = "https://www.amazon.com/dp/B000CHB5SM"; //Получить из api
+									$linkToMarket = ""; //Получить из api
 									echo '<a href="' . $linkToMarket . '" class="markets-card__logo">';
 										echo '<img src="' . get_sub_field('logo') . '">';
 									echo '</a>';
 								}
-							}
-							$query->rewind_posts();
-							if ( $query->have_posts() ) { 
-								while ( $query->have_posts() ) { 
-									$query->the_post(); 
-									$title = get_the_title();
-									if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
-										break;
-									};
-								} 
 							}
 						?>
 					</div>
@@ -690,76 +679,72 @@ get_header() ?>
 				<h3 class="partners__heading header3"><?php the_field('rating_on_marketplaces','option');?></h3>
 			</div>
 
-			<div class="partners__wrapper">
+			<?php if( have_rows('items_marketplaces', 'option') ): ?>
+				<div class="works-section__partners">
+					<div class="lg-container">
+						<div class="partners__wrapper">
+							<!-- <span class="slider-left-arrow partners-left _icon-arrow-new">
+							</span> -->
+							<div class="swiper partners-slider" pagination="true">
+								<div class="swiper-wrapper partners-slider__wrapper">
+									
+									<?php while ( have_rows('items_marketplaces', 'option') ) : the_row();?>
 
-				<span class="slider-left-arrow partners-left _icon-arrow-new">
-					<!-- <img src="<?=get_template_directory_uri();?>/assets/img/home/arrow-left.png" alt="" class="partners-left-arrow__img" /> -->
-				</span>
-				<div class="swiper partners-slider">
-					
-					<?php wp_reset_postdata(); ?>
+										<div class="swiper-slide partners-slider__card">
+										
+											<?php $linkToMarket = ""; //Получить из api ?>
+											<?php $ratingOnMarket = 4.8; //Получить из api ?>
 
-					<div class="swiper-wrapper partners-slider__wrapper ">
+											<a href="<?=$linkToMarket ?>" class="partners-slider__link">
+												<img src='<?php echo get_sub_field('logo') ?>' alt="" class="partners-slider__image">
+											</a>
 
-					<?php if (have_rows('online_retailers')) { ?>
-					<?php while (have_rows('online_retailers')) { the_row();?>
-					<!-- api -->
-					<?php $linkToMarket = ""; //Получить из api ?>
-					<?php $ratingOnMarket = 4.8; //Получить из api ?>
+											<div class="partners-slider__star">
+												<div class="rating rating_set">
+													<div class="rating__body">
+														<div class="rating__active" style="width:66%"></div>
+														<div class="rating__items">
+															<input type="radio" class="rating__item" value="1" name="rating">
+															<input type="radio" class="rating__item" value="2" name="rating">
+															<input type="radio" class="rating__item" value="3" name="rating">
+															<input type="radio" class="rating__item" value="4" name="rating">
+															<input type="radio" class="rating__item" value="5" name="rating">
+														</div>
+													</div>
+													<div class="rating__value"><b><?= $ratingOnMarket ?></b> / 5</div>
+												</div>
+											</div>
 
-
-
-						<div class="swiper-slide partners-slider__card ">
-							<a href="<?=$linkToMarket ?>" class="partners-slider__link">
-								<img src='<?php echo get_sub_field('logo') ?>' alt="" class="partners-slider__image">
-							</a>
-
-							<div class="partners-slider__star">
-
-								<div class="rating rating_set">
-									<div class="rating__body">
-										<div class="rating__active" style="width:66%"></div>
-										<div class="rating__items">
-											<input type="radio" class="rating__item" value="1" name="rating">
-											<input type="radio" class="rating__item" value="2" name="rating">
-											<input type="radio" class="rating__item" value="3" name="rating">
-											<input type="radio" class="rating__item" value="4" name="rating">
-											<input type="radio" class="rating__item" value="5" name="rating">
 										</div>
-									</div>
-									<div class="rating__value"><b><?= $ratingOnMarket ?></b> / 5</div>
+										
+									<?php endwhile; ?>
+
 								</div>
-
+								
 							</div>
+							<!-- <span class="slider-right-arrow partners-right _icon-arrow-new">
+							</span> -->
 						</div>
-
-
-					<?php }} ?>
-					
+						<div class="swiper-pagination-partners"></div>
 					</div>
-
-					<?php
-						$query->rewind_posts();
-						if ( $query->have_posts() ) { 
-							while ( $query->have_posts() ) { 
-								$query->the_post(); 
-								$title = get_the_title();
-								if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
-									break;
-								};
-							} 
-						}
-					?>
-
 				</div>
-				<span class="slider-right-arrow partners-right _icon-arrow-new">
-					<!-- <img src="<?=get_template_directory_uri();?>/assets/img/home/arrow-left.png" alt="" class="partners-right-arrow__img" /> -->
-				</span>
-
-			</div>
+			<?php endif; ?>
 
 		</div>
 	</section>
+
+	<?php
+		$query->rewind_posts();
+		if ( $query->have_posts() ) { 
+			while ( $query->have_posts() ) { 
+				$query->the_post(); 
+				$title = get_the_title();
+				if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+					break;
+				};
+			} 
+		}
+	?>
 
 	<section class="page__card-work-circles">
 		<?php wp_reset_postdata() ?>
