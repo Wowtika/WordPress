@@ -291,7 +291,7 @@ get_header() ?>
 															 '&md=' . $model . 
 															 $submodelWithParm . 
 															 $engineWithParm . 
-															 '&rg=' . $region ?>" class="item-category__link" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: #000000"><?php the_field('back_to_catalog') ?></a>
+															 '&rg=' . $region ?>" class="item-category__link" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: #000000"><?php the_field('back_to_catalog', 'option') ?></a>
 			<img class="card-header__image" src="<?=get_template_directory_uri();?>/assets/img/card/card-bg.svg" alt="">
 			<!-- <img class="card-header__image-mobile" src="<?=get_template_directory_uri();?>/assets/img/catalog/header-bg-mobile.svg" alt=""> -->
 		</div>
@@ -528,25 +528,14 @@ get_header() ?>
 					 	$linkToMarket = ""
 					 ?>
 						<?php 
-							wp_reset_postdata();
-							if (have_rows('online_retailers')) {
-								while (have_rows('online_retailers')) {
+							if (have_rows('items_marketplaces', 'option')) {
+								while (have_rows('items_marketplaces', 'option')) {
 									the_row();
-									$linkToMarket = "https://www.amazon.com/dp/B000CHB5SM"; //Получить из api
+									$linkToMarket = ""; //Получить из api
 									echo '<a href="' . $linkToMarket . '" class="markets-card__logo">';
 										echo '<img src="' . get_sub_field('logo') . '">';
 									echo '</a>';
 								}
-							}
-							$query->rewind_posts();
-							if ( $query->have_posts() ) { 
-								while ( $query->have_posts() ) { 
-									$query->the_post(); 
-									$title = get_the_title();
-									if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
-										break;
-									};
-								} 
 							}
 						?>
 					</div>
@@ -616,7 +605,20 @@ get_header() ?>
 								<div class="spollers__body">
 									<?php foreach ($cars as $car) { ?>
 									<div class="card-tabs__row card-tabs__row_cars">
-										<div class="card-tabs__row-inner"><?php echo $car["year"]; ?> / <?php echo $car["model"]; ?> / <?php echo $car["engine"]; ?></div>
+										<div class="card-tabs__row-inner">
+											<?php 
+												echo 
+												$car["make"] . " " .
+												$car["model"] . " " .
+												$car["year"] . " " .
+												$car["submodel"] . " " .
+												$car["body_type"] . " " .
+												$car["engine"] . " " .
+												$car["drive_type"] . " " .
+												$car["transmission"] . " " .
+												$car["brake"]
+											?>
+										</div>
 										<!-- <div class="card-tabs__row-inner"><b><?php echo $car["model"]; ?></b></div>
 										<div class="card-tabs__row-inner"><b><?php echo $car["engine"]; ?></b></div> -->
 									</div>
@@ -690,76 +692,72 @@ get_header() ?>
 				<h3 class="partners__heading header3"><?php the_field('rating_on_marketplaces','option');?></h3>
 			</div>
 
-			<div class="partners__wrapper">
+			<?php if( have_rows('items_marketplaces', 'option') ): ?>
+				<div class="works-section__partners">
+					<div class="lg-container">
+						<div class="partners__wrapper">
+							<!-- <span class="slider-left-arrow partners-left _icon-arrow-new">
+							</span> -->
+							<div class="swiper partners-slider" pagination="true">
+								<div class="swiper-wrapper partners-slider__wrapper">
+									
+									<?php while ( have_rows('items_marketplaces', 'option') ) : the_row();?>
 
-				<span class="slider-left-arrow partners-left _icon-arrow-new">
-					<!-- <img src="<?=get_template_directory_uri();?>/assets/img/home/arrow-left.png" alt="" class="partners-left-arrow__img" /> -->
-				</span>
-				<div class="swiper partners-slider">
-					
-					<?php wp_reset_postdata(); ?>
+										<div class="swiper-slide partners-slider__card">
+										
+											<?php $linkToMarket = ""; //Получить из api ?>
+											<?php $ratingOnMarket = 4.8; //Получить из api ?>
 
-					<div class="swiper-wrapper partners-slider__wrapper ">
+											<a href="<?=$linkToMarket ?>" class="partners-slider__link">
+												<img src='<?php echo get_sub_field('logo') ?>' alt="" class="partners-slider__image">
+											</a>
 
-					<?php if (have_rows('online_retailers')) { ?>
-					<?php while (have_rows('online_retailers')) { the_row();?>
-					<!-- api -->
-					<?php $linkToMarket = ""; //Получить из api ?>
-					<?php $ratingOnMarket = 4.8; //Получить из api ?>
+											<div class="partners-slider__star">
+												<div class="rating rating_set">
+													<div class="rating__body">
+														<div class="rating__active" style="width:66%"></div>
+														<div class="rating__items">
+															<input type="radio" class="rating__item" value="1" name="rating">
+															<input type="radio" class="rating__item" value="2" name="rating">
+															<input type="radio" class="rating__item" value="3" name="rating">
+															<input type="radio" class="rating__item" value="4" name="rating">
+															<input type="radio" class="rating__item" value="5" name="rating">
+														</div>
+													</div>
+													<div class="rating__value"><b><?= $ratingOnMarket ?></b> / 5</div>
+												</div>
+											</div>
 
-
-
-						<div class="swiper-slide partners-slider__card ">
-							<a href="<?=$linkToMarket ?>" class="partners-slider__link">
-								<img src='<?php echo get_sub_field('logo') ?>' alt="" class="partners-slider__image">
-							</a>
-
-							<div class="partners-slider__star">
-
-								<div class="rating rating_set">
-									<div class="rating__body">
-										<div class="rating__active" style="width:66%"></div>
-										<div class="rating__items">
-											<input type="radio" class="rating__item" value="1" name="rating">
-											<input type="radio" class="rating__item" value="2" name="rating">
-											<input type="radio" class="rating__item" value="3" name="rating">
-											<input type="radio" class="rating__item" value="4" name="rating">
-											<input type="radio" class="rating__item" value="5" name="rating">
 										</div>
-									</div>
-									<div class="rating__value"><b><?= $ratingOnMarket ?></b> / 5</div>
+										
+									<?php endwhile; ?>
+
 								</div>
-
+								
 							</div>
+							<!-- <span class="slider-right-arrow partners-right _icon-arrow-new">
+							</span> -->
 						</div>
-
-
-					<?php }} ?>
-					
+						<div class="swiper-pagination-partners"></div>
 					</div>
-
-					<?php
-						$query->rewind_posts();
-						if ( $query->have_posts() ) { 
-							while ( $query->have_posts() ) { 
-								$query->the_post(); 
-								$title = get_the_title();
-								if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
-									break;
-								};
-							} 
-						}
-					?>
-
 				</div>
-				<span class="slider-right-arrow partners-right _icon-arrow-new">
-					<!-- <img src="<?=get_template_directory_uri();?>/assets/img/home/arrow-left.png" alt="" class="partners-right-arrow__img" /> -->
-				</span>
-
-			</div>
+			<?php endif; ?>
 
 		</div>
 	</section>
+
+	<?php
+		$query->rewind_posts();
+		if ( $query->have_posts() ) { 
+			while ( $query->have_posts() ) { 
+				$query->the_post(); 
+				$title = get_the_title();
+				if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+					break;
+				};
+			} 
+		}
+	?>
 
 	<section class="page__card-work-circles">
 		<?php wp_reset_postdata() ?>
@@ -793,46 +791,29 @@ get_header() ?>
 					<h2 class="small-header-gray1 _card"><?php the_field('related_products','option');?></h2>
 				</div>
 
-				<div class="catalog__row">
-					<?php foreach ($allItems as $item) { ?>
-
-					<?php
-						$img = "";
-						$url = 'https://catalog.loopautomotive.com/catalog/part-images?part_ids=' . $item['part_id'];
-						$headers = array(
-							'Content-Type: application/json',
-						);
-					
-						$ch = curl_init($url);
-					
-						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-					
-						$response = curl_exec($ch);
-					
-						if (curl_errno($ch)) {
-							echo 'Ошибка cURL: ' . curl_error($ch);
-						} else {
-							$data = json_decode($response, true);
-							$partImage = $data;
-						}
-						curl_close($ch);
-
-						foreach ($partImages as $partImage) {
-							if (is_array($partImage) && isset($partImage['images'])) {
-								foreach ($partImage['images'] as $image) {
-									$img = $image;
-									break;
-								}
-								if ($img == "") {
-									foreach ($partImage['tech_drawings'] as $image) {
-										$img = $image;
-										break;
-									}
+				<?php wp_reset_postdata() ?>
+				<?php
+					$img = "";
+					$imgArray;
+					$query->rewind_posts();
+					if ( $query->have_posts() ) { 
+						while ( $query->have_posts() ) { 
+							$query->the_post(); 
+							if (have_rows('labeling')) {
+								while (have_rows('labeling')) {
+									the_row();
+									$label = get_sub_field('label');
+									$img = get_field('img');
+									$imgArray[$label] = $img;
 								}
 							}
 						}
-					?>
+					}
+				?>
+
+				<div class="catalog__row">
+					<?php foreach ($allItems as $item) { ?>
+
 						
 					<div class="catalog__item item-catalog">
 
@@ -846,6 +827,17 @@ get_header() ?>
 								<?= $item['part_number'] ?>
 							</div>
 						</div>
+
+						<?php
+							$numberType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
+							if (isset($imgArray[$numberType])) {
+								$img = $imgArray[$numberType]; //Проверка
+							}
+							else
+							{
+								$img = '/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg';
+							}
+						?>
 
 						<div class="item-catalog__image">
 							<img src="<?= $img ?>" alt="Без фото">
@@ -871,40 +863,13 @@ get_header() ?>
 					<?php foreach ($allItems as $item) { ?>
 
 					<?php
-						$img = "";
-						$url = 'https://catalog.loopautomotive.com/catalog/part-images?part_ids=' . $item['part_id'];
-						$headers = array(
-							'Content-Type: application/json',
-						);
-					
-						$ch = curl_init($url);
-					
-						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-					
-						$response = curl_exec($ch);
-					
-						if (curl_errno($ch)) {
-							echo 'Ошибка cURL: ' . curl_error($ch);
-						} else {
-							$data = json_decode($response, true);
-							$partImage = $data;
+						$numberType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
+						if (isset($imgArray[$numberType])) {
+							$img = $imgArray[$numberType]; //Проверка
 						}
-						curl_close($ch);
-
-						foreach ($partImages as $partImage) {
-							if (is_array($partImage) && isset($partImage['images'])) {
-								foreach ($partImage['images'] as $image) {
-									$img = $image;
-									break;
-								}
-								if ($img == "") {
-									foreach ($partImage['tech_drawings'] as $image) {
-										$img = $image;
-										break;
-									}
-								}
-							}
+						else
+						{
+							$img = '/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg';
 						}
 					?>
 						
