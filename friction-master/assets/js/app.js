@@ -1619,13 +1619,13 @@
     lastSubModel;
     order = [];
     usedKeys = new Map(); //Нужно чтобы определять ненужные селекты
+    imgCache = [];
 
     constructor(block, Select) {
       super(block, Select);
 
       //Получить линейки
       const url = "/wp-json/wp/v2/product-lines?per_page=20";
-      let groupedData;
       let _this = this;
 
       fetch(url)
@@ -1648,31 +1648,11 @@
               ? item.acf.labeling.map((label) => label.label)
               : [];
             const imgId = item.acf.img;
-
-            let imgPathPromise = Promise.resolve("");
-            if (imgId) {
-              imgPathPromise = fetch(`/wp-json/wp/v2/media/${imgId}`)
-                .then((imgResponse) => {
-                  if (!imgResponse.ok) {
-                    throw new Error(
-                      "Network response was not ok " + imgResponse.statusText
-                    );
-                  }
-                  return imgResponse.json();
-                })
-                .then((imgData) => imgData.source_url)
-                .catch((error) => {
-                  return "/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg";
-                });
-            }
-
-            return imgPathPromise.then((imgPath) => {
-              acc[group].push({ line, labeling, imgPath });
-            });
+            
+            acc[group].push({ line, labeling, imgId });
           });
-
-          return Promise.all(fetchImagePromises).then(() => acc);
-        })
+          return acc;
+          })
         .then((data) => {
           const order = [
             "Black",
@@ -2281,6 +2261,124 @@
               // let catalogAutoTitleBlock = document.querySelector(
               //   "#catalog_auto_title"
               // );
+              if (res.data.param_weights) {
+                if (Object.keys(res.data.param_weights).length === 1) {
+                    console.log('key', Object.keys(res.data.param_weights));
+                    let key = Object.keys(res.data.param_weights)[0];
+                    let valueKey = res.data.param_weights[key];
+                    let year = _this.$year.val();
+                    let make = _this.$make.val();
+                    let model = _this.$model.val();
+                    if (key === 'engine') {
+                      let valueEngine = res.data.engines[0].engine_short;
+                      console.log(valueEngine);
+                      _this.$vehicleIdSubmodule = res.data.engines[0].vehicle_ids[0];
+                      let engine = valueEngine;
+                      console.log(_this.$vehicleIdSubmodule);
+                      _this.partsSearch(year, make, model, engine);
+                      // _this.create_parts(res.data.part_applications);
+                      // _this.updateCurrentData();
+                    } else if (key === 'submodel') {
+                      console.log(res.data.vehicles);
+                      if (res.data.vehicles.length === 1) {
+                        _this.$vehicleIdSubmodule = res.data.vehicles[0].vehicle_ids[0];
+                        let valueSubmodel = res.data.vehicles[0].submodel;
+                        console.log(valueSubmodel);
+                      } else if (res.data.vehicles.length > 1) {
+                        _this.setOptionsSubmodels(
+                          res.data.vehicles,
+                          _this.$submodel
+                        );
+                      }
+                      // let valueSubmodel = res.data.vehicles[0].submodel;
+                      // console.log(valueSubmodel);
+                      // _this.$vehicleIdSubmodule = res.data.vehicles[0].vehicle_ids[0];
+                      // let submodel = valueSubmodel;
+                      // console.log(_this.$vehicleIdSubmodule);
+                      // _this.partsSearch(year, make, model, engine, submodel);
+
+                      // _this.create_parts(res.data.part_applications);
+                      // _this.updateCurrentData();
+                    }
+                  } else if ((Object.keys(res.data.param_weights).length > 1)) {
+                    Object.keys(res.data.param_weights).forEach((key) => {
+                      let valueKey = res.data.param_weights[key];
+                      console.log('key more 1 lenght', key);
+                      console.log('valueKey more 1 lenght', valueKey);
+
+                      if (!submodel) {
+                        let submodelBlock = document.querySelector('[data-id="6"]');
+                        if (res.data.vehicles) {
+                          if (submodelBlock) {
+                            submodelBlock.style.display = "block";
+                          }
+                          if (res.data.vehicles.length > 1) {
+                            _this.setOptionsSubmodels(
+                              res.data.vehicles,
+                              _this.$submodel
+                            );
+                          } else if (res.data.vehicles.length === 1) {
+                            _this.setOptionsSubmodels(
+                              res.data.vehicles,
+                              _this.$submodel,
+                              res.data.vehicles[0]
+                            );
+                            submodelBlock.style.display = "none";
+                            submodel = res.data.vehicles[0].submodel;
+                            _this.$submodel.attr("disabled", true);
+                          }
+                        } else {
+                          submodelBlock.style.display = "none";
+                        }
+      
+                        _this.partsSearch(year, make, model, engine, submodel);
+                        // load_catalog.html("");
+                        // $("#catalog_row").html("");
+                        // $("#inner1").fadeIn().css("display", "grid");
+                        // catalogAutoTitleBlock.style.display = "flex";
+                      }
+
+
+
+
+                      // let year = _this.$year.val();
+                      // let make = _this.$make.val();
+                      // let model = _this.$model.val();
+                      // if (key === 'engine') {
+                      //   let valueEngine = _this.$apiResponseData.engines[0].engine_short;
+                      //   console.log(valueEngine);
+                      //   _this.$vehicleIdSubmodule = _this.$apiResponseData.engines[0].vehicle_ids[0];
+                      //   let engine = valueEngine;
+                      //   console.log(_this.$vehicleIdSubmodule);
+                      //   _this.partsSearch(year, make, model, engine);
+                      // }
+                    })
+                    // for (key in Object.keys(res.data.param_weights)) {
+                    //   console.log(key);
+                    //   console.log(res.data.param_weights[key]);
+                    // }
+                }
+                
+
+                // if (dataWithParamWeights && Object.keys(dataWithParamWeights).length > 0) {
+                //     console.log("внутри updateCurrentData", dataWithParamWeights);
+                //     console.log("внутри updateCurrentData", Object.keys(dataWithParamWeights));
+                   
+                //     // else if (key === 'submodel') {
+                //     //   let valueSubmodel = _this.$apiResponseData.engines[0].engine_short;
+                //     //   _this.$vehicleIdSubmodule = _this.$apiResponseData.engines[0].vehicle_ids[0];
+                //     // }
+                //   } else if (Object.keys(dataWithParamWeights).length > 1) {
+                //     // Object.keys(dataWithParamWeights).
+                //     for (key in dataWithParamWeights) {
+                //       console.log(key);
+                //       console.log(dataWithParamWeights[key]);
+                //     }
+                //   }
+
+
+                }
+
 
               if (res.data.engines || res.data.vehicles) {
                 load_catalog.html("");
@@ -2308,37 +2406,7 @@
                 //   engineBlock.style.display = "none";
                 // }
 
-                if (!submodel) {
-                  let submodelBlock = document.querySelector('[data-id="6"]');
-                  if (res.data.vehicles) {
-                    if (submodelBlock) {
-                      submodelBlock.style.display = "block";
-                    }
-                    if (res.data.vehicles.length > 1) {
-                      _this.setOptionsSubmodels(
-                        res.data.vehicles,
-                        _this.$submodel
-                      );
-                    } else if (res.data.vehicles.length === 1) {
-                      _this.setOptionsSubmodels(
-                        res.data.vehicles,
-                        _this.$submodel,
-                        res.data.vehicles[0]
-                      );
-                      submodelBlock.style.display = "none";
-                      submodel = res.data.vehicles[0].submodel;
-                      _this.$submodel.attr("disabled", true);
-                    }
-                  } else {
-                    submodelBlock.style.display = "none";
-                  }
-
-                  _this.partsSearch(year, make, model, engine, submodel);
-                  // load_catalog.html("");
-                  // $("#catalog_row").html("");
-                  // $("#inner1").fadeIn().css("display", "grid");
-                  // catalogAutoTitleBlock.style.display = "flex";
-                }
+               
               }
 
               // если нет подмодели и двигателя
@@ -2525,16 +2593,33 @@
                   year
               );
               catalog_auto_title.fadeIn().css("display", "flex");
-
-              _this.create_parts(_this.$currentData);
-
-              if (!res.data.vehicles) {
+              if (res.data.param_weights && Object.keys(res.data.param_weights).length > 0) {
+                console.log(res.data.param_weights);
                 _this.showSelectedInnerParts();
+                if (Object.keys(res.data.param_weights).length === 1) {
+
+                }
               }
+              //   // let catalog = $("#catalog");
+              //   // let catalog__wrapper = catalog.find(".catalog__wrapper");
+              //   // catalog__wrapper.html("");
+              //   _this.create_parts(_this.$currentData);
+              //   catalog.fadeIn();
+              // } else {
+              //   // let catalog = $("#catalog");
+              //   // // let catalog__wrapper = catalog.find(".catalog__wrapper");
+              //   // // catalog__wrapper.html("");
+              //   // catalog.html("");
+              //   catalog[0].style.display = "none";
+              // }
+
+              // if (!res.data.vehicles) {
+              //   _this.showSelectedInnerParts();
+              // }
 
               //_this.showSelectedInnerParts();
 
-              catalog.fadeIn();
+              // catalog.fadeIn();
 
               window.dispatchEvent(new Event("resize"));
 
@@ -2550,9 +2635,13 @@
       });
     }
 
-    showSelectedInnerParts() {
+    defineSearchParameters() {
       let _this = this;
 
+    }
+    showSelectedInnerParts() {
+      let _this = this;
+      console.log("showSelectedInnerParts");
       let engineBlock = document.querySelector('[data-id="7"]');
       let transmissionsBlock = document.querySelector('[data-id="8"]');
       let bodyTypesBlock = document.querySelector('[data-id="9"]');
@@ -2613,6 +2702,7 @@
       let dataOnEngines = 
         _this.findEnginesByVehicleId(_this.$vehicleIdSubmodule) ||
         requestData.engines;
+      console.log(dataOnEngines);
       let dataOnTransmissions =
         _this.findTransmissionsByVehicleId(_this.$vehicleIdSubmodule) ||
         requestData.transmissions;
@@ -2635,8 +2725,10 @@
       driveTypeBlock.style.display = "block";
 
       if (dataOnEngines && dataOnEngines.length > 1) {
+        console.log(dataOnEngines);
         _this.setOptionsEngines(dataOnEngines, _this.$engine);
       } else if (dataOnEngines && dataOnEngines.length == 1) {
+        console.log(dataOnEngines);
         _this.setOptionsEngines(dataOnEngines, _this.$engine, dataOnEngines[0]);
         _this.$engine.attr("disabled", true);
         engineBlock.style.display = "none";
@@ -2679,21 +2771,52 @@
       } else if (dataOnDriveTypes && dataOnDriveTypes.length == 1) {
         _this.setOptionsDriveTypes(dataOnDriveTypes, _this.$driveType, dataOnDriveTypes[0]);
         _this.$driveType.attr("disabled", true);
-        driveTypeBlock.style.display = "none";
+        brakesBlock.style.display = "none";
       } else {
         driveTypeBlock.style.display = "none";
-      } 
+      }
+
+      _this.updateCurrentData();
   }
 
     updateCurrentData() {
       let _this = this;
       let dataWithResponse = _this.$apiResponseData.part_applications;
+      let dataWithParamWeights = _this.$apiResponseData.param_weights; // тут параметры двигатель и тд
       let engine = _this.$engine.val();
       let submodel = _this.$submodel.val();
       let transmission = _this.$transmission.val();
       let bodytype = _this.$bodyType.val();
       let brake = _this.$brake.val();
   
+      // console.log("updateCurrentData", dataWithParamWeights);
+      // if (dataWithParamWeights && Object.keys(dataWithParamWeights).length > 0) {
+      //   console.log("внутри updateCurrentData", dataWithParamWeights);
+      //   console.log("внутри updateCurrentData", Object.keys(dataWithParamWeights));
+      //   let key = Object.keys(dataWithParamWeights)[0];
+      //   let valueKey = dataWithParamWeights[key];
+      //   let year = _this.$year.val();
+      //   let make = _this.$make.val();
+      //   let model = _this.$model.val();
+      //   if (key === 'engine') {
+      //     let valueEngine = _this.$apiResponseData.engines[0].engine_short;
+      //     console.log(valueEngine);
+      //     _this.$vehicleIdSubmodule = _this.$apiResponseData.engines[0].vehicle_ids[0];
+      //     let engine = valueEngine;
+      //     console.log(_this.$vehicleIdSubmodule);
+      //     _this.partsSearch(year, make, model, engine);
+      //   }
+      //   // else if (key === 'submodel') {
+      //   //   let valueSubmodel = _this.$apiResponseData.engines[0].engine_short;
+      //   //   _this.$vehicleIdSubmodule = _this.$apiResponseData.engines[0].vehicle_ids[0];
+      //   // }
+      // } else if (Object.keys(dataWithParamWeights).length > 1) {
+      //   // Object.keys(dataWithParamWeights).
+      //   for (key in dataWithParamWeights) {
+      //     console.log(key);
+      //     console.log(dataWithParamWeights[key]);
+      //   }
+      // }
       // Проверяем наличие подмодели
       if (submodel !== "") {
           let newData = [..._this.$responseData];
@@ -2708,12 +2831,27 @@
   
           _this.create_parts(newData);
       }
+      if (engine !== "" && !submodel) {
+        
+        console.log('engine', engine);
+        let newData = [..._this.$responseData];
+
+        _this.usedKeys.clear();
+
+        newData = _this.getProductsForValues(newData);
+
+        //this.hideUnused();
+
+        this.$currentData = newData;
+
+        _this.create_parts(newData);
+      }
     }
 
     //Пока что не работает
     hideUnused() {
       let _this = this;
-
+      console.log("hideUnused", _this.usedKeys);
       //Строки в селектах, которые нужно оставить
       let valuableRows = [];
 
@@ -3496,13 +3634,34 @@
         let result = Object.values(partGroupData).find((item) =>
           item.labeling.includes(letterPart)
         );
-        if (result && result.imgPath) {
-          imgPath = result.imgPath;
-          part_img.innerHTML = `<img src="${result.imgPath}" alt="product image" />`;
-        }
-      }
-      if (!imgPath || imgPath === "") {
+        if (result && result.imgId) {
+          if (_this.imgCache[result.imgId]) {
+            console.log(_this.imgCache[result.imgId]);
+            part_img.innerHTML = `<img src="${_this.imgCache[result.imgId]}" alt="product image" />`;
+          } 
+          else {
+            let imgPathPromise = Promise.resolve("");
+            imgPathPromise = fetch(`/wp-json/wp/v2/media/${result.imgId}`)
+              .then((imgResponse) => {
+                if (!imgResponse.ok) {
+                  throw new Error(
+                    "Network response was not ok " + imgResponse.statusText
+                  );
+                }
+                return imgResponse.json();
+              })
+              .then((imgData) => imgData.source_url)
+              .then((url) => {
+                _this.imgCache[result.imgId] = url;
+                part_img.innerHTML = `<img src="${url}" alt="product image" />`;
+              })
+              .catch((error) => {
+                return "/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg";
+              });
+          }
+        } else {
         part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
+        }
       }
 
       let part_footer = document.createElement("div");
@@ -3752,10 +3911,10 @@
       }
 
       if (submodel != "") {
-        //_this.partsSearch(year, make, model, engine, submodel);
+        _this.partsSearch(year, make, model, engine, submodel);
       }
 
-      if (submodel != this.lastSubModel) {
+      if (submodel !== this.lastSubModel) {
         _this.checkModel(year, make, model);
       }
 
