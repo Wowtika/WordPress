@@ -605,7 +605,20 @@ get_header() ?>
 								<div class="spollers__body">
 									<?php foreach ($cars as $car) { ?>
 									<div class="card-tabs__row card-tabs__row_cars">
-										<div class="card-tabs__row-inner"><?php echo $car["year"]; ?> / <?php echo $car["model"]; ?> / <?php echo $car["engine"]; ?></div>
+										<div class="card-tabs__row-inner">
+											<?php 
+												echo 
+												$car["make"] . " " .
+												$car["model"] . " " .
+												$car["year"] . " " .
+												$car["submodel"] . " " .
+												$car["body_type"] . " " .
+												$car["engine"] . " " .
+												$car["drive_type"] . " " .
+												$car["transmission"] . " " .
+												$car["brake"]
+											?>
+										</div>
 										<!-- <div class="card-tabs__row-inner"><b><?php echo $car["model"]; ?></b></div>
 										<div class="card-tabs__row-inner"><b><?php echo $car["engine"]; ?></b></div> -->
 									</div>
