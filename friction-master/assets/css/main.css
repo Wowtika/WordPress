@@ -1364,6 +1364,50 @@ body::after {
 	display: none;
 }
 
+.tabs__body-advanced {
+	display: -ms-grid;
+	display: grid;
+	-ms-grid-columns: (1fr)[6];
+	grid-template-columns: repeat(6, 1fr);
+	gap: 0.1875rem;
+}
+
+.advanced-row {
+	background: #0397411c;
+	display: flex;
+	justify-content: space-between;
+}
+
+.advanced-search-column {
+	text-align: center
+}
+
+.advanced-search-column-header {
+	text-align: left;
+	padding: 10px;
+	font-weight: bold;
+}
+
+.advanced-search-column-content li {
+	padding: 10px;
+	color: black;
+	cursor: pointer;
+	transition: filter 0.3s ease;
+}
+
+.advanced-search-column-content li:hover {
+	filter: brightness(1.2);
+}
+
+
+li.advanced-search-active {
+	background-color: #E9EBF5;
+}
+
+li.advanced-search-good {
+	color: white;
+	background-color: #173788;
+}
 
 /* для элемента input c type="checkbox" */
 .custom-checkbox-advanced-search {
@@ -5713,6 +5757,11 @@ p {
 	}
 
 	.tabs__body-inner {
+		-ms-grid-columns: (1fr)[1];
+		grid-template-columns: repeat(1, 1fr);
+	}
+
+	.tabs__body-advanced {
 		-ms-grid-columns: (1fr)[1];
 		grid-template-columns: repeat(1, 1fr);
 	}
