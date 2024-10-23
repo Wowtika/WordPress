@@ -1619,13 +1619,13 @@
     lastSubModel;
     order = [];
     usedKeys = new Map(); //Нужно чтобы определять ненужные селекты
+    imgCache = [];
 
     constructor(block, Select) {
       super(block, Select);
 
       //Получить линейки
       const url = "/wp-json/wp/v2/product-lines?per_page=20";
-      let groupedData;
       let _this = this;
 
       fetch(url)
@@ -1648,31 +1648,11 @@
               ? item.acf.labeling.map((label) => label.label)
               : [];
             const imgId = item.acf.img;
-
-            let imgPathPromise = Promise.resolve("");
-            if (imgId) {
-              imgPathPromise = fetch(`/wp-json/wp/v2/media/${imgId}`)
-                .then((imgResponse) => {
-                  if (!imgResponse.ok) {
-                    throw new Error(
-                      "Network response was not ok " + imgResponse.statusText
-                    );
-                  }
-                  return imgResponse.json();
-                })
-                .then((imgData) => imgData.source_url)
-                .catch((error) => {
-                  return "/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg";
-                });
-            }
-
-            return imgPathPromise.then((imgPath) => {
-              acc[group].push({ line, labeling, imgPath });
-            });
+            
+            acc[group].push({ line, labeling, imgId });
           });
-
-          return Promise.all(fetchImagePromises).then(() => acc);
-        })
+          return acc;
+          })
         .then((data) => {
           const order = [
             "Black",
@@ -2679,7 +2659,7 @@
       } else if (dataOnDriveTypes && dataOnDriveTypes.length == 1) {
         _this.setOptionsDriveTypes(dataOnDriveTypes, _this.$driveType, dataOnDriveTypes[0]);
         _this.$driveType.attr("disabled", true);
-        driveTypeBlock.style.display = "none";
+        brakesBlock.style.display = "none";
       } else {
         driveTypeBlock.style.display = "none";
       } 
@@ -3496,13 +3476,34 @@
         let result = Object.values(partGroupData).find((item) =>
           item.labeling.includes(letterPart)
         );
-        if (result && result.imgPath) {
-          imgPath = result.imgPath;
-          part_img.innerHTML = `<img src="${result.imgPath}" alt="product image" />`;
-        }
-      }
-      if (!imgPath || imgPath === "") {
+        if (result && result.imgId) {
+          if (_this.imgCache[result.imgId]) {
+            console.log(_this.imgCache[result.imgId]);
+            part_img.innerHTML = `<img src="${_this.imgCache[result.imgId]}" alt="product image" />`;
+          } 
+          else {
+            let imgPathPromise = Promise.resolve("");
+            imgPathPromise = fetch(`/wp-json/wp/v2/media/${result.imgId}`)
+              .then((imgResponse) => {
+                if (!imgResponse.ok) {
+                  throw new Error(
+                    "Network response was not ok " + imgResponse.statusText
+                  );
+                }
+                return imgResponse.json();
+              })
+              .then((imgData) => imgData.source_url)
+              .then((url) => {
+                _this.imgCache[result.imgId] = url;
+                part_img.innerHTML = `<img src="${url}" alt="product image" />`;
+              })
+              .catch((error) => {
+                return "/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg";
+              });
+          }
+        } else {
         part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
+        }
       }
 
       let part_footer = document.createElement("div");
