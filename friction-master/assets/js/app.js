@@ -2675,8 +2675,6 @@
       let dataOnDriveTypes = [...(requestData.drive_types ?? [])];
 
 
-      console.log(dataOnSubmodels);
-
       dataOnSubmodels.unshift({ submodel: "I Don't Know" });
       dataOnEngines.unshift({ engine_short: "I Don't Know" });
       dataOnTransmissions.unshift({ transmission: "I Don't Know" });
@@ -2861,11 +2859,11 @@
         _this.$brake.val(),
         _this.$driveType.val()
     ];
-    
+
     // Сначала сохраняем индексы блоков, которые нужно удалить
     let indicesToRemove = [];
     blocks.forEach((block, index) => {
-        if (block.querySelectorAll("option").length <= 1) {
+        if (block.querySelectorAll("option").length <= 2) {
             indicesToRemove.push(index);
         }
     });
@@ -2875,8 +2873,6 @@
         blocks.splice(index, 1);
         values.splice(index, 1);
     });
-
-    console.log(blocks);
 
     for (let i = 0; i < blocks.length; i++) {
         let block = blocks[i];
