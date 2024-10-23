@@ -2126,7 +2126,9 @@
 
       $("#inner1").on("change", function () {
         _this.showSelectedInnerParts();
-        _this.updateCurrentData();
+        _this.findIntersection();
+        _this.checkoutValueOnSelected();
+        // _this.updateCurrentData();
       });
     }
 
@@ -2281,6 +2283,7 @@
                   load_catalog.html(
                     '<div class="catalog_nodata">No data available</div>'
                   );
+                  catalog.html("");
                 }
               }
               // конец if (res.data) {
@@ -2363,7 +2366,13 @@
         catalog_auto_title.html("Found 1 part");
         catalog_auto_title.fadeIn().css("display", "flex");
 
-        _this.create_parts(_this.$currentData);
+        // // _this.create_parts(_this.$currentData);
+        // if (res.data.part_applications.length === 0) {
+        //   catalog.html('');
+        //   // _this.updateCurrentData();
+        //   // _this.hideProductBlock();
+        //   catalog_row.html("");
+        // }
 
         catalog.fadeIn();
 
@@ -2458,13 +2467,26 @@
               );
               catalog_auto_title.fadeIn().css("display", "flex");
 
-              _this.create_parts(_this.$currentData);
+              if (Array.isArray(res.data.param_weights)) {
+                // Проверка на пустой массив
+                if (res.data.param_weights.length === 0 && res.data.part_applications.length > 0) {
+                  _this.create_parts(_this.$currentData);
+                  catalog.fadeIn();
+                } else {
+                  catalog.fadeOut();
+                }
+              } else if (typeof res.data.param_weights === 'object' && res.data.param_weights !== null) {
+                if (Object.keys(res.data.param_weights).length > 0) {
+                  _this.showSelectedInnerParts();
+                  _this.checkoutValueOnSelected();
+
+                }
+            }
 
               _this.setIntersections();
 
               _this.showSelectedInnerParts();
 
-              catalog.fadeIn();
 
               window.dispatchEvent(new Event("resize"));
 
@@ -2480,6 +2502,64 @@
       });
     }
 
+    checkoutValueOnSelected() {
+      let catalog = $("#catalog");
+      let catalog_row = $("#catalog_row");
+  
+      catalog_row.html("");
+      let _this = this;
+      let dataOnResponseData = _this.$apiResponseData;
+  
+      if (dataOnResponseData.param_weights) {
+          let keys = Object.keys(dataOnResponseData.param_weights);
+          let valueSet = false; // Флаг для проверки, есть ли хотя бы одно установленное значение
+  
+          // Проверяем значения для каждого ключа
+          valueSet = keys.some((key) => {
+              let value;
+  
+              switch (key) {
+                  case 'submodel':
+                      value = _this.$submodel.val();
+                      break;
+                  case 'engine':
+                      value = _this.$engine.val();
+                      break;
+                  case 'transmission':
+                      value = _this.$transmission.val();
+                      break;
+                  case 'body_type':
+                      value = _this.$bodyType.val();
+                      break;
+                  case 'brake':
+                      value = _this.$brake.val();
+                      break;
+                  case 'drive_type':
+                      value = _this.$driveType.val();
+                      break;
+                  default:
+                      return false;
+              }
+            const intersections = this.findIntersection();
+
+            if (_this.carIntersection) {
+              if (_this.carIntersection.length === 0) {
+                return true;
+              }
+            }
+              return value && value !== "";
+          });
+  
+          // Если хотя бы одно значение установлено, отображаем продукты
+          if (valueSet) {
+              _this.updateCurrentData();
+              catalog.fadeIn();
+          } else {
+            return;
+          }
+      }
+  }
+   
     showSelectedInnerParts() {
       let _this = this;
 
@@ -2535,6 +2615,7 @@
       let requestData = _this.$apiResponseData || [];
       let dataOnSubmodels = requestData.vehicles || [];
       let dataOnEngines = requestData.engines || [];
+
       let dataOnTransmissions = requestData.transmissions || [];
       let dataOnBodyTypes = requestData.body_types || [];
       let dataOnBrakes =  requestData.brakes || [];
@@ -2556,10 +2637,9 @@
         }
       };
 
-      //Оставляем только те двигатели, которые имеют смысл при текущей машине
       dataOnEngines = dataOnEngines.filter(
         engine => 
-        intersections.some(intersection => 
+          intersections.some(intersection => 
           intersection.engine &&
           intersection.engine.value === engine.engine_short
         )
@@ -2578,7 +2658,9 @@
         }
         engineBlock.style.display = "none";
       } 
-
+      if (_this.engine) {
+        _this.engine.val();
+      }
       dataOnTransmissions = dataOnTransmissions.filter(
         transmission => 
         intersections.some(intersection => 
@@ -2637,7 +2719,7 @@
           _this.$brake.attr("disabled", true);
         }
         brakesBlock.style.display = "none";
-      } 
+      }
 
       dataOnDriveTypes = dataOnDriveTypes.filter(
         driveType =>
@@ -2762,8 +2844,9 @@
       brake: this.$brake.val(),
       drive_type: this.$driveType.val()
     }
+
     return this.carIntersection.filter(item => {
-        return Object.keys(params).every(key => {
+      return Object.keys(params).every(key => {
             return !item[key] || params[key] === "" || item[key].value === params[key];
         });
     });
@@ -2974,7 +3057,6 @@
     getProductsForValues(data) {
       let _this = this;
       let productAll = data;
-
       let result = [];
 
       if (productAll) {
@@ -3359,6 +3441,7 @@
               .querySelectorAll(".item-catalog")
               .forEach((partElement) => {
                 partElement.style.height = `${height}px`;
+                // partElement.classList.add("item-catalog-image-height");
               });
           });
         }
@@ -3557,7 +3640,7 @@
       let partOptions = document.createElement("div");
       partOptions.classList.add("options-qualifier");
       partOptions.setAttribute("data-options", productCategory);
-
+      let partOptionsHeading = null;
       if (!nameCategory.includes("Dont have qualifier")) {
         // Проверяем, содержит ли строка 'w/'
         if (nameCategory.includes("w/")) {
@@ -3569,7 +3652,7 @@
           ""
         );
 
-        let partOptionsHeading = document.createElement("h2");
+        partOptionsHeading = document.createElement("h2");
         partOptionsHeading.classList.add("item-catalog__header-heading");
         partOptionsHeading.classList.add("item-options-heading");
         partOptionsHeading.textContent = nameCategory;
@@ -3589,6 +3672,7 @@
         partOptionsSide.innerHTML =
           '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-all.svg" alt="Side" />';
       }
+
       partOptions.append(partOptionsSide);
 
       let partOptionsSxema = document.createElement("div");
@@ -3617,7 +3701,11 @@
           : "/wp-content/themes/friction-master/assets/img/catalog/catalog-sxem.jpg"; // Значение по умолчанию
         imgElement.src = indexSxema;
         imgElement.alt = "Sxema";
-        imgElement.style.width = "165px";
+        if (partOptionsHeading !== null) {
+          imgElement.style.width = "125px";
+        } else {
+          imgElement.style.width = "165px";
+        }
       };
 
       // Добавляем <img> в div
@@ -3720,6 +3808,10 @@
 
       if (submodel != "") {
         console.log("submodel", submodel);
+        _this.showSelectedInnerParts();
+        // _this.findIntersection();
+        // _this.getProductsForValues();
+        // _this.partsSearch(year, make, model, engine, submodel);
       }
     }
 
@@ -3741,6 +3833,9 @@
 
       if (engine != "") {
         console.log("engine", engine);
+        _this.showSelectedInnerParts();
+        // _this.findIntersection();
+        // _this.getProductsForValues();
       }
     }
 
@@ -3761,6 +3856,7 @@
 
       if (transmission != "") {
         console.log("transmission", transmission);
+        // _this.getProductsForValues();
         // _this.showSelectedInnerParts();
       }
     }
