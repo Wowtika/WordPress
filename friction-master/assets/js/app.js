@@ -1951,6 +1951,11 @@
           }
         });
         this.$submodel.on("change", function () {
+          _this.$engine.val("");
+          _this.$brake.val("");
+          _this.$transmission.val("");
+          _this.$bodyType.val("");
+          _this.$driveType.val("");
           _this.checkSubModel();
         });
         this.$engine.on("change", function () {
@@ -2538,6 +2543,8 @@
       let catalog = $("#catalog");
       let catalog_row = $("#catalog_row");
   
+      $('#advanced-search').show();
+
       catalog_row.html("");
       let _this = this;
       let dataOnResponseData = _this.$apiResponseData;
@@ -2597,7 +2604,7 @@
           }
 
           // Если найдено значение, устанавливаем флаг valueSet
-          if (value && value !== "") {
+          if (value && value !== "" && value !== "I Don't Know") {
             valueSet = true;
           }
         });
@@ -3285,7 +3292,6 @@
       const brakeIds = brakes.flatMap((brake) => brake.vehicle_ids) 
       const driveTypeIds = driveTypes.flatMap((driveType) => driveType.vehicle_ids) 
 
-
       let allIds = submodelId ? [submodelId] :
       [
         ...(submodelId ? [submodelId] : []),
@@ -3321,8 +3327,6 @@
       }
 
       allIds = [... new Set(allIds)];
-
-      console.log(allIds);
 
       //Добавить I Dont Know
       submodels.unshift({ submodel: "I Don't Know" });
@@ -3379,28 +3383,28 @@
             listItem.on("click", function() {
               switch (textProperty) {
                 case 'submodel':
-                  parent.$submodel.val("").change();
-                  parent.$submodel.val("").change();
+                  parent.$submodel.val("I Don't Know").change();
+                  parent.$submodel.val("I Don't Know").change();
                   break;
                 case 'engine_short':
-                  parent.$engine.val("").change();
-                  parent.$engine.val("").change();
+                  parent.$engine.val("I Don't Know").change();
+                  parent.$engine.val("I Don't Know").change();
                   break;
                 case 'transmission':
-                  parent.$transmission.val("").change();
-                  parent.$transmission.val("").change();
+                  parent.$transmission.val("I Don't Know").change();
+                  parent.$transmission.val("I Don't Know").change();
                   break;
                 case 'body_type':
-                  parent.$bodyType.val("").change();
-                  parent.$bodyType.val("").change();
+                  parent.$bodyType.val("I Don't Know").change();
+                  parent.$bodyType.val("I Don't Know").change();
                   break;
                 case 'brake':
-                  parent.$brake.val("").change();
-                  parent.$brake.val("").change();
+                  parent.$brake.val("I Don't Know").change();
+                  parent.$brake.val("I Don't Know").change();
                   break;
                 case 'drive_type':
-                  parent.$driveType.val("").change();
-                  parent.$driveType.val("").change();
+                  parent.$driveType.val("I Don't Know").change();
+                  parent.$driveType.val("I Don't Know").change();
                   break;
               }
           })
