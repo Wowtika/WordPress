@@ -2494,7 +2494,7 @@
 
               _this.setIntersections();
 
-              // _this.showSelectedInnerParts();
+              _this.showSelectedInnerParts();
 
               window.dispatchEvent(new Event("resize"));
 
@@ -2519,62 +2519,77 @@
       let dataOnResponseData = _this.$apiResponseData;
   
       if (dataOnResponseData.param_weights) {
-          let keys = Object.keys(dataOnResponseData.param_weights);
-          let valueSet = false; // Флаг для проверки, есть ли хотя бы одно установленное значение
-          console.log("dataOnResponseData.param_weights", dataOnResponseData.param_weights);
-  
-          // Получение пересечений
-          const intersections = this.findIntersection();
-          console.log("intersections", intersections);
-  
-          // Проверка наличия значений
-          const submodelValue = _this.$submodel.val();
-          console.log("submodel", submodelValue);
-  
-          // Если submodel имеет значение, устанавливаем флаг
-          if (submodelValue) {
-              valueSet = true;
+        let keys = Object.keys(dataOnResponseData.param_weights);
+        let valueSet = false; // Флаг для проверки, есть ли хотя бы одно установленное значение
+
+        // Получение пересечений
+        let intersections = this.findIntersection();
+
+        // Проверка наличия значений
+        const submodelValue = _this.$submodel.val();
+
+        // Если submodel имеет значение, устанавливаем флаг
+        if (submodelValue) {
+          valueSet = true;
+        }
+
+        // Проверяем, есть ли только один ключ и если он равен 'engine'
+        if (keys.length === 1 && keys[0] === "engine") {
+          console.log("Есть только один ключ: engine");
+          // Дополнительные действия при выполнении условия
+          if (dataOnResponseData.engines.length === 1) {
+            valueSet = true;
           }
-  
-          // Проверяем значения для каждого ключа
-          keys.forEach((key) => {
-            let value;
-
-            switch (key) {
-              case "engine":
-                value = _this.$engine.val();
-                console.log("engine", value);
-                break;
-              case "transmission":
-                value = _this.$transmission.val();
-                break;
-              case "body_type":
-                value = _this.$bodyType.val();
-                break;
-              case "brake":
-                value = _this.$brake.val();
-                break;
-              case "drive_type":
-                value = _this.$driveType.val();
-                break;
-              default:
-                return;
-            }
-
-            // Если найдено значение, устанавливаем флаг valueSet
-            if (value && value !== "") {
+        } else {
+          // console.log("Условия не выполнены");
+          if (keys.length === 1) {
+            if (!intersections.hasOwnProperty("engine")) {
               valueSet = true;
             }
-          });
-
-          // Если хотя бы одно значение установлено, отображаем продукты
-          if (valueSet) {
-            _this.updateCurrentData();
-            catalog.fadeIn();
-          } else {
-            catalog.fadeOut();
-            return;
           }
+        }
+        // Проверяем значения для каждого ключа
+        keys.forEach((key) => {
+          let value;
+
+          switch (key) {
+            case "engine":
+              value = _this.$engine.val();
+              break;
+            case "transmission":
+              value = _this.$transmission.val();
+              break;
+            case "body_type":
+              value = _this.$bodyType.val();
+              break;
+            case "brake":
+              value = _this.$brake.val();
+              break;
+            case "drive_type":
+              value = _this.$driveType.val();
+              break;
+            default:
+              return;
+          }
+
+          // Если найдено значение, устанавливаем флаг valueSet
+          if (value && value !== "") {
+            valueSet = true;
+          }
+        });
+
+        if (valueSet) {
+          catalog.html("");
+          _this.updateCurrentData();
+          catalog.fadeIn();
+          intersections = [];
+
+          $("#catalog").fadeIn().css("display", "block");
+        } else {
+          catalog.html("");
+          catalog.fadeOut();
+          return;
+        }
       }
   }
    
@@ -2757,7 +2772,7 @@
           _this.$driveType.attr("disabled", true);
         }
         driveTypeBlock.style.display = "none";
-      } 
+      }
 
       _this.showAfterSelection();
   }
