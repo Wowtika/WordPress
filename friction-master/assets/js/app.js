@@ -1652,6 +1652,7 @@
           });
           return acc;
           })
+            
         .then((data) => {
           const order = [
             "Black",
@@ -2257,27 +2258,43 @@
           if (res && res.success) {
             if (res.data) {
               console.log("checkModel отрабатывает", res.data);
-              // let catalogAutoTitleBlock = document.querySelector(
-              //   "#catalog_auto_title"
-              // );
 
-              if (res.data.engines || res.data.vehicles) {
+              // if (res.data.engines || res.data.vehicles) {
+              //   load_catalog.html("");
+              //   $("#catalog_row").html("");
+              //   $("#inner1").fadeIn().css("display", "grid");
+
+              //   if (!submodel) {
+              //     _this.partsSearch(year, make, model, engine, submodel);
+              //     // load_catalog.html("");
+              //     // $("#catalog_row").html("");
+              //     // $("#inner1").fadeIn().css("display", "grid");
+              //     // catalogAutoTitleBlock.style.display = "flex";
+              //   }
+              // }
+
+              // // если нет подмодели и двигателя
+              // if (!res.data.engines && !res.data.vehicles) {
+              //   if (res.data.part_applications.length) {
+              //     _this.partsSearch(year, make, model);
+              //   } else {
+              //     load_catalog.html(
+              //       '<div class="catalog_nodata">No data available</div>'
+              //     );
+
+              //   }
+              // }
+              $("#inner1").fadeIn().css("display", "grid");
+
+              if (
+                res.data.engines ||
+                res.data.vehicles ||
+                res.data.drive_types
+              ) {
                 load_catalog.html("");
                 $("#catalog_row").html("");
-                $("#inner1").fadeIn().css("display", "grid");
 
-                if (!submodel) {
-                  _this.partsSearch(year, make, model, engine, submodel);
-                  // load_catalog.html("");
-                  // $("#catalog_row").html("");
-                  // $("#inner1").fadeIn().css("display", "grid");
-                  // catalogAutoTitleBlock.style.display = "flex";
-                }
-              }
-
-              // если нет подмодели и двигателя
-              if (!res.data.engines && !res.data.vehicles) {
-                if (res.data.part_applications.length) {
+                if (res.data.part_applications.length > 0) {
                   _this.partsSearch(year, make, model);
                 } else {
                   load_catalog.html(
@@ -2365,14 +2382,6 @@
 
         catalog_auto_title.html("Found 1 part");
         catalog_auto_title.fadeIn().css("display", "flex");
-
-        // // _this.create_parts(_this.$currentData);
-        // if (res.data.part_applications.length === 0) {
-        //   catalog.html('');
-        //   // _this.updateCurrentData();
-        //   // _this.hideProductBlock();
-        //   catalog_row.html("");
-        // }
 
         catalog.fadeIn();
 
@@ -2485,8 +2494,7 @@
 
               _this.setIntersections();
 
-              _this.showSelectedInnerParts();
-
+              // _this.showSelectedInnerParts();
 
               window.dispatchEvent(new Event("resize"));
 
@@ -2513,48 +2521,58 @@
       if (dataOnResponseData.param_weights) {
           let keys = Object.keys(dataOnResponseData.param_weights);
           let valueSet = false; // Флаг для проверки, есть ли хотя бы одно установленное значение
+          console.log("dataOnResponseData.param_weights", dataOnResponseData.param_weights);
+  
+          // Получение пересечений
+          const intersections = this.findIntersection();
+          console.log("intersections", intersections);
+  
+          // Проверка наличия значений
+          const submodelValue = _this.$submodel.val();
+          console.log("submodel", submodelValue);
+  
+          // Если submodel имеет значение, устанавливаем флаг
+          if (submodelValue) {
+              valueSet = true;
+          }
   
           // Проверяем значения для каждого ключа
-          valueSet = keys.some((key) => {
-              let value;
-  
-              switch (key) {
-                  case 'submodel':
-                      value = _this.$submodel.val();
-                      break;
-                  case 'engine':
-                      value = _this.$engine.val();
-                      break;
-                  case 'transmission':
-                      value = _this.$transmission.val();
-                      break;
-                  case 'body_type':
-                      value = _this.$bodyType.val();
-                      break;
-                  case 'brake':
-                      value = _this.$brake.val();
-                      break;
-                  case 'drive_type':
-                      value = _this.$driveType.val();
-                      break;
-                  default:
-                      return false;
-              }
-            const intersections = this.findIntersection();
+          keys.forEach((key) => {
+            let value;
 
-            if (_this.carIntersection) {
-              if (_this.carIntersection.length === 0) {
-                return true;
-              }
+            switch (key) {
+              case "engine":
+                value = _this.$engine.val();
+                console.log("engine", value);
+                break;
+              case "transmission":
+                value = _this.$transmission.val();
+                break;
+              case "body_type":
+                value = _this.$bodyType.val();
+                break;
+              case "brake":
+                value = _this.$brake.val();
+                break;
+              case "drive_type":
+                value = _this.$driveType.val();
+                break;
+              default:
+                return;
             }
-              return value && value !== "";
+
+            // Если найдено значение, устанавливаем флаг valueSet
+            if (value && value !== "") {
+              valueSet = true;
+            }
           });
-  
+
           // Если хотя бы одно значение установлено, отображаем продукты
           if (valueSet) {
-              _this.updateCurrentData();
-              catalog.fadeIn();
+            _this.updateCurrentData();
+            catalog.fadeIn();
           } else {
+            catalog.fadeOut();
             return;
           }
       }
@@ -3562,7 +3580,7 @@
       //Для wheel hubs почему-то не ставит картинку по умолчанию, сделал так
       if (part_img.innerHTML === "") {
         part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
-      }
+        }
 
       let part_footer = document.createElement("div");
       part_footer.classList.add("item-catalog__footer");
