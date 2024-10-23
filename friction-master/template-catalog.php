@@ -73,6 +73,44 @@ get_header() ?>
 										<option value="" selected>Drive Type</option>
 									</select>
 								</div>
+
+								<div class="tabs__body" id="advanced-search">
+									<div class="advanced-row">
+										<p>
+											Please, select optional parameters to search part applications
+										</p>
+										<input type="checkbox" class="custom-checkbox-advanced-search" id="advanced-search-checkbox">
+										<label for="advanced-search-checkbox">
+											Advanced search	
+										</label>
+									</div>
+									<div class="tabs__body-advanced" id="advanced-search-columns" style="display: none">
+										<div class="advanced-search-column" id="aSubmodel">
+											<h3 class="advanced-search-column-header">Submodel</h3>
+											<ul class="advanced-search-column-content"></ul>
+										</div>
+										<div class="advanced-search-column" id="aEngine">
+											<h3 class="advanced-search-column-header">Engine</h3>
+											<ul class="advanced-search-column-content"></ul>
+										</div>
+										<div class="advanced-search-column" id="aBodyType">
+											<h3 class="advanced-search-column-header">Body Type</h3>
+											<ul class="advanced-search-column-content"></ul>
+										</div>
+										<div class="advanced-search-column" id="aBrakeType">
+											<h3 class="advanced-search-column-header">Brake Type</h3>
+											<ul class="advanced-search-column-content"></ul>
+										</div>
+										<div class="advanced-search-column" id="aDriveType">
+											<h3 class="advanced-search-column-header">Drive Type</h3>
+											<ul class="advanced-search-column-content"></ul>
+										</div>
+										<div class="advanced-search-column" id="aTransmission">
+											<h3 class="advanced-search-column-header">Transmission</h3>
+											<ul class="advanced-search-column-content"></ul>
+										</div>
+									</div>
+								</div>
 							</div>
 						</div>
 						<div class="tabs__body">
@@ -628,6 +666,12 @@ jQuery(document).ready(function($) {
     let getRegion = searchParams.get("rg"); // 1
     let getType = searchParams.get("tp"); // пусто
 
+	let advancedSearch = $('#advanced-search');
+	let advancedSearchCheckbox = $('#advanced-search-checkbox');
+	let advancedSearchColumns = $('#advanced-search-columns');
+
+	advancedSearch.hide();
+
     // Установка значения по умолчанию для getType, если оно пустое
     if (!getType) {
         getType = "1"; // Присваиваем значение по умолчанию
@@ -750,7 +794,7 @@ jQuery(document).ready(function($) {
 	$('[data-filter="model"]').on("change", function(){
 		let url = new URL(document.location);
 		let searchParams = url.searchParams;
-		
+
 		searchParams.set("md", $(this).val());
 		
 		window.history.pushState({}, '', url.toString());
@@ -772,6 +816,14 @@ jQuery(document).ready(function($) {
 		searchParams.set("tp", $(this).val());
 		
 		window.history.pushState({}, '', url.toString());
+	});
+
+	advancedSearchCheckbox.on("change", function() {
+		if ($(this).is(":checked")) {
+			advancedSearchColumns.show();
+		} else {
+			advancedSearchColumns.hide();
+		}
 	});
 });
 </script>
