@@ -1652,6 +1652,7 @@
           });
           return acc;
           })
+            
         .then((data) => {
           const order = [
             "Black",
@@ -2126,7 +2127,9 @@
 
       $("#inner1").on("change", function () {
         _this.showSelectedInnerParts();
-        _this.updateCurrentData();
+        _this.findIntersection();
+        _this.checkoutValueOnSelected();
+        // _this.updateCurrentData();
       });
     }
 
@@ -2255,32 +2258,49 @@
           if (res && res.success) {
             if (res.data) {
               console.log("checkModel отрабатывает", res.data);
-              // let catalogAutoTitleBlock = document.querySelector(
-              //   "#catalog_auto_title"
-              // );
 
-              if (res.data.engines || res.data.vehicles) {
+              // if (res.data.engines || res.data.vehicles) {
+              //   load_catalog.html("");
+              //   $("#catalog_row").html("");
+              //   $("#inner1").fadeIn().css("display", "grid");
+
+              //   if (!submodel) {
+              //     _this.partsSearch(year, make, model, engine, submodel);
+              //     // load_catalog.html("");
+              //     // $("#catalog_row").html("");
+              //     // $("#inner1").fadeIn().css("display", "grid");
+              //     // catalogAutoTitleBlock.style.display = "flex";
+              //   }
+              // }
+
+              // // если нет подмодели и двигателя
+              // if (!res.data.engines && !res.data.vehicles) {
+              //   if (res.data.part_applications.length) {
+              //     _this.partsSearch(year, make, model);
+              //   } else {
+              //     load_catalog.html(
+              //       '<div class="catalog_nodata">No data available</div>'
+              //     );
+
+              //   }
+              // }
+              $("#inner1").fadeIn().css("display", "grid");
+
+              if (
+                res.data.engines ||
+                res.data.vehicles ||
+                res.data.drive_types
+              ) {
                 load_catalog.html("");
                 $("#catalog_row").html("");
-                $("#inner1").fadeIn().css("display", "grid");
 
-                if (!submodel) {
-                  _this.partsSearch(year, make, model, engine, submodel);
-                  // load_catalog.html("");
-                  // $("#catalog_row").html("");
-                  // $("#inner1").fadeIn().css("display", "grid");
-                  // catalogAutoTitleBlock.style.display = "flex";
-                }
-              }
-
-              // если нет подмодели и двигателя
-              if (!res.data.engines && !res.data.vehicles) {
-                if (res.data.part_applications.length) {
+                if (res.data.part_applications.length > 0) {
                   _this.partsSearch(year, make, model);
                 } else {
                   load_catalog.html(
                     '<div class="catalog_nodata">No data available</div>'
                   );
+                  catalog.html("");
                 }
               }
               // конец if (res.data) {
@@ -2362,8 +2382,6 @@
 
         catalog_auto_title.html("Found 1 part");
         catalog_auto_title.fadeIn().css("display", "flex");
-
-        _this.create_parts(_this.$currentData);
 
         catalog.fadeIn();
 
@@ -2458,13 +2476,25 @@
               );
               catalog_auto_title.fadeIn().css("display", "flex");
 
-              _this.create_parts(_this.$currentData);
+              if (Array.isArray(res.data.param_weights)) {
+                // Проверка на пустой массив
+                if (res.data.param_weights.length === 0 && res.data.part_applications.length > 0) {
+                  _this.create_parts(_this.$currentData);
+                  catalog.fadeIn();
+                } else {
+                  catalog.fadeOut();
+                }
+              } else if (typeof res.data.param_weights === 'object' && res.data.param_weights !== null) {
+                if (Object.keys(res.data.param_weights).length > 0) {
+                  _this.showSelectedInnerParts();
+                  _this.checkoutValueOnSelected();
+
+                }
+            }
 
               _this.setIntersections();
 
               _this.showSelectedInnerParts();
-
-              catalog.fadeIn();
 
               window.dispatchEvent(new Event("resize"));
 
@@ -2480,6 +2510,89 @@
       });
     }
 
+    checkoutValueOnSelected() {
+      let catalog = $("#catalog");
+      let catalog_row = $("#catalog_row");
+  
+      catalog_row.html("");
+      let _this = this;
+      let dataOnResponseData = _this.$apiResponseData;
+  
+      if (dataOnResponseData.param_weights) {
+        let keys = Object.keys(dataOnResponseData.param_weights);
+        let valueSet = false; // Флаг для проверки, есть ли хотя бы одно установленное значение
+
+        // Получение пересечений
+        let intersections = this.findIntersection();
+
+        // Проверка наличия значений
+        const submodelValue = _this.$submodel.val();
+
+        // Если submodel имеет значение, устанавливаем флаг
+        if (submodelValue) {
+          valueSet = true;
+        }
+
+        // Проверяем, есть ли только один ключ и если он равен 'engine'
+        if (keys.length === 1 && keys[0] === "engine") {
+          console.log("Есть только один ключ: engine");
+          // Дополнительные действия при выполнении условия
+          if (dataOnResponseData.engines.length === 1) {
+            valueSet = true;
+          }
+        } else {
+          // console.log("Условия не выполнены");
+          if (keys.length === 1) {
+            if (!intersections.hasOwnProperty("engine")) {
+              valueSet = true;
+            }
+          }
+        }
+        // Проверяем значения для каждого ключа
+        keys.forEach((key) => {
+          let value;
+
+          switch (key) {
+            case "engine":
+              value = _this.$engine.val();
+              break;
+            case "transmission":
+              value = _this.$transmission.val();
+              break;
+            case "body_type":
+              value = _this.$bodyType.val();
+              break;
+            case "brake":
+              value = _this.$brake.val();
+              break;
+            case "drive_type":
+              value = _this.$driveType.val();
+              break;
+            default:
+              return;
+          }
+
+          // Если найдено значение, устанавливаем флаг valueSet
+          if (value && value !== "") {
+            valueSet = true;
+          }
+        });
+
+        if (valueSet) {
+          catalog.html("");
+          _this.updateCurrentData();
+          catalog.fadeIn();
+          intersections = [];
+
+          $("#catalog").fadeIn().css("display", "block");
+        } else {
+          catalog.html("");
+          catalog.fadeOut();
+          return;
+        }
+      }
+  }
+   
     showSelectedInnerParts() {
       let _this = this;
 
@@ -2535,6 +2648,7 @@
       let requestData = _this.$apiResponseData || [];
       let dataOnSubmodels = requestData.vehicles || [];
       let dataOnEngines = requestData.engines || [];
+
       let dataOnTransmissions = requestData.transmissions || [];
       let dataOnBodyTypes = requestData.body_types || [];
       let dataOnBrakes =  requestData.brakes || [];
@@ -2556,10 +2670,9 @@
         }
       };
 
-      //Оставляем только те двигатели, которые имеют смысл при текущей машине
       dataOnEngines = dataOnEngines.filter(
         engine => 
-        intersections.some(intersection => 
+          intersections.some(intersection => 
           intersection.engine &&
           intersection.engine.value === engine.engine_short
         )
@@ -2578,7 +2691,9 @@
         }
         engineBlock.style.display = "none";
       } 
-
+      if (_this.engine) {
+        _this.engine.val();
+      }
       dataOnTransmissions = dataOnTransmissions.filter(
         transmission => 
         intersections.some(intersection => 
@@ -2637,7 +2752,7 @@
           _this.$brake.attr("disabled", true);
         }
         brakesBlock.style.display = "none";
-      } 
+      }
 
       dataOnDriveTypes = dataOnDriveTypes.filter(
         driveType =>
@@ -2657,7 +2772,7 @@
           _this.$driveType.attr("disabled", true);
         }
         driveTypeBlock.style.display = "none";
-      } 
+      }
 
       _this.showAfterSelection();
   }
@@ -2762,8 +2877,9 @@
       brake: this.$brake.val(),
       drive_type: this.$driveType.val()
     }
+
     return this.carIntersection.filter(item => {
-        return Object.keys(params).every(key => {
+      return Object.keys(params).every(key => {
             return !item[key] || params[key] === "" || item[key].value === params[key];
         });
     });
@@ -2974,7 +3090,6 @@
     getProductsForValues(data) {
       let _this = this;
       let productAll = data;
-
       let result = [];
 
       if (productAll) {
@@ -3359,6 +3474,7 @@
               .querySelectorAll(".item-catalog")
               .forEach((partElement) => {
                 partElement.style.height = `${height}px`;
+                // partElement.classList.add("item-catalog-image-height");
               });
           });
         }
@@ -3479,7 +3595,7 @@
       //Для wheel hubs почему-то не ставит картинку по умолчанию, сделал так
       if (part_img.innerHTML === "") {
         part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
-      }
+        }
 
       let part_footer = document.createElement("div");
       part_footer.classList.add("item-catalog__footer");
@@ -3557,7 +3673,7 @@
       let partOptions = document.createElement("div");
       partOptions.classList.add("options-qualifier");
       partOptions.setAttribute("data-options", productCategory);
-
+      let partOptionsHeading = null;
       if (!nameCategory.includes("Dont have qualifier")) {
         // Проверяем, содержит ли строка 'w/'
         if (nameCategory.includes("w/")) {
@@ -3569,7 +3685,7 @@
           ""
         );
 
-        let partOptionsHeading = document.createElement("h2");
+        partOptionsHeading = document.createElement("h2");
         partOptionsHeading.classList.add("item-catalog__header-heading");
         partOptionsHeading.classList.add("item-options-heading");
         partOptionsHeading.textContent = nameCategory;
@@ -3589,6 +3705,7 @@
         partOptionsSide.innerHTML =
           '<img src="/wp-content/themes/friction-master/assets/img/catalog/inner-catalog-car-all.svg" alt="Side" />';
       }
+
       partOptions.append(partOptionsSide);
 
       let partOptionsSxema = document.createElement("div");
@@ -3617,7 +3734,11 @@
           : "/wp-content/themes/friction-master/assets/img/catalog/catalog-sxem.jpg"; // Значение по умолчанию
         imgElement.src = indexSxema;
         imgElement.alt = "Sxema";
-        imgElement.style.width = "165px";
+        if (partOptionsHeading !== null) {
+          imgElement.style.width = "125px";
+        } else {
+          imgElement.style.width = "165px";
+        }
       };
 
       // Добавляем <img> в div
@@ -3720,6 +3841,10 @@
 
       if (submodel != "") {
         console.log("submodel", submodel);
+        _this.showSelectedInnerParts();
+        // _this.findIntersection();
+        // _this.getProductsForValues();
+        // _this.partsSearch(year, make, model, engine, submodel);
       }
     }
 
@@ -3741,6 +3866,9 @@
 
       if (engine != "") {
         console.log("engine", engine);
+        _this.showSelectedInnerParts();
+        // _this.findIntersection();
+        // _this.getProductsForValues();
       }
     }
 
@@ -3761,6 +3889,7 @@
 
       if (transmission != "") {
         console.log("transmission", transmission);
+        // _this.getProductsForValues();
         // _this.showSelectedInnerParts();
       }
     }

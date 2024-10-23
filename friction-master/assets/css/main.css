@@ -3894,6 +3894,8 @@ p {
 	padding: 0.625rem;
 	gap: 0.4375rem;
 	border: 1px solid #a9a9a9;
+	max-height: 220px;
+    min-height: 220px;
 }
 
 .item-catalog-non-exact_match {
@@ -3903,6 +3905,7 @@ p {
 .item-catalog-exact_match {
 	background-color: #b2eab6af;
 }
+
 .options-qualifier {
 	position: relative;
 	display: -webkit-box;
@@ -3922,8 +3925,10 @@ p {
 	gap: 0.4375rem;
 	border: 1px solid #a9a9a9;
 	flex-basis: 25%;
-	min-width: 200px;
+	min-width: 220px;
 	max-width: 240px;
+	max-height: 220px;
+    min-height: 220px;
 }
 
 .category-container {
