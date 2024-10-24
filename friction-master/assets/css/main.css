@@ -1399,14 +1399,14 @@ body::after {
 	filter: brightness(1.2);
 }
 
-
 li.advanced-search-active {
-	background-color: #E9EBF5;
+	color: white;
+	background-color: #920A11;
 }
 
 li.advanced-search-good {
 	color: white;
-	background-color: #173788;
+	background-color: #D51F11;
 }
 
 /* для элемента input c type="checkbox" */
