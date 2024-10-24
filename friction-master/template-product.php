@@ -109,9 +109,10 @@ get_header() ?>
 	curl_close($ch);
 
 	foreach ($partApp as $car) {
-		$make = $car["make"];
-		unset($car["make"]);
-		$groupedData[$make][] = $car;
+		if (isset($car["make"])) {
+			$make = $car["make"];
+			$groupedData[$make][] = $car;
+		}
 	}
 
 
@@ -137,10 +138,10 @@ get_header() ?>
 	//выполнить поиск
 	$parsed_url = parse_url($url);
 	parse_str($parsed_url['query'], $query_params);
-	$car = explode('_', $query_params['car']);
-	$make = $car[0];
-	$model = $car[1];
-	$year = $car[2]; 	
+	$carName = explode('_', $query_params['car']);
+	$make = $carName[0];
+	$model = $carName[1];
+	$year = $carName[2]; 	
 	$urlToSearch = 'https://catalog.loopautomotive.com/catalog/search?filter=' . urlencode(json_encode([
 		'make' => $make,
 		'model' => $model,
@@ -445,7 +446,7 @@ get_header() ?>
 				<div class="card__content content-card">
 
 					<div class="content-card__header header-card">
-						<span class="header-card__icon _icon-arrow-down"></span>Fits <?php echo $make . " " . $model . " " . $submodel . " " . $year . " " . $engine; ?>
+						<span class="header-card__icon _icon-arrow-down"></span>Fits <?php echo $make . " " . $model . " " . ($submodel != "I Don\'t Know" ? $submodel : "") . " " . $year . " " . ($engine != "I Don\'t Know" ? $engine : ""); ?>
 					</div>
 
 					<div class="content-card__body body-card">
@@ -522,43 +523,13 @@ get_header() ?>
 					</div>
 
 					<div class="markets-card__logos">
-					<!-- <?php
-						$url = 'https://catalog.loopautomotive.com/catalog/part-attributes?part_id=' . $_GET['part_id']; // Замените на фактический URL вашего API
-
-						// Заголовки запроса
-						$headers = array(
-							'Content-Type: application/json',
-						);
-					
-						// Создаем новый cURL ресурс
-						$ch = curl_init($url);
-					
-						// Устанавливаем опции cURL
-						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-						//curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params)); // Преобразуем параметры в JSON и передаем их в теле запроса
-					
-						// Выполняем запрос
-						$response = curl_exec($ch);
-					
-						// Проверяем наличие ошибок
-						if (curl_errno($ch)) {
-							echo 'Ошибка cURL: ' . curl_error($ch);
-						} else {
-							$data = json_decode($response, true);
-							
-							// Печатаем данные
-							//print_r($data);
-							$partAttribute = $data;
-							//var_dump($data);
-						}
-						curl_close($ch);
-					?> -->
 					<!-- api -->
+					 <?php
+					 	$linkToMarket = ""
+					 ?>
 						<?php 
-							wp_reset_postdata();
-							if (have_rows('online_retailers')) {
-								while (have_rows('online_retailers')) {
+							if (have_rows('items_marketplaces', 'option')) {
+								while (have_rows('items_marketplaces', 'option')) {
 									the_row();
 									$linkToMarket = ""; //Получить из api
 									echo '<a href="' . $linkToMarket . '" class="markets-card__logo">';
@@ -589,13 +560,14 @@ get_header() ?>
 
 				<div class="card-tabs__wrapper">
 
+					<?php if (count($partAttribute) > 0) { ?>
+
 					<div class="card-tabs__item">
 
 						<div class="card-tabs__header">
 							<?php the_field('technical_specifications','option');?>
 						</div>
 						<?php 
-							$partAttribute;
 							$foreachIndAttribute = 1;
 							foreach ($partAttribute as $item) {
 						?>
@@ -616,6 +588,10 @@ get_header() ?>
 								</div>
 							</div>
 					</div>
+
+					<?php } ?>
+
+					<?php if (isset($car["make"])) { ?>
 
 					<div class="card-tabs__item">
 						<div class="card-tabs__header">
@@ -652,6 +628,9 @@ get_header() ?>
 						</div>
 						<?php } ?>
 					</div>
+
+					<?php } ?>
+
 				</div>
 			</div>
 		</div>
@@ -713,54 +692,21 @@ get_header() ?>
 				<h3 class="partners__heading header3"><?php the_field('rating_on_marketplaces','option');?></h3>
 			</div>
 
-			<div class="partners__wrapper">
+			<?php if( have_rows('items_marketplaces', 'option') ): ?>
+				<div class="works-section__partners">
+					<div class="lg-container">
+						<div class="partners__wrapper">
+							<!-- <span class="slider-left-arrow partners-left _icon-arrow-new">
+							</span> -->
+							<div class="swiper partners-slider" pagination="true">
+								<div class="swiper-wrapper partners-slider__wrapper">
+									
+									<?php while ( have_rows('items_marketplaces', 'option') ) : the_row();?>
 
-				<span class="slider-left-arrow partners-left _icon-arrow-new">
-					<!-- <img src="<?=get_template_directory_uri();?>/assets/img/home/arrow-left.png" alt="" class="partners-left-arrow__img" /> -->
-				</span>
-				<div class="swiper partners-slider">
-					
-					<?php wp_reset_postdata(); ?>
-
-					<div class="swiper-wrapper partners-slider__wrapper ">
-
-					<?php if (have_rows('online_retailers')) { ?>
-					<?php while (have_rows('online_retailers')) { the_row();?>
-					<!-- <?php
-						$url = 'https://catalog.loopautomotive.com/catalog/part-attributes?part_id=' . $_GET['part_id']; // Замените на фактический URL вашего API
-
-						// Заголовки запроса
-						$headers = array(
-							'Content-Type: application/json',
-						);
-					
-						// Создаем новый cURL ресурс
-						$ch = curl_init($url);
-					
-						// Устанавливаем опции cURL
-						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-						curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-						//curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params)); // Преобразуем параметры в JSON и передаем их в теле запроса
-					
-						// Выполняем запрос
-						$response = curl_exec($ch);
-					
-						// Проверяем наличие ошибок
-						if (curl_errno($ch)) {
-							echo 'Ошибка cURL: ' . curl_error($ch);
-						} else {
-							$data = json_decode($response, true);
-							
-							// Печатаем данные
-							//print_r($data);
-							$partAttribute = $data;
-							//var_dump($data);
-						}
-						curl_close($ch);
-					?> -->
-					<!-- api -->
-					<?php $linkToMarket = "https://www.ebay.com/itm/116321581739"; //Получить из api ?>
-					<?php $ratingOnMarket = 4.8; //Получить из api ?>
+										<div class="swiper-slide partners-slider__card">
+										
+											<?php $linkToMarket = ""; //Получить из api ?>
+											<?php $ratingOnMarket = 4.8; //Получить из api ?>
 
 											<a href="<?=$linkToMarket ?>" class="partners-slider__link">
 												<img src='<?php echo get_sub_field('logo') ?>' alt="" class="partners-slider__image">
