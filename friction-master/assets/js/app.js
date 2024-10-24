@@ -2304,6 +2304,8 @@
 
       $("#advanced-search").show();
 
+      this.openAdvancedSearch();
+
       catalog_row.html("");
 
       let _this = this;
@@ -2318,91 +2320,45 @@
         let getIntersections = this.setIntersections();
         // console.log("getIntersections", getIntersections);
         let intersections = this.findIntersection();
+        const intersectionKeys = [...new Set(intersections.flatMap((intersection) => Object.keys(intersection)))];
         // console.log("intersections", intersections);
         // if (_this.$engine) {
         //   console.log("engine", _this.$engine.val());
         // }
-        if (intersections.length > 0) {
-          intersections.forEach((intersection) => {
-            if (Object.keys(intersection).length > 1) {
-              allKeysHaveValues = Object.values(intersection).every((value) => {
-                let keyValue;
-
-                switch (
-                  Object.keys(intersection).find(
-                    (key) => intersection[key] === value
-                  )
-                ) {
-                  case "engine":
-                    keyValue = _this.$engine.val();
-                    break;
-                  case "transmission":
-                    keyValue = _this.$transmission.val();
-                    break;
-                  case "body_type":
-                    keyValue = _this.$bodyType.val();
-                    break;
-                  case "brake":
-                    keyValue = _this.$brake.val();
-                    break;
-                  case "drive_type":
-                    keyValue = _this.$driveType.val();
-                    break;
-                  default:
-                    return false;
-                }
-
-                return keyValue !== "" && keyValue !== "I Don't Know";
-              });
-            } else {
-              let keyOnly = Object.keys(intersection)[0];
-              let value = intersection[keyOnly];
-              console.log("keyOnly", keyOnly);
-              switch (keyOnly) {
-                case "engine":
-                  // console.log('dataOnResponseData.engines', dataOnResponseData.engines);
-                  if (dataOnResponseData.engines.length === 1) {
-                    value = dataOnResponseData.engines[0].engine_short;
-                    // console.log("dataOnResponseData.engines[0].engine_short", dataOnResponseData.engines[0].engine_short);
-                  } else {
-                    value = _this.$engine.val();
-                  }
-                  break;
-                case "transmission":
-                  value = _this.$transmission.val();
-                  break;
-                case "body_type":
-                  value = _this.$bodyType.val();
-                  break;
-                case "brake":
-                  value = _this.$brake.val();
-                  break;
-                case "drive_type":
-                  value = _this.$driveType.val();
-                  break;
-                default:
-                  return;
-              }
-
-              allKeysHaveValues = value !== "" && value !== "I Don't Know";
+        let allKeysHaveValues = true;
+        allKeysHaveValues = intersectionKeys.every(
+          (key) => {
+            let keyValue = "";
+            switch (key) {
+              case "submodel":
+                keyValue = _this.$submodel.val();
+                break;
+              case "engine":
+                keyValue = _this.$engine.val();
+                break;
+              case "transmission":
+                keyValue = _this.$transmission.val()
+                break;
+              case "body_type":
+                keyValue = _this.$bodyType.val();
+                break;
+              case "brake":
+                keyValue = _this.$brake.val();
+                break;
+              case "drive_type":
+                keyValue = _this.$driveType.val();
+                break;
             }
+            return keyValue !== "" && keyValue !== "I Don't Know";
           });
-        }
+
+        console.log(allKeysHaveValues);
 
         // const submodelValue = _this.$submodel.val();
 
         // if (submodelValue) {
         //   valueSet = true;
         // }
-
-        if (keys.length === 1 && keys[0] === "engine") {
-          if (dataOnResponseData.engines.length === 1) {
-            allKeysHaveValues = true;
-          }
-          if (intersections.length === 0) {
-            allKeysHaveValues = true;
-          }
-        }
 
         if (intersections.length === 0) {
           allKeysHaveValues = true;
@@ -2555,26 +2511,26 @@
         _this.setOptionsInner(data, element, type, selectedValue);
       } else {
         if (data && data.length == 1) {
-          switch (type) {
-            case 'submodel':
-              _this.selectedParts.submodel = data[0];
-              break;
-            case 'engine_short':
-              _this.selectedParts.engine = data[0];
-              break;
-            case 'transmission':
-              _this.selectedParts.transmission = data[0];
-              break;
-            case 'body_type':
-              _this.selectedParts.bodyType = data[0];
-              break;
-            case 'brake':
-              _this.selectedParts.brake = data[0];
-              break;
-            case 'drive_type':
-              _this.selectedParts.driveType = data[0];
-              break;
-          }
+          // switch (type) {
+          //   case 'submodel':
+          //     _this.selectedParts.submodel = data[0];
+          //     break;
+          //   case 'engine_short':
+          //     _this.selectedParts.engine = data[0];
+          //     break;
+          //   case 'transmission':
+          //     _this.selectedParts.transmission = data[0];
+          //     break;
+          //   case 'body_type':
+          //     _this.selectedParts.bodyType = data[0];
+          //     break;
+          //   case 'brake':
+          //     _this.selectedParts.brake = data[0];
+          //     break;
+          //   case 'drive_type':
+          //     _this.selectedParts.driveType = data[0];
+          //     break;
+          // }
           _this.setOptionsInner(data, element, type, data[0][type]);
           element.attr("disabled", true);
         }
@@ -3144,7 +3100,7 @@
 
       let ifhasSortedProducts = _this.hasSortedProducts(validfilteredMatches);
 
-      console.log("validfilteredMatches", validfilteredMatches);
+      // console.log("validfilteredMatches", validfilteredMatches);
       validfilteredMatches = this.modifyFilteredData(validfilteredMatches);
       if (ifhasSortedProducts) {
         this.renderParts(validfilteredMatches);
@@ -3802,6 +3758,7 @@
 
       if (transmission != "") {
         console.log("transmission", transmission);
+        _this.showSelectedInnerParts();
         // _this.getProductsForValues();
         // _this.showSelectedInnerParts();
       }
@@ -3821,6 +3778,7 @@
 
       if (bodyType != "") {
         console.log("bodyType", bodyType);
+        _this.showSelectedInnerParts();
         // _this.showSelectedInnerParts();
       }
     }
@@ -3831,7 +3789,7 @@
 
       _this.selectedParts.brake = _this.$apiResponseData.brakes.find(b => b.brake === brake) ?? {};
 
-      if (brake === "I Don't Know") {
+        if (brake === "I Don't Know") {
         $("#inner1").hide();
         _this.openAdvancedSearch();
         $("#advanced-search-checkbox").prop("checked", true).change();
@@ -3839,6 +3797,7 @@
 
       if (brake != "") {
         console.log("brake", brake);
+        _this.showSelectedInnerParts();
         // _this.showSelectedInnerParts();
       }
     }
@@ -3857,6 +3816,7 @@
 
       if (driveType != "") {
         console.log("driveType", driveType);
+        _this.showSelectedInnerParts();
         // _this.showSelectedInnerParts();
       }
     }
