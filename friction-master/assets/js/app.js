@@ -1800,6 +1800,9 @@
           }
           $('#advanced-search-checkbox').prop('checked', false).change();
 
+          
+          $("#inner1").fadeOut();
+          _this.hideBlocks();
           if (model === lastModel) return;
           lastModel = model;
 
@@ -1809,8 +1812,6 @@
             md: model,
           });
 
-          $("#inner1").fadeOut();
-          _this.hideBlocks();
           if (_this.$model.val()) {
             _this.checkModel(year, make, model);
           }
@@ -1821,6 +1822,14 @@
           _this.$transmission.val("");
           _this.$bodyType.val("");
           _this.$driveType.val("");
+          _this.selectedParts = {
+            submodel: _this.selectedParts.submodel,
+            engine: {},
+            bodyType: {},
+            transmission: {},
+            brake: {},
+            driveType: {},
+          }
           _this.checkSubModel();
         });
         this.$engine.on("change", function () {
@@ -1886,7 +1895,6 @@
             _this.hideBlocks();
             $("#inner1").show();
             _this.showSelectedInnerParts();
-            _this.showAfterSelection();
           }
         });
       }
@@ -2320,7 +2328,9 @@
         let getIntersections = this.setIntersections();
         // console.log("getIntersections", getIntersections);
         let intersections = this.findIntersection();
+        console.log(intersections);
         const intersectionKeys = [...new Set(intersections.flatMap((intersection) => Object.keys(intersection)))];
+        console.log(intersectionKeys);
         // console.log("intersections", intersections);
         // if (_this.$engine) {
         //   console.log("engine", _this.$engine.val());
@@ -2482,60 +2492,55 @@
       const goodBrakes = dataOnBrakes.filter((brake) => brake.brake === "I Don't Know" || allIds.some(id => brake.vehicle_ids.includes(id)));
       const goodDriveTypes = dataOnDriveTypes.filter((driveType) => driveType.drive_type === "I Don't Know" || allIds.some(id => driveType.vehicle_ids.includes(id)));
 
+      
 
       const selectedSubmodel = submodelVal.submodel;
-      _this.handleOptions(dataOnSubmodels, _this.$submodel, 'submodel', selectedSubmodel, submodelBlock);
+      const isSubmodelShown = _this.handleOptions(dataOnSubmodels, _this.$submodel, 'submodel', selectedSubmodel, submodelBlock);
 
       const selectedEngine = engineVal.engine_short;
-      _this.handleOptions(goodEngines, _this.$engine, 'engine_short', selectedEngine, engineBlock);
+      const isEngineShown = _this.handleOptions(goodEngines, _this.$engine, 'engine_short', selectedEngine, engineBlock);
 
       const selectedTransmission = transmissionVal.transmission;
-      _this.handleOptions(goodTransmissions, _this.$transmission, 'transmission', selectedTransmission, transmissionsBlock);
+      const isTransmissionShown = _this.handleOptions(goodTransmissions, _this.$transmission, 'transmission', selectedTransmission, transmissionsBlock);
 
       const selectedBodyType = bodyTypeVal.body_type;
-      _this.handleOptions(goodBodyTypes, _this.$bodyType, 'body_type', selectedBodyType, bodyTypesBlock);
+      const isBodyTypeShown = _this.handleOptions(goodBodyTypes, _this.$bodyType, 'body_type', selectedBodyType, bodyTypesBlock);
 
       const selectedBrake = brakeVal.brake;
-      _this.handleOptions(goodBrakes, _this.$brake, 'brake', selectedBrake, brakesBlock);
+      const isBrakeShown = _this.handleOptions(goodBrakes, _this.$brake, 'brake', selectedBrake, brakesBlock);
 
       const selectedDriveType = driveTypeVal.drive_type;
-      _this.handleOptions(goodDriveTypes, _this.$driveType, 'drive_type', selectedDriveType, driveTypeBlock);
+      const isDriveTypeShown =_this.handleOptions(goodDriveTypes, _this.$driveType, 'drive_type', selectedDriveType, driveTypeBlock);
       
-      _this.showAfterSelection();
+      _this.showAfterSelection(isSubmodelShown, isEngineShown, isTransmissionShown, isBodyTypeShown, isBrakeShown, isDriveTypeShown);
     }
 
     handleOptions(data, element, type, selectedValue, block) {
       let _this = this;
 
+      let intersections = this.findIntersection();
+      const intersectionKeys = [...new Set(intersections.flatMap((intersection) => Object.keys(intersection)))];
+
+      let isShown = true;
+      if (!intersectionKeys.includes(type)) {
+        isShown = false;
+      }
+
       if (data && data.length > 1) {
         _this.setOptionsInner(data, element, type, selectedValue);
       } else {
         if (data && data.length == 1) {
-          // switch (type) {
-          //   case 'submodel':
-          //     _this.selectedParts.submodel = data[0];
-          //     break;
-          //   case 'engine_short':
-          //     _this.selectedParts.engine = data[0];
-          //     break;
-          //   case 'transmission':
-          //     _this.selectedParts.transmission = data[0];
-          //     break;
-          //   case 'body_type':
-          //     _this.selectedParts.bodyType = data[0];
-          //     break;
-          //   case 'brake':
-          //     _this.selectedParts.brake = data[0];
-          //     break;
-          //   case 'drive_type':
-          //     _this.selectedParts.driveType = data[0];
-          //     break;
-          // }
           _this.setOptionsInner(data, element, type, data[0][type]);
           element.attr("disabled", true);
         }
         block.style.display = "none";
       }
+
+      if (block.style.display == "block") {
+        block.style.display = isShown ? "block" : "none";
+      }
+
+      return isShown;
     }
 
     hideBlocks() {
@@ -2555,10 +2560,10 @@
       )
     }
 
-    showAfterSelection() {
+    showAfterSelection(isSubmodelShown, isEngineShown, isTransmissionShown, isBodyTypeShown, isBrakeShown, isDriveTypeShown) {
       let _this = this;
 
-      const weights = _this.$apiResponseData.param_weights;
+      const weights = _this.$apiResponseData?.param_weights;
 
       const submodelBlock = document.querySelector('[data-id="6"]');
       const engineBlock = document.querySelector('[data-id="7"]');
@@ -2568,53 +2573,44 @@
       const driveTypeBlock = document.querySelector('[data-id="11"]');
 
       let blocksC = [
-        { block: submodelBlock, type: 'submodel', value: _this.$submodel.val() },
-        { block: engineBlock, type: 'engine', value: _this.$engine.val() },
-        { block: transmissionBlock, type: 'transmission', value: _this.$transmission.val() },
-        { block: bodyTypeBlock, type: 'body_type', value: _this.$bodyType.val() },
-        { block: brakeBlock, type: 'brake', value: _this.$brake.val() },
-        { block: driveTypeBlock, type: 'drive_type', value: _this.$driveType.val() }
+        { block: submodelBlock, type: 'submodel', value: _this.$submodel.val(), isShown: isSubmodelShown },
+        { block: engineBlock, type: 'engine', value: _this.$engine.val(), isShown: isEngineShown},
+        { block: transmissionBlock, type: 'transmission', value: _this.$transmission.val(), isShown: isTransmissionShown },
+        { block: bodyTypeBlock, type: 'body_type', value: _this.$bodyType.val(), isShown: isBodyTypeShown },
+        { block: brakeBlock, type: 'brake', value: _this.$brake.val(), isShown: isBrakeShown },
+        { block: driveTypeBlock, type: 'drive_type', value: _this.$driveType.val(), isShown: isDriveTypeShown}
       ];
 
-      blocksC.sort((a, b) => {
-        const weightA = weights[a.type] || 0;
-        const weightB = weights[b.type] || 0;
-        return weightB - weightA; // Сортировка по убыванию веса
-      });
-
-      // Обновляем массив values в соответствии с отсортированными блоками
-      let values = blocksC.map(item => item.value);
-      let blocks = blocksC.map(item => item.block);
-
-      // Сначала сохраняем индексы блоков, которые нужно удалить
-      let indicesToRemove = [];
-      blocks.forEach((block, index) => {
-          if (block.querySelectorAll("option").length <= 2) {
-              indicesToRemove.push(index);
-          }
-      });
-      
-      // Удаляем блоки и значения по сохраненным индексам
-      indicesToRemove.reverse().forEach(index => {
-          blocks.splice(index, 1);
-          values.splice(index, 1);
-      });
-
-      for (let i = 0; i < blocks.length; i++) {
-          let block = blocks[i];
-          let previousBlock = blocks[i - 1];
-          let previousValue = values[i - 1];
-          if (block.style.display === 'none') {
-              if ((i === 0 || this.getLength(previousBlock) <= 3 || previousValue) && this.getLength(block) > 3 ) {
-                block.style.display = 'block';
-                return;
-              }
-          }
+      console.log(1);
+      try {
+        throw new Error("Ошибка"); // Выбросьте ошибку
       }
+      catch (e) {
+        console.log(e.stack);
+      }
+
+
+      if (weights) {
+        blocksC.sort((a, b) => {
+          const weightA = weights[a.type] || 0;
+          const weightB = weights[b.type] || 0;
+          return weightB - weightA; // Сортировка по убыванию веса
+        });
+      }
+
+      blocksC = blocksC.filter((block) => block.isShown && this.getLength(block.block) > 3);
+
+
+      let block = blocksC.find((block) => {return block.isShown && block.block.style.display == "none"});
+
+      if (!block) {
+        return;
+      } 
+      block.block.style.display = "block";
     }
 
     getLength(block) {
-      return block.querySelectorAll("option").length;
+      return block.querySelectorAll("option")?.length;
     }
 
     //Создаем список всех связаных деталей
@@ -3717,7 +3713,7 @@
 
       if (submodel != "") {
         console.log("submodel", submodel);
-        _this.showSelectedInnerParts();
+        // _this.showSelectedInnerParts();
         // _this.findIntersection();
         // _this.getProductsForValues();
         // _this.partsSearch(year, make, model, engine, submodel);
