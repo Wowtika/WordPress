@@ -1895,6 +1895,7 @@
             _this.hideBlocks();
             $("#inner1").show();
             _this.showSelectedInnerParts();
+            _this.checkoutValueOnSelected();
           }
         });
       }
@@ -2328,10 +2329,8 @@
         let getIntersections = this.setIntersections();
         // console.log("getIntersections", getIntersections);
         let intersections = this.findIntersection();
-        console.log(intersections);
         const intersectionKeys = [...new Set(intersections.flatMap((intersection) => Object.keys(intersection)))];
-        console.log(intersectionKeys);
-        // console.log("intersections", intersections);
+          // console.log("intersections", intersections);
         // if (_this.$engine) {
         //   console.log("engine", _this.$engine.val());
         // }
@@ -2379,6 +2378,11 @@
           console.log("если все true", _this.checkAllExactMatches());
           allKeysHaveValues = true;
         }
+
+        if ($('#advanced-search-checkbox').is(':checked')) {
+          allKeysHaveValues = true;
+        }
+
         if (allKeysHaveValues) {
           catalog.html("");
           _this.updateCurrentData();
@@ -2490,9 +2494,7 @@
       const goodTransmissions = dataOnTransmissions.filter((transmission) => transmission.transmission === "I Don't Know" || allIds.some(id => transmission.vehicle_ids.includes(id)));
       const goodBodyTypes = dataOnBodyTypes.filter((bodyType) => bodyType.body_type === "I Don't Know" || allIds.some(id => bodyType.vehicle_ids.includes(id)));
       const goodBrakes = dataOnBrakes.filter((brake) => brake.brake === "I Don't Know" || allIds.some(id => brake.vehicle_ids.includes(id)));
-      const goodDriveTypes = dataOnDriveTypes.filter((driveType) => driveType.drive_type === "I Don't Know" || allIds.some(id => driveType.vehicle_ids.includes(id)));
-
-      
+      const goodDriveTypes = dataOnDriveTypes.filter((driveType) => driveType.drive_type === "I Don't Know" || allIds.some(id => driveType.vehicle_ids.includes(id)));      
 
       const selectedSubmodel = submodelVal.submodel;
       const isSubmodelShown = _this.handleOptions(dataOnSubmodels, _this.$submodel, 'submodel', selectedSubmodel, submodelBlock);
@@ -2573,22 +2575,13 @@
       const driveTypeBlock = document.querySelector('[data-id="11"]');
 
       let blocksC = [
-        { block: submodelBlock, type: 'submodel', value: _this.$submodel.val(), isShown: isSubmodelShown },
-        { block: engineBlock, type: 'engine', value: _this.$engine.val(), isShown: isEngineShown},
-        { block: transmissionBlock, type: 'transmission', value: _this.$transmission.val(), isShown: isTransmissionShown },
-        { block: bodyTypeBlock, type: 'body_type', value: _this.$bodyType.val(), isShown: isBodyTypeShown },
-        { block: brakeBlock, type: 'brake', value: _this.$brake.val(), isShown: isBrakeShown },
-        { block: driveTypeBlock, type: 'drive_type', value: _this.$driveType.val(), isShown: isDriveTypeShown}
+        { block: submodelBlock, type: 'submodel', value: _this.$submodel.val(), isShown: isSubmodelShown, select: _this.$submodel },
+        { block: engineBlock, type: 'engine', value: _this.$engine.val(), isShown: isEngineShown, select: _this.$engine },
+        { block: transmissionBlock, type: 'transmission', value: _this.$transmission.val(), isShown: isTransmissionShown, select: _this.$transmission},
+        { block: bodyTypeBlock, type: 'body_type', value: _this.$bodyType.val(), isShown: isBodyTypeShown, select: _this.$bodyType },
+        { block: brakeBlock, type: 'brake', value: _this.$brake.val(), isShown: isBrakeShown, select: _this.$brake },
+        { block: driveTypeBlock, type: 'drive_type', value: _this.$driveType.val(), isShown: isDriveTypeShown, select: _this.$driveType }
       ];
-
-      console.log(1);
-      try {
-        throw new Error("Ошибка"); // Выбросьте ошибку
-      }
-      catch (e) {
-        console.log(e.stack);
-      }
-
 
       if (weights) {
         blocksC.sort((a, b) => {
@@ -2600,13 +2593,19 @@
 
       blocksC = blocksC.filter((block) => block.isShown && this.getLength(block.block) > 3);
 
-
       let block = blocksC.find((block) => {return block.isShown && block.block.style.display == "none"});
 
       if (!block) {
         return;
       } 
+
       block.block.style.display = "block";
+
+      console.log(block);
+
+      if (block.value) {
+        block.select.val(block.value).change();
+      }
     }
 
     getLength(block) {
