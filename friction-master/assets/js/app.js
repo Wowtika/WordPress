@@ -2160,7 +2160,6 @@
         _this.findIntersection();
         _this.checkoutValueOnSelected();
         // _this.updateCurrentData();
-        
       });
     }
 
@@ -2637,11 +2636,11 @@
           });
         }
 
-        const submodelValue = _this.$submodel.val();
+        // const submodelValue = _this.$submodel.val();
 
-        if (submodelValue) {
-          valueSet = true;
-        }
+        // if (submodelValue) {
+        //   valueSet = true;
+        // }
 
         if (keys.length === 1 && keys[0] === "engine") {
           if (dataOnResponseData.engines.length === 1) {
@@ -2656,6 +2655,11 @@
           allKeysHaveValues = true;
         }
 
+        let checkForExactMatches = _this.checkAllExactMatches();
+        if (checkForExactMatches) {
+          console.log("если все true", _this.checkAllExactMatches());
+          allKeysHaveValues = true;
+        }
         if (allKeysHaveValues) {
           catalog.html("");
           _this.updateCurrentData();
@@ -3746,6 +3750,20 @@
         this.closeAdvancedSearch();
       }
     }
+
+    checkAllExactMatches = () => {
+      let _this = this;
+      let data = _this.$currentData;
+      console.log("checkAllExactMatches", data);
+      return data.every((group) => {
+        const groupKey = this.getDynamicKey(group);
+        const groupValue = group[groupKey];
+
+        return Object.values(groupValue).every((items) => {
+          return items.every((item) => item.exact_match === true);
+        });
+      });
+    };
 
     removeNonExactMatches = (data) => {
       return data
