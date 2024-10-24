@@ -2143,6 +2143,8 @@
           if ($(this).is(":checked")) {
             $("#inner1").hide();
             _this.openAdvancedSearch();
+            // тут обновление товаров для отображение зеленых
+            _this.updateCurrentData();
           } else {
             _this.hideBlocks();
             $("#inner1").show();
@@ -2153,10 +2155,12 @@
       }
 
       $("#inner1").on("change", function () {
+        // const isChecked = $("#advanced-search-checkbox").is(":checked");
         _this.showSelectedInnerParts();
         _this.findIntersection();
         _this.checkoutValueOnSelected();
         // _this.updateCurrentData();
+        
       });
     }
 
@@ -3979,13 +3983,16 @@
 
     createProduct(part, productsContainer) {
       let _this = this;
+      const isChecked = $("#advanced-search-checkbox").is(":checked");
       // Создаем элемент для части
 
       let partElement = document.createElement("div");
       partElement.classList.add("item-catalog");
       partElement.setAttribute("data-part_id", part.part_id);
-      if (part.exact_match === true) {
-        partElement.classList.add("item-catalog-exact_match");
+      if (isChecked) {
+        if (part.exact_match === true) {
+          partElement.classList.add("item-catalog-exact_match");
+        }
       }
       // if (!part.exact_match) {
       //   partElement.classList.add("item-catalog-non-exact_match");
