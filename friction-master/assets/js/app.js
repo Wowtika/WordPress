@@ -1759,6 +1759,7 @@
 
         this.$make.on("change", function () {
           $('#advanced-search').hide();
+          _this.hideBlocks();
 
           _this.selectedParts = {
             submodel: {},
@@ -1778,6 +1779,7 @@
 
         this.$model.on("change", function () {
           $('#advanced-search').hide();
+          _this.hideBlocks();
 
           let year = _this.$year.val();
           let make = _this.$make.val();
@@ -2265,6 +2267,7 @@
                 }
               } else if (typeof res.data.param_weights === 'object' && res.data.param_weights !== null) {
                 if (Object.keys(res.data.param_weights).length > 0) {
+                  $('#advanced-search').show();
                   _this.showSelectedInnerParts();
                   _this.checkoutValueOnSelected();
 
@@ -2558,23 +2561,33 @@
     showAfterSelection() {
       let _this = this;
 
-      let blocks = [
-        document.querySelector('[data-id="6"]'),
-        document.querySelector('[data-id="7"]'),
-        document.querySelector('[data-id="8"]'),
-        document.querySelector('[data-id="9"]'),
-        document.querySelector('[data-id="10"]'),
-        document.querySelector('[data-id="11"]')
+      const weights = _this.$apiResponseData.param_weights;
+
+      const submodelBlock = document.querySelector('[data-id="6"]');
+      const engineBlock = document.querySelector('[data-id="7"]');
+      const transmissionBlock = document.querySelector('[data-id="8"]');
+      const bodyTypeBlock = document.querySelector('[data-id="9"]');
+      const brakeBlock = document.querySelector('[data-id="10"]');
+      const driveTypeBlock = document.querySelector('[data-id="11"]');
+
+      let blocksC = [
+        { block: submodelBlock, type: 'submodel', value: _this.$submodel.val() },
+        { block: engineBlock, type: 'engine', value: _this.$engine.val() },
+        { block: transmissionBlock, type: 'transmission', value: _this.$transmission.val() },
+        { block: bodyTypeBlock, type: 'body_type', value: _this.$bodyType.val() },
+        { block: brakeBlock, type: 'brake', value: _this.$brake.val() },
+        { block: driveTypeBlock, type: 'drive_type', value: _this.$driveType.val() }
       ];
-      
-      let values = [
-          _this.$submodel.val(),
-          _this.$engine.val(),
-          _this.$transmission.val(),
-          _this.$bodyType.val(),
-          _this.$brake.val(),
-          _this.$driveType.val()
-      ];
+
+      blocksC.sort((a, b) => {
+        const weightA = weights[a.type] || 0;
+        const weightB = weights[b.type] || 0;
+        return weightB - weightA; // Сортировка по убыванию веса
+      });
+
+      // Обновляем массив values в соответствии с отсортированными блоками
+      let values = blocksC.map(item => item.value);
+      let blocks = blocksC.map(item => item.block);
 
       // Сначала сохраняем индексы блоков, которые нужно удалить
       let indicesToRemove = [];
