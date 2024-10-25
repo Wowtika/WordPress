@@ -1067,7 +1067,6 @@
 
     setOptions(data, $select, selected = false) {
       $select = $($select);
-      $select.html("");
 
       for (let i = 0; i < data.length; i++) {
         let val = data[i];
@@ -1208,6 +1207,7 @@
       }).always(function () {
         _this.loading($select, false);
       });
+
     }
   }
   class FilterMini extends FilterCore {
@@ -1738,7 +1738,8 @@
             if (getYear && getMake && getModel && getRegion) {
               _this.loadYears(getYear);
             } else {
-              _this.loadYears();
+              // Вызывается снизу и тут
+              // _this.loadYears();
             }
           })
           .trigger("change")
@@ -2474,7 +2475,7 @@
         (submodel) => submodel.vehicle_id
       );
       const engineIds = dataOnEngines.flatMap((engine) => engine.vehicle_ids);
-      console.log(engineIds);
+      // console.log(engineIds);
       const transmissionsIds = dataOnTransmissions.flatMap(
         (transmission) => transmission.vehicle_ids
       );
