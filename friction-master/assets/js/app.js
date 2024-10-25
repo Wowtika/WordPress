@@ -1067,7 +1067,6 @@
 
     setOptions(data, $select, selected = false) {
       $select = $($select);
-      $select.html("");
 
       for (let i = 0; i < data.length; i++) {
         let val = data[i];
@@ -1100,27 +1099,16 @@
       for (let i = 0; i < data.length; i++) {
         let val = data[i];
         let opt = document.createElement("option");
-        if (key === "engine") {
-          opt.value = val.engine_short;
-          opt.innerHTML = val.engine_short;
-        } else {
-          opt.value = val[key];
-          opt.innerHTML = val[key];
-        }
+        opt.value = val[key];
+        opt.innerHTML = val[key];
         // console.log("val[key]", val[key]);
         // if (key === 'engine') {
         //   opt.innerHTML = val.engine_short;
         // } else {
         //   opt.innerHTML = val[key];
         // }
-        if (key === "engine") {
-          if (selected && selected == val.engine_short) {
-            opt.setAttribute("selected", "selected");
-          }
-        } else {
-          if (selected && selected == val[key]) {
-            opt.setAttribute("selected", "selected");
-          }
+        if (selected && selected == val[key]) {
+          opt.setAttribute("selected", "selected");
         }
 
         $select.append(opt);
@@ -1219,6 +1207,7 @@
       }).always(function () {
         _this.loading($select, false);
       });
+
     }
   }
   class FilterMini extends FilterCore {
@@ -1749,7 +1738,8 @@
             if (getYear && getMake && getModel && getRegion) {
               _this.loadYears(getYear);
             } else {
-              _this.loadYears();
+              // Вызывается снизу и тут
+              // _this.loadYears();
             }
           })
           .trigger("change")
@@ -1916,7 +1906,7 @@
               _this.create_parts(_this.$currentData);
             }
           });
-        $("#advanced-search-checkbox").on("change", function () {
+        $("#advanced-search-checkbox").on("click", function () {
           if ($(this).is(":checked")) {
             $("#inner1").hide();
             _this.openAdvancedSearch();
@@ -2317,7 +2307,7 @@
               ) {
                 if (Object.keys(res.data.param_weights).length > 0) {
                   $("#advanced-search").show();
-                  _this.showSelectedInnerParts();
+                  // _this.showSelectedInnerParts();
                   _this.checkoutValueOnSelected();
                 }
               }
@@ -2485,7 +2475,7 @@
         (submodel) => submodel.vehicle_id
       );
       const engineIds = dataOnEngines.flatMap((engine) => engine.vehicle_ids);
-      console.log(engineIds);
+      // console.log(engineIds);
       const transmissionsIds = dataOnTransmissions.flatMap(
         (transmission) => transmission.vehicle_ids
       );
@@ -2565,13 +2555,6 @@
         allIds.some(
           (id) =>
             engine.engine === "I Don't Know" || engine.vehicle_ids.includes(id)
-        )
-      );
-      const goodEngines1 = dataOnEngines.filter((engine) =>
-        allIds.some(
-          (id) =>
-            engine.engine_short === "I Don't Know" ||
-            engine.vehicle_ids.includes(id)
         )
       );
       const goodTransmissions = dataOnTransmissions.filter(
@@ -2664,7 +2647,7 @@
       let _this = this;
 
       let intersections = this.findIntersection();
-      console.log("intersections", intersections);
+      // console.log("intersections", intersections);
       const intersectionKeys = [
         ...new Set(
           intersections.flatMap((intersection) => Object.keys(intersection))
@@ -2941,8 +2924,8 @@
                           myVal = _this.selectedParts.submodel.submodel;
                           break;
                         case "engine":
-                          myVal = _this.selectedParts.engine.engine_short;
-                          // myVal = _this.selectedParts.engine.engine;
+                          // myVal = _this.selectedParts.engine.engine_short;
+                          myVal = _this.selectedParts.engine.engine;
                           break;
                         case "transmission":
                           myVal = _this.selectedParts.transmission.transmission;
