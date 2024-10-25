@@ -1822,14 +1822,14 @@
           _this.$transmission.val("");
           _this.$bodyType.val("");
           _this.$driveType.val("");
-          _this.selectedParts = {
-            submodel: _this.selectedParts.submodel,
-            engine: {},
-            bodyType: {},
-            transmission: {},
-            brake: {},
-            driveType: {},
-          }
+          // _this.selectedParts = {
+          //   submodel: _this.selectedParts.submodel,
+          //   engine: {},
+          //   bodyType: {},
+          //   transmission: {},
+          //   brake: {},
+          //   driveType: {},
+          // }
           _this.checkSubModel();
         });
         this.$engine.on("change", function () {
@@ -2540,6 +2540,10 @@
 
       if (block.style.display == "block") {
         block.style.display = isShown ? "block" : "none";
+      }
+
+      if (!isShown) {
+        _this.selectedParts[type] = {};
       }
 
       return isShown;
