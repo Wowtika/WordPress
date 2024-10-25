@@ -1906,7 +1906,7 @@
               _this.create_parts(_this.$currentData);
             }
           });
-        $("#advanced-search-checkbox").on("change", function () {
+        $("#advanced-search-checkbox").on("click", function () {
           if ($(this).is(":checked")) {
             $("#inner1").hide();
             _this.openAdvancedSearch();
