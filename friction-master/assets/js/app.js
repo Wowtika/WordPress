@@ -2500,7 +2500,7 @@
       const isSubmodelShown = _this.handleOptions(dataOnSubmodels, _this.$submodel, 'submodel', selectedSubmodel, submodelBlock);
 
       const selectedEngine = engineVal.engine_short;
-      const isEngineShown = _this.handleOptions(goodEngines, _this.$engine, 'engine_short', selectedEngine, engineBlock);
+      const isEngineShown = _this.handleOptions(goodEngines, _this.$engine, 'engine', selectedEngine, engineBlock);
 
       const selectedTransmission = transmissionVal.transmission;
       const isTransmissionShown = _this.handleOptions(goodTransmissions, _this.$transmission, 'transmission', selectedTransmission, transmissionsBlock);
@@ -2526,6 +2526,10 @@
       let isShown = true;
       if (!intersectionKeys.includes(type)) {
         isShown = false;
+      }
+
+      if (type === 'engine') {
+        type = 'engine_short';
       }
 
       if (data && data.length > 1) {
