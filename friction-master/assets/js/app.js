@@ -1067,6 +1067,7 @@
 
     setOptions(data, $select, selected = false) {
       $select = $($select);
+      $select.html("");
 
       for (let i = 0; i < data.length; i++) {
         let val = data[i];
@@ -1750,6 +1751,16 @@
 
         this.$year.on("change", function () {
           $("#advanced-search").hide();
+          _this.hideBlocks();
+
+          _this.selectedParts = {
+            submodel: {},
+            engine: {},
+            bodyType: {},
+            transmission: {},
+            brake: {},
+            driveType: {},
+          }
 
           let year = _this.$year.val();
           _this.clearSelects("year");
