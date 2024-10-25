@@ -1100,27 +1100,16 @@
       for (let i = 0; i < data.length; i++) {
         let val = data[i];
         let opt = document.createElement("option");
-        if (key === "engine") {
-          opt.value = val.engine_short;
-          opt.innerHTML = val.engine_short;
-        } else {
-          opt.value = val[key];
-          opt.innerHTML = val[key];
-        }
+        opt.value = val[key];
+        opt.innerHTML = val[key];
         // console.log("val[key]", val[key]);
         // if (key === 'engine') {
         //   opt.innerHTML = val.engine_short;
         // } else {
         //   opt.innerHTML = val[key];
         // }
-        if (key === "engine") {
-          if (selected && selected == val.engine_short) {
-            opt.setAttribute("selected", "selected");
-          }
-        } else {
-          if (selected && selected == val[key]) {
-            opt.setAttribute("selected", "selected");
-          }
+        if (selected && selected == val[key]) {
+          opt.setAttribute("selected", "selected");
         }
 
         $select.append(opt);
@@ -2317,7 +2306,7 @@
               ) {
                 if (Object.keys(res.data.param_weights).length > 0) {
                   $("#advanced-search").show();
-                  _this.showSelectedInnerParts();
+                  // _this.showSelectedInnerParts();
                   _this.checkoutValueOnSelected();
                 }
               }
@@ -2567,13 +2556,6 @@
             engine.engine === "I Don't Know" || engine.vehicle_ids.includes(id)
         )
       );
-      const goodEngines1 = dataOnEngines.filter((engine) =>
-        allIds.some(
-          (id) =>
-            engine.engine_short === "I Don't Know" ||
-            engine.vehicle_ids.includes(id)
-        )
-      );
       const goodTransmissions = dataOnTransmissions.filter(
         (transmission) =>
           transmission.transmission === "I Don't Know" ||
@@ -2664,7 +2646,7 @@
       let _this = this;
 
       let intersections = this.findIntersection();
-      console.log("intersections", intersections);
+      // console.log("intersections", intersections);
       const intersectionKeys = [
         ...new Set(
           intersections.flatMap((intersection) => Object.keys(intersection))
@@ -2941,8 +2923,8 @@
                           myVal = _this.selectedParts.submodel.submodel;
                           break;
                         case "engine":
-                          myVal = _this.selectedParts.engine.engine_short;
-                          // myVal = _this.selectedParts.engine.engine;
+                          // myVal = _this.selectedParts.engine.engine_short;
+                          myVal = _this.selectedParts.engine.engine;
                           break;
                         case "transmission":
                           myVal = _this.selectedParts.transmission.transmission;
