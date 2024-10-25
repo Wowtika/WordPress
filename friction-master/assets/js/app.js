@@ -2936,12 +2936,12 @@
       driveTypeBlock.show();
 
       //Скрыть пустые
-      if (submodels.length < 2) submodelBlock.hide();
-      if (engines.length < 2) engineBlock.hide();
-      if (transmissions.length < 2) transmissionBlock.hide();
-      if (bodyTypes.length < 2) bodyTypeBlock.hide();
-      if (brakes.length < 2) brakeTypeBlock.hide();
-      if (driveTypes.length < 2) driveTypeBlock.hide();
+      // if (submodels.length < 2) submodelBlock.hide();
+      // if (engines.length < 2) engineBlock.hide();
+      // if (transmissions.length < 2) transmissionBlock.hide();
+      // if (bodyTypes.length < 2) bodyTypeBlock.hide();
+      // if (brakes.length < 2) brakeTypeBlock.hide();
+      // if (driveTypes.length < 2) driveTypeBlock.hide();
 
       //Очистка старых значений
       submodelContent.text("");
