@@ -1086,9 +1086,10 @@
       this.rebuildSelect($select);
     }
 
-    setOptionsInner(data, $select, key , selected = false) {
+    setOptionsInner(data, $select, key, selected = false) {
       $select = $($select);
 
+      console.log("key", key);
       let opt = document.createElement("option");
       opt.value = "I Don't Know";
       opt.innerHTML = "I Don't Know";
@@ -1098,11 +1099,27 @@
       for (let i = 0; i < data.length; i++) {
         let val = data[i];
         let opt = document.createElement("option");
-        opt.value = val[key];
-        opt.innerHTML = val[key];
-
-        if (selected && selected == val[key]) {
-          opt.setAttribute("selected", "selected");
+        if (key === "engine") {
+          opt.value = val.engine_short;
+          opt.innerHTML = val.engine_short;
+        } else {
+          opt.value = val[key];
+          opt.innerHTML = val[key];
+        }
+        // console.log("val[key]", val[key]);
+        // if (key === 'engine') {
+        //   opt.innerHTML = val.engine_short;
+        // } else {
+        //   opt.innerHTML = val[key];
+        // }
+        if (key === "engine") {
+          if (selected && selected == val.engine_short) {
+            opt.setAttribute("selected", "selected");
+          }
+        } else {
+          if (selected && selected == val[key]) {
+            opt.setAttribute("selected", "selected");
+          }
         }
 
         $select.append(opt);
@@ -1113,9 +1130,13 @@
         // $select.attr("disabled", true);
         // тут показывается один двигатель и блокируется блок чтобы не было выбора
         let selectOptionButtonAll = $select[0].querySelectorAll("option");
+        // console.log("selectOptionButtonAll", selectOptionButtonAll);
         let selectOption = selectOptionButtonAll[0];
-        let selectOptionButton = selectOptionButtonAll[1];
+        // console.log("selectOption", selectOption);
+        let selectOptionButton = selectOptionButtonAll[2];
+        // console.log("selectOptionButton", selectOptionButton);
         let dataValue = selectOptionButton.textContent;
+        // console.log("dataValue", dataValue);
         selectOption.textContent = dataValue;
       } else if (data.length > 1) {
         // Если больше одного элемента, разрешаем выбор
@@ -1465,7 +1486,7 @@
       transmission: {},
       brake: {},
       driveType: {},
-    }
+    };
 
     constructor(block, Select) {
       super(block, Select);
@@ -1758,7 +1779,7 @@
         });
 
         this.$make.on("change", function () {
-          $('#advanced-search').hide();
+          $("#advanced-search").hide();
           _this.hideBlocks();
 
           _this.selectedParts = {
@@ -1768,7 +1789,7 @@
             transmission: {},
             brake: {},
             driveType: {},
-          }
+          };
 
           let year = _this.$year.val();
           let make = _this.$make.val();
@@ -1778,7 +1799,7 @@
         });
 
         this.$model.on("change", function () {
-          $('#advanced-search').hide();
+          $("#advanced-search").hide();
           _this.hideBlocks();
 
           let year = _this.$year.val();
@@ -1797,10 +1818,9 @@
             transmission: {},
             brake: {},
             driveType: {},
-          }
-          $('#advanced-search-checkbox').prop('checked', false).change();
+          };
+          $("#advanced-search-checkbox").prop("checked", false).change();
 
-          
           $("#inner1").fadeOut();
           _this.hideBlocks();
           if (model === lastModel) return;
@@ -1829,7 +1849,7 @@
             transmission: {},
             brake: {},
             driveType: {},
-          }
+          };
           _this.checkSubModel();
         });
         this.$engine.on("change", function () {
@@ -1968,8 +1988,10 @@
     }
 
     hideProductBlock() {
+      let catalog = $("#catalog");
       let catalogContainer = $("#catalog")[0];
       if (catalogContainer) {
+        catalog.html("");
         catalogContainer.style.display = "none";
       }
     }
@@ -2185,7 +2207,7 @@
         transmission: {},
         brake: {},
         driveType: {},
-      }
+      };
       let _this = this;
       let load_catalog = $("#load_catalog");
       let catalog_auto_title = $("#catalog_auto_title");
@@ -2283,7 +2305,7 @@
                 res.data.param_weights !== null
               ) {
                 if (Object.keys(res.data.param_weights).length > 0) {
-                  $('#advanced-search').show();
+                  $("#advanced-search").show();
                   _this.showSelectedInnerParts();
                   _this.checkoutValueOnSelected();
                 }
@@ -2321,22 +2343,24 @@
       let dataOnResponseData = _this.$apiResponseData;
 
       let allKeysHaveValues; // Флаг для отслеживания состояния всех ключей
+      if (dataOnResponseData) {
+        if (dataOnResponseData.param_weights) {
+          // let keys = Object.keys(dataOnResponseData.param_weights);
+          // let valueSet = false; // Флаг для проверки, есть ли хотя бы одно установленное значение
 
-      if (dataOnResponseData.param_weights) {
-        let keys = Object.keys(dataOnResponseData.param_weights);
-        let valueSet = false; // Флаг для проверки, есть ли хотя бы одно установленное значение
+          let getIntersections = this.setIntersections();
+          console.log("getIntersections", getIntersections);
+          let intersections = this.findIntersection();
+          console.log("checkoutValueOnSelected intersections", intersections);
+          const intersectionKeys = [
+            ...new Set(
+              intersections.flatMap((intersection) => Object.keys(intersection))
+            ),
+          ];
 
-        let getIntersections = this.setIntersections();
-        // console.log("getIntersections", getIntersections);
-        let intersections = this.findIntersection();
-        const intersectionKeys = [...new Set(intersections.flatMap((intersection) => Object.keys(intersection)))];
-          // console.log("intersections", intersections);
-        // if (_this.$engine) {
-        //   console.log("engine", _this.$engine.val());
-        // }
-        let allKeysHaveValues = true;
-        allKeysHaveValues = intersectionKeys.every(
-          (key) => {
+          let allKeysHaveValues = true;
+          let getVenId = null;
+          allKeysHaveValues = intersectionKeys.every((key) => {
             let keyValue = "";
             switch (key) {
               case "submodel":
@@ -2344,9 +2368,10 @@
                 break;
               case "engine":
                 keyValue = _this.$engine.val();
+                console.log("engine keyValue", keyValue);
                 break;
               case "transmission":
-                keyValue = _this.$transmission.val()
+                keyValue = _this.$transmission.val();
                 break;
               case "body_type":
                 keyValue = _this.$bodyType.val();
@@ -2361,39 +2386,34 @@
             return keyValue !== "" && keyValue !== "I Don't Know";
           });
 
-        console.log(allKeysHaveValues);
+          console.log(allKeysHaveValues);
 
-        // const submodelValue = _this.$submodel.val();
+          if (intersections.length === 0) {
+            allKeysHaveValues = true;
+          }
 
-        // if (submodelValue) {
-        //   valueSet = true;
-        // }
+          let checkForExactMatches = _this.checkAllExactMatches();
+          if (checkForExactMatches) {
+            console.log("если все true", _this.checkAllExactMatches());
+            allKeysHaveValues = true;
+          }
 
-        if (intersections.length === 0) {
-          allKeysHaveValues = true;
-        }
+          if ($("#advanced-search-checkbox").is(":checked")) {
+            allKeysHaveValues = true;
+          }
 
-        let checkForExactMatches = _this.checkAllExactMatches();
-        if (checkForExactMatches) {
-          console.log("если все true", _this.checkAllExactMatches());
-          allKeysHaveValues = true;
-        }
+          if (allKeysHaveValues) {
+            catalog.html("");
+            _this.updateCurrentData();
+            catalog.fadeIn();
+            intersections = [];
 
-        if ($('#advanced-search-checkbox').is(':checked')) {
-          allKeysHaveValues = true;
-        }
-
-        if (allKeysHaveValues) {
-          catalog.html("");
-          _this.updateCurrentData();
-          catalog.fadeIn();
-          intersections = [];
-
-          $("#catalog").fadeIn().css("display", "block");
-        } else {
-          catalog.html("");
-          catalog.fadeOut();
-          return;
+            $("#catalog").fadeIn().css("display", "block");
+          } else {
+            catalog.html("");
+            catalog.fadeOut();
+            return;
+          }
         }
       }
     }
@@ -2409,7 +2429,10 @@
       let driveTypeBlock = document.querySelector('[data-id="11"]');
 
       let submodelVal = _this.selectedParts.submodel;
+
       let engineVal = _this.selectedParts.engine;
+      // let engineVal = _this.selectedParts.engine_short;
+      // let engineVal = _this.selectedParts.engine;
       let transmissionVal = _this.selectedParts.transmission;
       let bodyTypeVal = _this.selectedParts.bodyType;
       let brakeVal = _this.selectedParts.brake;
@@ -2447,29 +2470,40 @@
 
       const submodelId = this.selectedParts.submodel?.vehicle_id;
 
-      const submodelsId = dataOnSubmodels.flatMap((submodel) => submodel.vehicle_id);
+      const submodelsId = dataOnSubmodels.flatMap(
+        (submodel) => submodel.vehicle_id
+      );
       const engineIds = dataOnEngines.flatMap((engine) => engine.vehicle_ids);
-      const transmissionsIds = dataOnTransmissions.flatMap((transmission) => transmission.vehicle_ids) 
-      const bodyTypeIds = dataOnBodyTypes.flatMap((bodyType) => bodyType.vehicle_ids) 
-      const brakeIds = dataOnBrakes.flatMap((brake) => brake.vehicle_ids) 
-      const driveTypeIds = dataOnDriveTypes.flatMap((driveType) => driveType.vehicle_ids) 
+      console.log(engineIds);
+      const transmissionsIds = dataOnTransmissions.flatMap(
+        (transmission) => transmission.vehicle_ids
+      );
+      const bodyTypeIds = dataOnBodyTypes.flatMap(
+        (bodyType) => bodyType.vehicle_ids
+      );
+      const brakeIds = dataOnBrakes.flatMap((brake) => brake.vehicle_ids);
+      const driveTypeIds = dataOnDriveTypes.flatMap(
+        (driveType) => driveType.vehicle_ids
+      );
 
-      let allIds = submodelId ? [submodelId] :
-      [
-        ...(submodelsId || []),
-        ...(engineIds || []),
-        ...(transmissionsIds || []),
-        ...(bodyTypeIds || []),
-        ...(brakeIds || []),
-        ...(driveTypeIds || [])
-      ];
+      let allIds = submodelId
+        ? [submodelId]
+        : [
+            ...(submodelsId || []),
+            ...(engineIds || []),
+            ...(transmissionsIds || []),
+            ...(bodyTypeIds || []),
+            ...(brakeIds || []),
+            ...(driveTypeIds || []),
+          ];
 
       if (!submodelId) {
-
         function filterIds(allIds, selectedValue, dataArray, key) {
           if (selectedValue !== "") {
-            const currentIds = dataArray.find((item) => item[key] === selectedValue[key])?.vehicle_ids;
-        
+            const currentIds = dataArray.find(
+              (item) => item[key] === selectedValue[key]
+            )?.vehicle_ids;
+
             if (currentIds) {
               for (let i = allIds.length - 1; i >= 0; i--) {
                 if (!currentIds.includes(allIds[i])) {
@@ -2480,48 +2514,164 @@
           }
         }
 
-        filterIds(allIds, this.selectedParts.submodel, dataOnSubmodels, 'submodel');
-        filterIds(allIds, this.selectedParts.engine, dataOnEngines, 'engine_short');
-        filterIds(allIds, this.selectedParts.transmission, dataOnTransmissions, 'transmission');
-        filterIds(allIds, this.selectedParts.bodyType, dataOnBodyTypes, 'body_type');
-        filterIds(allIds, this.selectedParts.brake, dataOnBrakes, 'brake');
-        filterIds(allIds, this.selectedParts.driveType, dataOnDriveTypes, 'drive_type');
+        filterIds(
+          allIds,
+          this.selectedParts.submodel,
+          dataOnSubmodels,
+          "submodel"
+        );
+        filterIds(
+          allIds,
+          this.selectedParts.engine,
+          dataOnEngines,
+          "engine_short"
+        );
+        // filterIds(allIds, this.selectedParts.engine, dataOnEngines, 'engine_short');
+        filterIds(
+          allIds,
+          this.selectedParts.transmission,
+          dataOnTransmissions,
+          "transmission"
+        );
+        filterIds(
+          allIds,
+          this.selectedParts.bodyType,
+          dataOnBodyTypes,
+          "body_type"
+        );
+        filterIds(allIds, this.selectedParts.brake, dataOnBrakes, "brake");
+        filterIds(
+          allIds,
+          this.selectedParts.driveType,
+          dataOnDriveTypes,
+          "drive_type"
+        );
       }
 
-      allIds = [... new Set(allIds)];
+      allIds = [...new Set(allIds)];
 
-      const goodEngines = dataOnEngines.filter((engine) => allIds.some(id => engine.engine_short === "I Don't Know" || engine.vehicle_ids.includes(id)));
-      const goodTransmissions = dataOnTransmissions.filter((transmission) => transmission.transmission === "I Don't Know" || allIds.some(id => transmission.vehicle_ids.includes(id)));
-      const goodBodyTypes = dataOnBodyTypes.filter((bodyType) => bodyType.body_type === "I Don't Know" || allIds.some(id => bodyType.vehicle_ids.includes(id)));
-      const goodBrakes = dataOnBrakes.filter((brake) => brake.brake === "I Don't Know" || allIds.some(id => brake.vehicle_ids.includes(id)));
-      const goodDriveTypes = dataOnDriveTypes.filter((driveType) => driveType.drive_type === "I Don't Know" || allIds.some(id => driveType.vehicle_ids.includes(id)));      
+      const goodEngines = dataOnEngines.filter((engine) =>
+        allIds.some(
+          (id) =>
+            engine.engine === "I Don't Know" || engine.vehicle_ids.includes(id)
+        )
+      );
+      const goodEngines1 = dataOnEngines.filter((engine) =>
+        allIds.some(
+          (id) =>
+            engine.engine_short === "I Don't Know" ||
+            engine.vehicle_ids.includes(id)
+        )
+      );
+      const goodTransmissions = dataOnTransmissions.filter(
+        (transmission) =>
+          transmission.transmission === "I Don't Know" ||
+          allIds.some((id) => transmission.vehicle_ids.includes(id))
+      );
+      const goodBodyTypes = dataOnBodyTypes.filter(
+        (bodyType) =>
+          bodyType.body_type === "I Don't Know" ||
+          allIds.some((id) => bodyType.vehicle_ids.includes(id))
+      );
+      const goodBrakes = dataOnBrakes.filter(
+        (brake) =>
+          brake.brake === "I Don't Know" ||
+          allIds.some((id) => brake.vehicle_ids.includes(id))
+      );
+      const goodDriveTypes = dataOnDriveTypes.filter(
+        (driveType) =>
+          driveType.drive_type === "I Don't Know" ||
+          allIds.some((id) => driveType.vehicle_ids.includes(id))
+      );
 
       const selectedSubmodel = submodelVal.submodel;
-      const isSubmodelShown = _this.handleOptions(dataOnSubmodels, _this.$submodel, 'submodel', selectedSubmodel, submodelBlock);
+      const isSubmodelShown = _this.handleOptions(
+        dataOnSubmodels,
+        _this.$submodel,
+        "submodel",
+        selectedSubmodel,
+        submodelBlock
+      );
 
+      console.log("goodEngines", goodEngines);
+      console.log("goodEngines1", goodEngines1);
       const selectedEngine = engineVal.engine_short;
-      const isEngineShown = _this.handleOptions(goodEngines, _this.$engine, 'engine_short', selectedEngine, engineBlock);
-
+      // const selectedEngine = engineVal.engine;
+      console.log("dd selectedEngine", selectedEngine);
+      console.log("_this.selectedParts", _this.selectedParts);
+      console.log(
+        "_this.selectedParts.engine.engine_short",
+        _this.selectedParts.engine.engine_short
+      );
+      // _this.selectedParts.engine.engine_short
+      console.log("engineVal", engineVal);
+      console.log("engineVal.engine_short", engineVal.engine_short);
+      // console.log('engineVal.engine_short', engineVal.engine.engine_short);
+      const isEngineShown = _this.handleOptions(
+        goodEngines,
+        _this.$engine,
+        "engine",
+        selectedEngine,
+        engineBlock
+      );
+      // const isEngineShown = _this.handleOptions(goodEngines, _this.$engine, 'engine_short', selectedEngine, engineBlock);
+      console.log("isEngineShown", isEngineShown);
       const selectedTransmission = transmissionVal.transmission;
-      const isTransmissionShown = _this.handleOptions(goodTransmissions, _this.$transmission, 'transmission', selectedTransmission, transmissionsBlock);
+      const isTransmissionShown = _this.handleOptions(
+        goodTransmissions,
+        _this.$transmission,
+        "transmission",
+        selectedTransmission,
+        transmissionsBlock
+      );
 
       const selectedBodyType = bodyTypeVal.body_type;
-      const isBodyTypeShown = _this.handleOptions(goodBodyTypes, _this.$bodyType, 'body_type', selectedBodyType, bodyTypesBlock);
+      const isBodyTypeShown = _this.handleOptions(
+        goodBodyTypes,
+        _this.$bodyType,
+        "body_type",
+        selectedBodyType,
+        bodyTypesBlock
+      );
 
       const selectedBrake = brakeVal.brake;
-      const isBrakeShown = _this.handleOptions(goodBrakes, _this.$brake, 'brake', selectedBrake, brakesBlock);
+      const isBrakeShown = _this.handleOptions(
+        goodBrakes,
+        _this.$brake,
+        "brake",
+        selectedBrake,
+        brakesBlock
+      );
 
       const selectedDriveType = driveTypeVal.drive_type;
-      const isDriveTypeShown =_this.handleOptions(goodDriveTypes, _this.$driveType, 'drive_type', selectedDriveType, driveTypeBlock);
-      
-      _this.showAfterSelection(isSubmodelShown, isEngineShown, isTransmissionShown, isBodyTypeShown, isBrakeShown, isDriveTypeShown);
+      const isDriveTypeShown = _this.handleOptions(
+        goodDriveTypes,
+        _this.$driveType,
+        "drive_type",
+        selectedDriveType,
+        driveTypeBlock
+      );
+
+      _this.showAfterSelection(
+        isSubmodelShown,
+        isEngineShown,
+        isTransmissionShown,
+        isBodyTypeShown,
+        isBrakeShown,
+        isDriveTypeShown
+      );
     }
 
     handleOptions(data, element, type, selectedValue, block) {
       let _this = this;
 
       let intersections = this.findIntersection();
-      const intersectionKeys = [...new Set(intersections.flatMap((intersection) => Object.keys(intersection)))];
+      console.log("intersections", intersections);
+      const intersectionKeys = [
+        ...new Set(
+          intersections.flatMap((intersection) => Object.keys(intersection))
+        ),
+      ];
 
       let isShown = true;
       if (!intersectionKeys.includes(type)) {
@@ -2552,17 +2702,22 @@
         document.querySelector('[data-id="8"]'),
         document.querySelector('[data-id="9"]'),
         document.querySelector('[data-id="10"]'),
-        document.querySelector('[data-id="11"]')
+        document.querySelector('[data-id="11"]'),
       ];
 
-      blocks.forEach(
-        block => {
-          block.style.display = "none";
-        }
-      )
+      blocks.forEach((block) => {
+        block.style.display = "none";
+      });
     }
 
-    showAfterSelection(isSubmodelShown, isEngineShown, isTransmissionShown, isBodyTypeShown, isBrakeShown, isDriveTypeShown) {
+    showAfterSelection(
+      isSubmodelShown,
+      isEngineShown,
+      isTransmissionShown,
+      isBodyTypeShown,
+      isBrakeShown,
+      isDriveTypeShown
+    ) {
       let _this = this;
 
       const weights = _this.$apiResponseData?.param_weights;
@@ -2575,12 +2730,48 @@
       const driveTypeBlock = document.querySelector('[data-id="11"]');
 
       let blocksC = [
-        { block: submodelBlock, type: 'submodel', value: _this.$submodel.val(), isShown: isSubmodelShown, select: _this.$submodel },
-        { block: engineBlock, type: 'engine', value: _this.$engine.val(), isShown: isEngineShown, select: _this.$engine },
-        { block: transmissionBlock, type: 'transmission', value: _this.$transmission.val(), isShown: isTransmissionShown, select: _this.$transmission},
-        { block: bodyTypeBlock, type: 'body_type', value: _this.$bodyType.val(), isShown: isBodyTypeShown, select: _this.$bodyType },
-        { block: brakeBlock, type: 'brake', value: _this.$brake.val(), isShown: isBrakeShown, select: _this.$brake },
-        { block: driveTypeBlock, type: 'drive_type', value: _this.$driveType.val(), isShown: isDriveTypeShown, select: _this.$driveType }
+        {
+          block: submodelBlock,
+          type: "submodel",
+          value: _this.$submodel.val(),
+          isShown: isSubmodelShown,
+          select: _this.$submodel,
+        },
+        {
+          block: engineBlock,
+          type: "engine",
+          value: _this.$engine.val(),
+          isShown: isEngineShown,
+          select: _this.$engine,
+        },
+        {
+          block: transmissionBlock,
+          type: "transmission",
+          value: _this.$transmission.val(),
+          isShown: isTransmissionShown,
+          select: _this.$transmission,
+        },
+        {
+          block: bodyTypeBlock,
+          type: "body_type",
+          value: _this.$bodyType.val(),
+          isShown: isBodyTypeShown,
+          select: _this.$bodyType,
+        },
+        {
+          block: brakeBlock,
+          type: "brake",
+          value: _this.$brake.val(),
+          isShown: isBrakeShown,
+          select: _this.$brake,
+        },
+        {
+          block: driveTypeBlock,
+          type: "drive_type",
+          value: _this.$driveType.val(),
+          isShown: isDriveTypeShown,
+          select: _this.$driveType,
+        },
       ];
 
       if (weights) {
@@ -2591,13 +2782,17 @@
         });
       }
 
-      blocksC = blocksC.filter((block) => block.isShown && this.getLength(block.block) > 3);
+      blocksC = blocksC.filter(
+        (block) => block.isShown && this.getLength(block.block) > 3
+      );
 
-      let block = blocksC.find((block) => {return block.isShown && block.block.style.display == "none"});
+      let block = blocksC.find((block) => {
+        return block.isShown && block.block.style.display == "none";
+      });
 
       if (!block) {
         return;
-      } 
+      }
 
       block.block.style.display = "block";
 
@@ -2628,26 +2823,34 @@
           }
           applications.forEach((application) => {
             _this.carIntersection.push(application);
-          })
+          });
         });
-      })
+      });
     }
 
     //Получить детали, связанные с текущей машиной
     findIntersection() {
       const params = {
-        submodel: this.$submodel.val() !== "I Don't Know" ? this.$submodel.val() : "",
+        submodel:
+          this.$submodel.val() !== "I Don't Know" ? this.$submodel.val() : "",
         engine: this.$engine.val() !== "I Don't Know" ? this.$engine.val() : "",
-        body_type: this.$bodyType.val() !== "I Don't Know" ? this.$bodyType.val() : "",
-        transmission: this.$transmission.val() !== "I Don't Know" ? this.$transmission.val() : "",
+        body_type:
+          this.$bodyType.val() !== "I Don't Know" ? this.$bodyType.val() : "",
+        transmission:
+          this.$transmission.val() !== "I Don't Know"
+            ? this.$transmission.val()
+            : "",
         brake: this.$brake.val() !== "I Don't Know" ? this.$brake.val() : "",
-        drive_type: this.$driveType.val() !== "I Don't Know" ? this.$driveType.val() : "",
-      }
+        drive_type:
+          this.$driveType.val() !== "I Don't Know" ? this.$driveType.val() : "",
+      };
 
-      return this.carIntersection.filter(item => {
-        return Object.keys(params).every(key => {
-              return !item[key] || params[key] === "" || item[key].value === params[key];
-          });
+      return this.carIntersection.filter((item) => {
+        return Object.keys(params).every((key) => {
+          return (
+            !item[key] || params[key] === "" || item[key].value === params[key]
+          );
+        });
       });
     }
 
@@ -2683,7 +2886,7 @@
                 resultArr.push(item);
               }
             }
-          })
+          });
         }
       }
 
@@ -2732,7 +2935,8 @@
                           myVal = _this.selectedParts.submodel.submodel;
                           break;
                         case "engine":
-                          myVal = _this.selectedParts.engine.engine;
+                          myVal = _this.selectedParts.engine.engine_short;
+                          // myVal = _this.selectedParts.engine.engine;
                           break;
                         case "transmission":
                           myVal = _this.selectedParts.transmission.transmission;
@@ -2747,8 +2951,12 @@
                           myVal = _this.selectedParts.bodyType.body_type;
                           break;
                       }
-                      // console.log(Object.keys(itemOption[key])); Тут можно сделать перебор по selectedParts.деталь ключи и itemOption[key] ключи 
-                      if (itemOption[key].value != myVal && (myVal !== undefined && !myVal.includes(itemOption[key].value))) {
+                      // console.log(Object.keys(itemOption[key])); Тут можно сделать перебор по selectedParts.деталь ключи и itemOption[key] ключи
+                      if (
+                        itemOption[key].value != myVal &&
+                        myVal !== undefined &&
+                        !myVal.includes(itemOption[key].value)
+                      ) {
                         isAllGood = false;
                         break;
                       }
@@ -2849,21 +3057,24 @@
         (driveType) => driveType.vehicle_ids
       );
 
-      let allIds = submodelId ? [submodelId] :
-      [
-        ...(submodelsId || []),
-        ...(engineIds || []),
-        ...(transmissionsIds || []),
-        ...(bodyTypeIds || []),
-        ...(brakeIds || []),
-        ...(driveTypeIds || [])
-      ];
+      let allIds = submodelId
+        ? [submodelId]
+        : [
+            ...(submodelsId || []),
+            ...(engineIds || []),
+            ...(transmissionsIds || []),
+            ...(bodyTypeIds || []),
+            ...(brakeIds || []),
+            ...(driveTypeIds || []),
+          ];
 
       if (!submodelId) {
         function filterIds(allIds, selectedValue, dataArray, key) {
           if (selectedValue !== "") {
-            const currentIds = dataArray.find((item) => item[key] === selectedValue[key])?.vehicle_ids;
-        
+            const currentIds = dataArray.find(
+              (item) => item[key] === selectedValue[key]
+            )?.vehicle_ids;
+
             if (currentIds) {
               for (let i = allIds.length - 1; i >= 0; i--) {
                 if (!currentIds.includes(allIds[i])) {
@@ -2874,13 +3085,22 @@
           }
         }
 
-        filterIds(allIds, this.selectedParts.submodel, submodels, 'submodel');
-        filterIds(allIds, this.selectedParts.engine, engines, 'engine_short');
-        filterIds(allIds, this.selectedParts.transmission, transmissions, 'transmission');
-        filterIds(allIds, this.selectedParts.bodyType, bodyTypes, 'body_type');
-        filterIds(allIds, this.selectedParts.brake, brakes, 'brake');
-        filterIds(allIds, this.selectedParts.driveType, driveTypes, 'drive_type');
-
+        filterIds(allIds, this.selectedParts.submodel, submodels, "submodel");
+        filterIds(allIds, this.selectedParts.engine, engines, "engine_short");
+        filterIds(
+          allIds,
+          this.selectedParts.transmission,
+          transmissions,
+          "transmission"
+        );
+        filterIds(allIds, this.selectedParts.bodyType, bodyTypes, "body_type");
+        filterIds(allIds, this.selectedParts.brake, brakes, "brake");
+        filterIds(
+          allIds,
+          this.selectedParts.driveType,
+          driveTypes,
+          "drive_type"
+        );
       }
 
       allIds = [...new Set(allIds)];
@@ -2959,34 +3179,41 @@
       let brakeVal = this.selectedParts.brake;
       let driveTypeVal = this.selectedParts.driveType;
 
-      function createListItem(item, value, goodItems, content, textProperty, parent) {
-        let listItem = $('<li></li>').text(item[textProperty]);
+      function createListItem(
+        item,
+        value,
+        goodItems,
+        content,
+        textProperty,
+        parent
+      ) {
+        let listItem = $("<li></li>").text(item[textProperty]);
         if (value === undefined && item[textProperty] === "I Don't Know") {
-          listItem.addClass('advanced-search-active');
+          listItem.addClass("advanced-search-active");
         } else if (item[textProperty] === "I Don't Know") {
-            listItem.addClass('advanced-search-good');
-            listItem.on("click", function() {
-              switch (textProperty) {
-                case 'submodel':
-                  parent.$submodel.val("I Don't Know").change();
-                  break;
-                case 'engine_short':
-                  parent.$engine.val("I Don't Know").change();
-                  break;
-                case 'transmission':
-                  parent.$transmission.val("I Don't Know").change();
-                  break;
-                case 'body_type':
-                  parent.$bodyType.val("I Don't Know").change();
-                  break;
-                case 'brake':
-                  parent.$brake.val("I Don't Know").change();
-                  break;
-                case 'drive_type':
-                  parent.$driveType.val("I Don't Know").change();
-                  break;
-              }
-          })
+          listItem.addClass("advanced-search-good");
+          listItem.on("click", function () {
+            switch (textProperty) {
+              case "submodel":
+                parent.$submodel.val("I Don't Know").change();
+                break;
+              case "engine_short":
+                parent.$engine.val("I Don't Know").change();
+                break;
+              case "transmission":
+                parent.$transmission.val("I Don't Know").change();
+                break;
+              case "body_type":
+                parent.$bodyType.val("I Don't Know").change();
+                break;
+              case "brake":
+                parent.$brake.val("I Don't Know").change();
+                break;
+              case "drive_type":
+                parent.$driveType.val("I Don't Know").change();
+                break;
+            }
+          });
         } else {
           if (item[textProperty] === value) {
             listItem.addClass("advanced-search-active");
@@ -3030,12 +3257,72 @@
         content.append(listItem);
       }
 
-      submodels && submodels.forEach(submodel => createListItem(submodel, submodelVal.submodel, goodSubmodels, submodelContent, 'submodel', this));
-      engines && engines.forEach(engine => createListItem(engine, engineVal.engine_short, goodEngines, engineContent, 'engine_short', this));
-      transmissions && transmissions.forEach(transmission => createListItem(transmission, transmissionVal.transmission, goodTransmissions, transmissionContent, 'transmission', this));
-      bodyTypes && bodyTypes.forEach(bodyType => createListItem(bodyType, bodyTypeVal.body_type, goodBodyTypes, bodyTypeContent, 'body_type', this));
-      brakes && brakes.forEach(brake => createListItem(brake, brakeVal.brake, goodBrakes, brakeTypeContent, 'brake', this));
-      driveTypes && driveTypes.forEach(driveType => createListItem(driveType, driveTypeVal.drive_type, goodDriveTypes, driveTypeContent, 'drive_type', this));      
+      submodels &&
+        submodels.forEach((submodel) =>
+          createListItem(
+            submodel,
+            submodelVal.submodel,
+            goodSubmodels,
+            submodelContent,
+            "submodel",
+            this
+          )
+        );
+      engines &&
+        engines.forEach((engine) =>
+          createListItem(
+            engine,
+            engineVal.engine_short,
+            goodEngines,
+            engineContent,
+            "engine_short",
+            this
+          )
+        );
+      transmissions &&
+        transmissions.forEach((transmission) =>
+          createListItem(
+            transmission,
+            transmissionVal.transmission,
+            goodTransmissions,
+            transmissionContent,
+            "transmission",
+            this
+          )
+        );
+      bodyTypes &&
+        bodyTypes.forEach((bodyType) =>
+          createListItem(
+            bodyType,
+            bodyTypeVal.body_type,
+            goodBodyTypes,
+            bodyTypeContent,
+            "body_type",
+            this
+          )
+        );
+      brakes &&
+        brakes.forEach((brake) =>
+          createListItem(
+            brake,
+            brakeVal.brake,
+            goodBrakes,
+            brakeTypeContent,
+            "brake",
+            this
+          )
+        );
+      driveTypes &&
+        driveTypes.forEach((driveType) =>
+          createListItem(
+            driveType,
+            driveTypeVal.drive_type,
+            goodDriveTypes,
+            driveTypeContent,
+            "drive_type",
+            this
+          )
+        );
     }
 
     closeAdvancedSearch() {
@@ -3109,7 +3396,7 @@
     checkAllExactMatches = () => {
       let _this = this;
       let data = _this.$currentData;
-      console.log("checkAllExactMatches", data);
+      console.log("это до проверки на checkAllExactMatches", data);
       return data.every((group) => {
         const groupKey = this.getDynamicKey(group);
         const groupValue = group[groupKey];
@@ -3702,7 +3989,9 @@
       let _this = this;
       let submodel = _this.$submodel.val();
 
-      _this.selectedParts.submodel = _this.$apiResponseData.vehicles.find(v => v.submodel === submodel) ?? {};
+      _this.selectedParts.submodel =
+        _this.$apiResponseData.vehicles.find((v) => v.submodel === submodel) ??
+        {};
 
       if (submodel === "I Don't Know") {
         $("#inner1").hide();
@@ -3723,7 +4012,9 @@
       let _this = this;
       let engine = _this.$engine.val();
 
-      _this.selectedParts.engine = _this.$apiResponseData.engines.find(e => e.engine_short === engine) ?? {};
+      _this.selectedParts.engine =
+        _this.$apiResponseData.engines.find((e) => e.engine_short === engine) ??
+        {};
 
       if (engine === "I Don't Know") {
         $("#inner1").hide();
@@ -3743,7 +4034,10 @@
       let _this = this;
       let transmission = _this.$transmission.val();
 
-      _this.selectedParts.transmission = _this.$apiResponseData.transmissions.find(t => t.transmission === transmission) ?? {};
+      _this.selectedParts.transmission =
+        _this.$apiResponseData.transmissions.find(
+          (t) => t.transmission === transmission
+        ) ?? {};
 
       if (transmission === "I Don't Know") {
         $("#inner1").hide();
@@ -3763,7 +4057,10 @@
       let _this = this;
       let bodyType = _this.$bodyType.val();
 
-      _this.selectedParts.bodyType = _this.$apiResponseData.body_types.find(b => b.body_type === bodyType) ?? {};
+      _this.selectedParts.bodyType =
+        _this.$apiResponseData.body_types.find(
+          (b) => b.body_type === bodyType
+        ) ?? {};
 
       if (bodyType === "I Don't Know") {
         $("#inner1").hide();
@@ -3782,9 +4079,10 @@
       let _this = this;
       let brake = _this.$brake.val();
 
-      _this.selectedParts.brake = _this.$apiResponseData.brakes.find(b => b.brake === brake) ?? {};
+      _this.selectedParts.brake =
+        _this.$apiResponseData.brakes.find((b) => b.brake === brake) ?? {};
 
-        if (brake === "I Don't Know") {
+      if (brake === "I Don't Know") {
         $("#inner1").hide();
         _this.openAdvancedSearch();
         $("#advanced-search-checkbox").prop("checked", true).change();
@@ -3801,7 +4099,10 @@
       let _this = this;
       let driveType = _this.$driveType.val();
 
-      _this.selectedParts.driveType = _this.$apiResponseData.drive_types.find(d => d.drive_type === driveType) ?? {};
+      _this.selectedParts.driveType =
+        _this.$apiResponseData.drive_types.find(
+          (d) => d.drive_type === driveType
+        ) ?? {};
 
       if (driveType === "I Don't Know") {
         $("#inner1").hide();
