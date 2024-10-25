@@ -1067,6 +1067,7 @@
 
     setOptions(data, $select, selected = false) {
       $select = $($select);
+      $select.html("");
 
       for (let i = 0; i < data.length; i++) {
         let val = data[i];
@@ -1750,6 +1751,16 @@
 
         this.$year.on("change", function () {
           $("#advanced-search").hide();
+          _this.hideBlocks();
+
+          _this.selectedParts = {
+            submodel: {},
+            engine: {},
+            bodyType: {},
+            transmission: {},
+            brake: {},
+            driveType: {},
+          }
 
           let year = _this.$year.val();
           _this.clearSelects("year");
@@ -1822,14 +1833,14 @@
           _this.$transmission.val("");
           _this.$bodyType.val("");
           _this.$driveType.val("");
-          _this.selectedParts = {
-            submodel: _this.selectedParts.submodel,
-            engine: {},
-            bodyType: {},
-            transmission: {},
-            brake: {},
-            driveType: {},
-          }
+          // _this.selectedParts = {
+          //   submodel: _this.selectedParts.submodel,
+          //   engine: {},
+          //   bodyType: {},
+          //   transmission: {},
+          //   brake: {},
+          //   driveType: {},
+          // }
           _this.checkSubModel();
         });
         this.$engine.on("change", function () {
@@ -2500,7 +2511,7 @@
       const isSubmodelShown = _this.handleOptions(dataOnSubmodels, _this.$submodel, 'submodel', selectedSubmodel, submodelBlock);
 
       const selectedEngine = engineVal.engine_short;
-      const isEngineShown = _this.handleOptions(goodEngines, _this.$engine, 'engine_short', selectedEngine, engineBlock);
+      const isEngineShown = _this.handleOptions(goodEngines, _this.$engine, 'engine', selectedEngine, engineBlock);
 
       const selectedTransmission = transmissionVal.transmission;
       const isTransmissionShown = _this.handleOptions(goodTransmissions, _this.$transmission, 'transmission', selectedTransmission, transmissionsBlock);
@@ -2528,6 +2539,10 @@
         isShown = false;
       }
 
+      if (type === 'engine') {
+        type = 'engine_short';
+      }
+
       if (data && data.length > 1) {
         _this.setOptionsInner(data, element, type, selectedValue);
       } else {
@@ -2540,6 +2555,10 @@
 
       if (block.style.display == "block") {
         block.style.display = isShown ? "block" : "none";
+      }
+
+      if (!isShown) {
+        _this.selectedParts[type] = {};
       }
 
       return isShown;
@@ -2936,12 +2955,12 @@
       driveTypeBlock.show();
 
       //Скрыть пустые
-      if (submodels.length < 2) submodelBlock.hide();
-      if (engines.length < 2) engineBlock.hide();
-      if (transmissions.length < 2) transmissionBlock.hide();
-      if (bodyTypes.length < 2) bodyTypeBlock.hide();
-      if (brakes.length < 2) brakeTypeBlock.hide();
-      if (driveTypes.length < 2) driveTypeBlock.hide();
+      // if (submodels.length < 2) submodelBlock.hide();
+      // if (engines.length < 2) engineBlock.hide();
+      // if (transmissions.length < 2) transmissionBlock.hide();
+      // if (bodyTypes.length < 2) bodyTypeBlock.hide();
+      // if (brakes.length < 2) brakeTypeBlock.hide();
+      // if (driveTypes.length < 2) driveTypeBlock.hide();
 
       //Очистка старых значений
       submodelContent.text("");
