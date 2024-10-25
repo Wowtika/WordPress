@@ -1924,7 +1924,6 @@
       $("#inner1").on("change", function () {
         // const isChecked = $("#advanced-search-checkbox").is(":checked");
         _this.showSelectedInnerParts();
-        _this.findIntersection();
         _this.checkoutValueOnSelected();
         // _this.updateCurrentData();
       });
@@ -2334,9 +2333,7 @@
       let catalog = $("#catalog");
       let catalog_row = $("#catalog_row");
 
-      $("#advanced-search").show();
-
-      this.openAdvancedSearch();
+      // this.openAdvancedSearch();
 
       catalog_row.html("");
 
@@ -2487,6 +2484,8 @@
         (driveType) => driveType.vehicle_ids
       );
 
+      const isAdvancedSearch = $("#advanced-search-checkbox").is(":checked");
+
       let allIds = submodelId
         ? [submodelId]
         : [
@@ -2500,7 +2499,42 @@
 
       if (!submodelId) {
         function filterIds(allIds, selectedValue, dataArray, key) {
-          if (selectedValue !== "") {
+          let intersections = _this.findIntersection(true);
+          // console.log("intersections", intersections);
+          const intersectionKeys = [
+            ...new Set(
+              intersections.flatMap((intersection) => Object.keys(intersection))
+            ),
+          ];
+          if (!intersectionKeys.includes(key) && !isAdvancedSearch) {
+            switch (key) {
+              case 'submodel':
+                _this.selectedParts.submodel = {};
+                _this.$submodel.val("");
+                break;
+              case 'engine_short':
+                _this.selectedParts.engine = {};
+                _this.$engine.val("");
+                break;
+              case 'transmission':
+                _this.selectedParts.transmission = {};
+                _this.$transmission.val("");
+                break;
+              case 'body_type':
+                _this.selectedParts.bodyType = {};
+                _this.$bodyType.val("");
+                break;
+              case 'brake':
+                _this.selectedParts.brake = {};
+                _this.$brake.val("");
+                break;
+              case 'drive_type':
+                _this.selectedParts.driveType = {};
+                _this.$driveType.val("");
+                break;
+            }
+          }
+          if (selectedValue !== "" && intersectionKeys.includes(key)) {
             const currentIds = dataArray.find(
               (item) => item[key] === selectedValue[key]
             )?.vehicle_ids;
@@ -2770,7 +2804,7 @@
           return weightB - weightA; // Сортировка по убыванию веса
         });
       }
-
+      
       blocksC = blocksC.filter(
         (block) => block.isShown && this.getLength(block.block) > 3
       );
@@ -2784,8 +2818,6 @@
       }
 
       block.block.style.display = "block";
-
-      console.log(block);
 
       if (block.value) {
         block.select.val(block.value).change();
@@ -2818,7 +2850,7 @@
     }
 
     //Получить детали, связанные с текущей машиной
-    findIntersection() {
+    findIntersection(isClear = false) {
       const params = {
         submodel:
           this.$submodel.val() !== "I Don't Know" ? this.$submodel.val() : "",
@@ -2833,6 +2865,15 @@
         drive_type:
           this.$driveType.val() !== "I Don't Know" ? this.$driveType.val() : "",
       };
+
+      if (isClear) {
+        params.submodel = "";
+        params.engine = "";
+        params.body_type = "";
+        params.transmission = "";
+        params.brake = "";
+        params.drive_type = "";
+      }
 
       return this.carIntersection.filter((item) => {
         return Object.keys(params).every((key) => {
