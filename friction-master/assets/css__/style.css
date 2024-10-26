@@ -5884,7 +5884,7 @@ p {
 }
 
 .swiper-wrapper {
-  width: 100%;
+  width: 100vw;
   height: 100%;
   -webkit-box-sizing: content-box;
           box-sizing: content-box;
