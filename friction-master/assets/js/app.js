@@ -2991,7 +2991,7 @@
                         break;
                       }
                     }
-                    if (isAllGood) {
+                    if (isAllGood && !isAdded) {
                       filteredProducts.push(itemProduct);
                       isAdded = true;
                     }
