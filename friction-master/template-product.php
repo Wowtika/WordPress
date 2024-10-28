@@ -525,11 +525,12 @@ get_header() ?>
 					<div class="markets-card__logos">
 					<!-- api -->
 					 <?php
-					 	$linkToMarket = ""
+					 	$linkToMarket = "";
+						wp_reset_postdata();
 					 ?>
 						<?php 
-							if (have_rows('items_marketplaces', 'option')) {
-								while (have_rows('items_marketplaces', 'option')) {
+							if (have_rows('online_retailers')) {
+								while (have_rows('online_retailers')) {
 									the_row();
 									$linkToMarket = ""; //Получить из api
 									echo '<a href="' . $linkToMarket . '" class="markets-card__logo">';
@@ -544,6 +545,19 @@ get_header() ?>
 						<a href="#" class="markets-card__link"><?php the_field('more_buying_options','option');?></a>
 
 					</div>
+
+					<?php
+						$query->rewind_posts();
+						if ( $query->have_posts() ) { 
+							while ( $query->have_posts() ) { 
+								$query->the_post(); 
+								$title = get_the_title();
+								if (stripos($title, $type) !== false && stripos($title, $group) !== false) {
+									break;
+								};
+							} 
+						}
+					?>
 
 				</div>
 
@@ -692,7 +706,11 @@ get_header() ?>
 				<h3 class="partners__heading header3"><?php the_field('rating_on_marketplaces','option');?></h3>
 			</div>
 
-			<?php if( have_rows('items_marketplaces', 'option') ): ?>
+			<?php
+			wp_reset_postdata();
+			?>
+
+			<?php if( have_rows('online_retailers')): ?>
 				<div class="works-section__partners">
 					<div class="lg-container">
 						<div class="partners__wrapper">
@@ -701,7 +719,7 @@ get_header() ?>
 							<div class="swiper partners-slider" pagination="true">
 								<div class="swiper-wrapper partners-slider__wrapper">
 									
-									<?php while ( have_rows('items_marketplaces', 'option') ) : the_row();?>
+									<?php while ( have_rows('online_retailers')) : the_row();?>
 
 										<div class="swiper-slide partners-slider__card">
 										

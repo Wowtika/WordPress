@@ -2991,7 +2991,7 @@
                         break;
                       }
                     }
-                    if (isAllGood) {
+                    if (isAllGood && !isAdded) {
                       filteredProducts.push(itemProduct);
                       isAdded = true;
                     }
@@ -3414,6 +3414,19 @@
 
       // console.log("validfilteredMatches", validfilteredMatches);
       validfilteredMatches = this.modifyFilteredData(validfilteredMatches);
+
+        if (
+          !_this.selectedParts.submodel.submodel &&
+          !_this.selectedParts.engine.engine &&
+          !_this.selectedParts.bodyType.body_type &&
+          !_this.selectedParts.transmission.transmission &&
+          !_this.selectedParts.brake.brake &&
+          !_this.selectedParts.driveType.drive_type
+        ) {
+          validfilteredMatches = this.removeNonExactMatches(validfilteredMatches);
+        }
+      } 
+
       if (ifhasSortedProducts) {
         this.renderParts(validfilteredMatches);
         this.openAdvancedSearch();
