@@ -3989,9 +3989,13 @@ p {
 	justify-content: flex-start;
 	padding: 0.625rem;
 	gap: 2.4375rem;
-	margin: 10px;
+	margin: 20px;
 	border-bottom: 1px solid #ccc;
     padding-bottom: 10px;
+}
+
+.category-container-exact_match {
+	background-color: #b2eab6af;
 }
 
 .products-container {

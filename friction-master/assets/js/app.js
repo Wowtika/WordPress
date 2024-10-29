@@ -2459,7 +2459,6 @@
             _this.$submodel.val("");
             break;
           case 'engine':
-            console.log("костя еблан")
             _this.selectedParts.engine = {};
             _this.$engine.val("");
             break;
@@ -2747,7 +2746,6 @@
                 _this.$submodel.val("");
                 break;
               case 'engine':
-                console.log("костя еблан")
                 _this.selectedParts.engine = {};
                 _this.$engine.val("");
                 break;
@@ -3945,6 +3943,12 @@
 
         let categoryContainer = document.createElement("div");
         categoryContainer.classList.add("category-container");
+        if ($("#advanced-search-checkbox").is(":checked")) {
+          // background-color: #b2eab6af;
+          dataForFender[key].every((item) => {
+            item.exact_match ? categoryContainer.classList.add("category-container-exact_match") : null;
+          });
+        }
 
         let productsContainer = document.createElement("div");
         productsContainer.classList.add("products-container");
@@ -3977,12 +3981,10 @@
           loadImage(image).then(() => {
             const height = optionsContainer.getBoundingClientRect().height;
 
-            productsContainer
-              .querySelectorAll(".item-catalog")
-              .forEach((partElement) => {
-                partElement.style.height = `${height}px`;
-                // partElement.classList.add("item-catalog-image-height");
-              });
+            productsContainer.querySelectorAll(".item-catalog").forEach((partElement) => {
+              partElement.style.height = `${height}px`;
+              // partElement.classList.add("item-catalog-image-height");
+            });
           });
         }
 
