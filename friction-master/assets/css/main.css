@@ -1373,7 +1373,7 @@ body::after {
 }
 
 .advanced-row {
-	background: #0397411c;
+	/* background: #0397411c; */
 	display: flex;
 	justify-content: space-between;
 	padding: 5px;

@@ -3488,7 +3488,7 @@
         if (value === undefined && item[textProperty] === "I Don't Know") {
           listItem.addClass("advanced-search-active");
         } else if (item[textProperty] === "I Don't Know") {
-          listItem.addClass("advanced-search-good");
+          // listItem.addClass("advanced-search-good");
           listItem.on("click", function () {
             switch (textProperty) {
               case "submodel":
