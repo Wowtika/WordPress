@@ -1862,11 +1862,6 @@
           }
         });
         this.$submodel.on("change", function () {
-          _this.$engine.val("");
-          _this.$brake.val("");
-          _this.$transmission.val("");
-          _this.$bodyType.val("");
-          _this.$driveType.val("");
           // _this.selectedParts = {
           //   submodel: _this.selectedParts.submodel,
           //   engine: {},
@@ -1939,7 +1934,6 @@
           } else {
             _this.hideBlocks();
             $("#inner1").show();
-            console.log(_this.selectedParts);
             _this.showSelectedInnerParts();
             _this.checkoutValueOnSelected();
           }
@@ -2452,34 +2446,6 @@
           intersections.flatMap((intersection) => Object.keys(intersection))
         ),
       ];
-      if (!intersectionKeys.includes(key) && !isAdvancedSearch) {
-        switch (key) {
-          case 'submodel':
-            _this.selectedParts.submodel = {};
-            _this.$submodel.val("");
-            break;
-          case 'engine':
-            _this.selectedParts.engine = {};
-            _this.$engine.val("");
-            break;
-          case 'transmission':
-            _this.selectedParts.transmission = {};
-            _this.$transmission.val("");
-            break;
-          case 'body_type':
-            _this.selectedParts.bodyType = {};
-            _this.$bodyType.val("");
-            break;
-          case 'brake':
-            _this.selectedParts.brake = {};
-            _this.$brake.val("");
-            break;
-          case 'drive_type':
-            _this.selectedParts.driveType = {};
-            _this.$driveType.val("");
-            break;
-        }
-      }
       if (selectedValue !== "") {
         const currentIds = dataArray.find(
           (item) => item[key] === selectedValue[key]
@@ -2493,9 +2459,6 @@
           }
         } else {
           if (key === "submodel" && selectedValue.vehicle_id) {
-            console.log(selectedValue);
-            console.log(selectedValue.vehicle_id);
-            console.log(allIds);
             const submodelIds = [selectedValue.vehicle_id];
             for (let i = allIds.length - 1; i >= 0; i--) {
               if (!submodelIds.includes(allIds[i])) {
@@ -2821,18 +2784,21 @@
     handleOptions(data, element, type, selectedValue, block, allIds) {
       let _this = this;
 
-      if (type !== "submodel") {
-        data = data.filter(
-          (item) =>
-            item[type] === "I Don't Know" ||
-            allIds.some((id) => item.vehicle_ids.includes(id))
-        );
-      } else {
-        data = data.filter(
-          (item) =>
-            item[type] === "I Don't Know" ||
-            allIds.some((id) => item.vehicle_id === id)
-        )
+      if (!$('#advanced-search-checkbox').is(':checked')) {
+
+        if (type !== "submodel") {
+          data = data.filter(
+            (item) =>
+              item[type] === "I Don't Know" ||
+              allIds.some((id) => item.vehicle_ids.includes(id))
+          );
+        } else {
+          data = data.filter(
+            (item) =>
+              item[type] === "I Don't Know" ||
+              allIds.some((id) => item.vehicle_id === id)
+          )
+        }
       }
 
       let intersections = this.findIntersection();
@@ -2850,6 +2816,35 @@
 
       if (type === 'engine') {
         type = 'engine_short';
+      }
+
+      //Если в adv search была выбрана деталь, затем в обыченом выбрана несовместимая
+      //То очистить значение 
+      if (
+        !data.some((item) => item[type] === selectedValue) ||
+        (!$('#advanced-search-checkbox').is(':checked') && !isShown)
+      ) {
+        selectedValue = false;
+        switch (type) {
+          case 'submodel':
+            _this.selectedParts.submodel = {};
+            break;
+          case 'engine_short':
+            _this.selectedParts.engine = {};
+            break;
+          case 'transmission':
+            _this.selectedParts.transmission = {};
+            break;
+          case 'body_type':
+            _this.selectedParts.bodyType = {};
+            break;
+          case 'brake':
+            _this.selectedParts.brake = {};
+            break;
+          case 'drive_type':
+            _this.selectedParts.driveType = {};
+            break;
+        }
       }
 
       if (data && data.length > 1) {
@@ -3242,11 +3237,9 @@
                           return transmissions.includes(itemOption[key].value)
                         case "brake":
                           let brake = _this.$brake.val();
-                          console.log(brake);
                           if (brake !== '' && brake !== "I Don't Know") {
                             return brake === itemOption[key].value;
                           }
-                          console.log(brakes.some((brake) => brake.includes(itemOption[key].value)));
                           return brakes.some((brake) => brake.includes(itemOption[key].value))
                           // return brakes.includes(itemOption[key].value)
                         case "drive_type":
@@ -3421,6 +3414,17 @@
     openAdvancedSearch() {
       $("#advanced-search").show();
 
+      try {
+        throw new Error()
+      }
+      catch (e) {
+        console.log(e.stack);
+      }
+
+      if ($('#advanced-search-checkbox').is(':checked')) {
+        this.showSelectedInnerParts();
+      }
+
       //Блоки
       let submodelBlock = $("#aSubmodel");
       let engineBlock = $("#aEngine");
@@ -3515,7 +3519,6 @@
       transmissionContent.text("");
 
       // Текущие значения
-      console.log(this.selectedParts);
       let submodelVal = this.selectedParts.submodel;
       let engineVal = this.selectedParts.engine;
       let bodyTypeVal = this.selectedParts.bodyType;
@@ -3585,6 +3588,47 @@
               }
             });
             listItem.addClass("advanced-search-good");
+          } else {
+
+            listItem.on("click", function () {
+
+              parent.$submodel.val("");
+              parent.selectedParts.submodel = {};
+              parent.$engine.val("");
+              parent.selectedParts.engine = {};
+              parent.$transmission.val("");
+              parent.selectedParts.transmission = {};
+              parent.$bodyType.val("");
+              parent.selectedParts.bodyType = {};
+              parent.$brake.val("");
+              parent.selectedParts.brake = {};
+              parent.$driveType.val("");
+              parent.selectedParts.driveType = {};
+
+
+              switch (textProperty) {
+                case "submodel":
+                  parent.$submodel.val(item[textProperty]).change();
+                  break;
+                case "engine_short":
+                  parent.$engine.val(item[textProperty]).change();
+                  parent.selectedParts.engine = item;
+                  break;
+                case "transmission":
+                  parent.$transmission.val(item[textProperty]).change();
+                  break;
+                case "body_type":
+                  parent.$bodyType.val(item[textProperty]).change();
+                  break;
+                case "brake":
+                  parent.$brake.val(item[textProperty]).change();
+                  break;
+                case "drive_type":
+                  parent.$driveType.val(item[textProperty]).change();
+                  break;
+              }
+            });
+            listItem.addClass("advanced-search-bad");
           }
         }
         if (textProperty === "submodel") {
