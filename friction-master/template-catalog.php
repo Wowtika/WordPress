@@ -76,9 +76,7 @@ get_header() ?>
 
 								<div class="tabs__body" id="advanced-search" hidden>
 									<div class="advanced-row">
-										<p>
-											Please, select optional parameters to search part applications
-										</p>
+										<p></p>
 										<input type="checkbox" class="custom-checkbox-advanced-search" id="advanced-search-checkbox">
 										<label for="advanced-search-checkbox">Expert view</label>
 									</div>
