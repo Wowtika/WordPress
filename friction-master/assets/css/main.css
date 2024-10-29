@@ -1376,6 +1376,7 @@ body::after {
 	background: #0397411c;
 	display: flex;
 	justify-content: space-between;
+	padding: 5px;
 }
 
 .advanced-search-column {
@@ -1421,6 +1422,7 @@ li.advanced-search-good {
 	display: inline-flex;
 	align-items: center;
 	user-select: none;
+	margin-right: 15px;
 }
 
 /* создание в label псевдоэлемента before со следующими стилями */

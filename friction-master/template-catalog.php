@@ -80,9 +80,7 @@ get_header() ?>
 											Please, select optional parameters to search part applications
 										</p>
 										<input type="checkbox" class="custom-checkbox-advanced-search" id="advanced-search-checkbox">
-										<label for="advanced-search-checkbox">
-											Advanced search	
-										</label>
+										<label for="advanced-search-checkbox">Expert view</label>
 									</div>
 									<div class="tabs__body-advanced" id="advanced-search-columns" style="display: none">
 										<div class="advanced-search-column" id="aSubmodel">
