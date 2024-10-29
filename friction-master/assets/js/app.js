@@ -2205,6 +2205,8 @@
 
         _this.$currentData = _this.$responseData;
 
+        this.create_parts(_this.$currentData);
+
         catalog_auto_title.html("Found 1 part");
         catalog_auto_title.fadeIn().css("display", "flex");
 
