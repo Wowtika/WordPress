@@ -2312,7 +2312,7 @@
                   " " +
                   year
               );
-              catalog_auto_title.fadeIn().css("display", "flex");
+              // catalog_auto_title.fadeIn().css("display", "flex");
 
               if (Array.isArray(res.data.param_weights)) {
                 // Проверка на пустой массив
@@ -2357,7 +2357,7 @@
     checkoutValueOnSelected() {
       let catalog = $("#catalog");
       let catalog_row = $("#catalog_row");
-
+      let catalog_auto_title = $("#catalog_auto_title");
       // this.openAdvancedSearch();
 
       catalog_row.html("");
@@ -2431,8 +2431,10 @@
             catalog.fadeIn();
             intersections = [];
 
+            catalog_auto_title.fadeIn().css("display", "flex");
             $("#catalog").fadeIn().css("display", "block");
           } else {
+            catalog_auto_title.fadeIn().css("display", "none");
             catalog.html("");
             catalog.fadeOut();
             return;
@@ -2457,7 +2459,6 @@
             _this.$submodel.val("");
             break;
           case 'engine':
-            console.log("костя еблан")
             _this.selectedParts.engine = {};
             _this.$engine.val("");
             break;
@@ -2745,7 +2746,6 @@
                 _this.$submodel.val("");
                 break;
               case 'engine':
-                console.log("костя еблан")
                 _this.selectedParts.engine = {};
                 _this.$engine.val("");
                 break;
@@ -3943,6 +3943,12 @@
 
         let categoryContainer = document.createElement("div");
         categoryContainer.classList.add("category-container");
+        if ($("#advanced-search-checkbox").is(":checked")) {
+          // background-color: #b2eab6af;
+          dataForFender[key].every((item) => {
+            item.exact_match ? categoryContainer.classList.add("category-container-exact_match") : null;
+          });
+        }
 
         let productsContainer = document.createElement("div");
         productsContainer.classList.add("products-container");
@@ -3975,12 +3981,10 @@
           loadImage(image).then(() => {
             const height = optionsContainer.getBoundingClientRect().height;
 
-            productsContainer
-              .querySelectorAll(".item-catalog")
-              .forEach((partElement) => {
-                partElement.style.height = `${height}px`;
-                // partElement.classList.add("item-catalog-image-height");
-              });
+            productsContainer.querySelectorAll(".item-catalog").forEach((partElement) => {
+              partElement.style.height = `${height}px`;
+              // partElement.classList.add("item-catalog-image-height");
+            });
           });
         }
 

@@ -1376,6 +1376,7 @@ body::after {
 	background: #0397411c;
 	display: flex;
 	justify-content: space-between;
+	padding: 5px;
 }
 
 .advanced-search-column {
@@ -1401,12 +1402,12 @@ body::after {
 
 li.advanced-search-active {
 	color: white;
-	background-color: #920A11;
+	background-color: #4a4a4a;
 }
 
 li.advanced-search-good {
 	color: white;
-	background-color: #D51F11;
+	background-color: #9d9999;
 }
 
 /* для элемента input c type="checkbox" */
@@ -1421,6 +1422,7 @@ li.advanced-search-good {
 	display: inline-flex;
 	align-items: center;
 	user-select: none;
+	margin-right: 15px;
 }
 
 /* создание в label псевдоэлемента before со следующими стилями */
@@ -3989,9 +3991,13 @@ p {
 	justify-content: flex-start;
 	padding: 0.625rem;
 	gap: 2.4375rem;
-	margin: 10px;
+	margin: 20px;
 	border-bottom: 1px solid #ccc;
     padding-bottom: 10px;
+}
+
+.category-container-exact_match {
+	background-color: #b2eab6af;
 }
 
 .products-container {
