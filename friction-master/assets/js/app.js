@@ -3366,13 +3366,6 @@
     openAdvancedSearch() {
       $("#advanced-search").show();
 
-      try {
-        throw new Error()
-      }
-      catch (e) {
-        console.log(e.stack);
-      }
-
       if ($('#advanced-search-checkbox').is(':checked')) {
         this.showSelectedInnerParts();
       }
@@ -3485,7 +3478,10 @@
         content,
         textProperty,
         parent
-      ) {
+      ) { 
+        if (goodItems.length === 1) {
+          return;
+        }
         let listItem = $("<li></li>").text(item[textProperty]);
         if (value === undefined && item[textProperty] === "I Don't Know") {
           listItem.addClass("advanced-search-active");
