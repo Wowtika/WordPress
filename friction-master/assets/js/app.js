@@ -2312,7 +2312,7 @@
                   " " +
                   year
               );
-              catalog_auto_title.fadeIn().css("display", "flex");
+              // catalog_auto_title.fadeIn().css("display", "flex");
 
               if (Array.isArray(res.data.param_weights)) {
                 // Проверка на пустой массив
@@ -2357,7 +2357,7 @@
     checkoutValueOnSelected() {
       let catalog = $("#catalog");
       let catalog_row = $("#catalog_row");
-
+      let catalog_auto_title = $("#catalog_auto_title");
       // this.openAdvancedSearch();
 
       catalog_row.html("");
@@ -2431,8 +2431,10 @@
             catalog.fadeIn();
             intersections = [];
 
+            catalog_auto_title.fadeIn().css("display", "flex");
             $("#catalog").fadeIn().css("display", "block");
           } else {
+            catalog_auto_title.fadeIn().css("display", "none");
             catalog.html("");
             catalog.fadeOut();
             return;

@@ -1401,12 +1401,12 @@ body::after {
 
 li.advanced-search-active {
 	color: white;
-	background-color: #920A11;
+	background-color: #4a4a4a;
 }
 
 li.advanced-search-good {
 	color: white;
-	background-color: #D51F11;
+	background-color: #9d9999;
 }
 
 /* для элемента input c type="checkbox" */
