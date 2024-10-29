@@ -3211,61 +3211,13 @@
                       isAdded = true;
                     }
                   });
-                  
-                  showIfNotSure &&
-                  options.forEach((itemOption) => {
-                    const keys = Object.keys(itemOption);
-                    let isAllGood = keys.every((key) => {
-                      switch (key) {
-                        case "submodel":
-                          let submodel = _this.$submodel.val();
-                          if (submodel !== '' && submodel !== "I Don't Know") {
-                            return submodel === itemOption[key].value;
-                          }
-                          return submodels.includes(itemOption[key].value)
-                        case "engine":
-                          let engine = _this.$engine.val();
-                          if (engine !== '' && engine !== "I Don't Know") {
-                            return engine === itemOption[key].value;
-                          }
-                          return engines.includes(itemOption[key].value)
-                        case "transmission":
-                          let transmission = _this.$transmission.val();
-                          if (transmission !== '' && transmission !== "I Don't Know") {
-                            return transmission === itemOption[key].value;
-                          }
-                          return transmissions.includes(itemOption[key].value)
-                        case "brake":
-                          let brake = _this.$brake.val();
-                          if (brake !== '' && brake !== "I Don't Know") {
-                            return brake === itemOption[key].value;
-                          }
-                          return brakes.some((brake) => brake.includes(itemOption[key].value))
-                          // return brakes.includes(itemOption[key].value)
-                        case "drive_type":
-                          let driveType = _this.$driveType.val();
-                          if (driveType !== '' && driveType !== "I Don't Know") {
-                            return driveType === itemOption[key].value;
-                          }
-                          console.log(driveTypes.includes(itemOption[key].value));
-                          return driveTypes.includes(itemOption[key].value)
-                        case "body_type":
-                          let bodyType = _this.$bodyType.val();
-                          if (bodyType !== '' && bodyType !== "I Don't Know") {
-                            return bodyType === itemOption[key].value;
-                          }
-                          return bodyTypes.includes(itemOption[key].value)
-                      }
-                    });
 
-                    if (isAllGood && !isAdded) {
-                      filteredProducts.push(itemProduct);
-                      isAdded = true;
-                    }
-                  });
+                  if (!isAdded) {
+                    filteredProducts.push(itemProduct);
+                    isAdded = true;
+                  }
+
                 });
-
-                
 
                 if (filteredProducts.length > 0) {
                   objWithFilter[key] = filteredProducts;
@@ -3783,7 +3735,7 @@
           !_this.selectedParts.driveType.drive_type
         ) {
           if (validfilteredMatches) {
-            validfilteredMatches = this.removeNonExactMatches(validfilteredMatches);
+            // validfilteredMatches = this.removeNonExactMatches(validfilteredMatches);
           } else {
             
           }

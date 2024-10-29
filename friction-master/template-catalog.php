@@ -74,7 +74,7 @@ get_header() ?>
 									</select>
 								</div>
 
-								<div class="tabs__body" id="advanced-search">
+								<div class="tabs__body" id="advanced-search" hidden>
 									<div class="advanced-row">
 										<p>
 											Please, select optional parameters to search part applications
