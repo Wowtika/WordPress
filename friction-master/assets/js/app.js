@@ -2179,7 +2179,6 @@
             [qualifierString]: [
               {
                 description: response.description,
-                exact_match: true,
                 fitment_type: 0,
                 make_id: response.make_id,
                 part_app_ids: 0,
