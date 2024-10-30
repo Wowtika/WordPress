@@ -143,7 +143,7 @@ get_header() ?>
 
 	<section class="page__type type">
 		<div class="type__container">
-			<h2 class="type__heading">Product lines</h2>
+			<h2 class="type__heading">Fitment Types</h2>
 			<div class="type__body">
 				<div class="type__item">
 					<h2 class="type__title">DAILY DRIVER</h2>
@@ -217,7 +217,7 @@ get_header() ?>
 			</div>
 
 			<div class="category__wrapper">
-				<div class="category__heading">Lines</div>
+				<div class="category__heading">Product Lines</div>
 
 				<div class="category__items item-category" data-fillter-groups="lines">
 					<a href="" class="item-category__link">Black</a>
