@@ -1055,6 +1055,10 @@
   overflow: hidden;
 }
 
+.card-thumbs .swiper-wrapper {
+  width: 100%;
+}
+
 .swiper-wrapper {
   width: 100vw;
   height: 100%;

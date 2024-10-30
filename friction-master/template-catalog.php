@@ -708,64 +708,64 @@ jQuery(document).ready(function($) {
 		{
 			let url = new URL(document.location);
 			let searchParams = url.searchParams;
-			
-			//очистка part number
-			$("#searchdata").val('');
-			searchParams.delete("searchdata");
-			
-			//очистка модели
-			$('[data-filter="model"]').html('<option value="" data-loading="" selected="">Model</option>');
-			let model_block = $('[data-filter="model"]').parent();
-			model_block.addClass("_select-disabled");
-			model_block.find(".select__title").attr("disabled", true);
-			model_block.find(".select__content").text("Model");
-			model_block.find(".select__options").html("");
-			searchParams.delete("md");
-			
-			//очистка марки
-			$('[data-filter="make"]').html('<option value="" data-loading="" selected="">Make</option>');
-			let make_block = $('[data-filter="make"]').parent();
-			make_block.addClass("_select-disabled");
-			make_block.find(".select__title").attr("disabled", true);
-			make_block.find(".select__content").text("Make");
-			make_block.find(".select__options").html("");
-			searchParams.delete("mk");
-			
-			//очистка submodel
-			$('[data-filter="submodel"]').html('<option value="" data-loading="" selected="">Submodel</option>');
-			let submodel_block = $('[data-filter="submodel"]').parent();
-			submodel_block.addClass("_select-disabled");
-			submodel_block.find(".select__title").attr("disabled", true);
-			submodel_block.find(".select__content").text("Submodel");
-			submodel_block.find(".select__options").html("");
-			
-			//очистка engine
-			$('[data-filter="engine"]').html('<option value="" data-loading="" selected="">Engine</option>');
-			let engine_block = $('[data-filter="engine"]').parent();
-			engine_block.addClass("_select-disabled");
-			engine_block.find(".select__title").attr("disabled", true);
-			engine_block.find(".select__content").text("Engine");
-			engine_block.find(".select__options").html("");
-			
-			//убираем строку дополнительных параметров
-			$("#inner1").hide();
-			
-			//очистка года
-			$('[data-filter="year"]').val("");
-			let year_block = $('[data-filter="year"]').parent();
-			year_block.find(".select__content").text("Year");
-			year_block.find(".select__option").attr("hidden", false);
-			searchParams.delete("yr");
 
-			window.history.pushState({}, '', url.toString());
+			//очистка part number
+			//$("#searchdata").val('');
+			//searchParams.delete("searchdata");
+			//
+			//очистка модели
+			// $('[data-filter="model"]').html('<option value="" data-loading="" selected="">Model</option>');
+			// let model_block = $('[data-filter="model"]').parent();
+			// model_block.addClass("_select-disabled");
+			// model_block.find(".select__title").attr("disabled", true);
+			// model_block.find(".select__content").text("Model");
+			// model_block.find(".select__options").html("");
+			// searchParams.delete("md");
+			
+			// //очистка марки
+			// $('[data-filter="make"]').html('<option value="" data-loading="" selected="">Make</option>');
+			// let make_block = $('[data-filter="make"]').parent();
+			// make_block.addClass("_select-disabled");
+			// make_block.find(".select__title").attr("disabled", true);
+			// make_block.find(".select__content").text("Make");
+			// make_block.find(".select__options").html("");
+			// searchParams.delete("mk");
+			
+			// //очистка submodel
+			// $('[data-filter="submodel"]').html('<option value="" data-loading="" selected="">Submodel</option>');
+			// let submodel_block = $('[data-filter="submodel"]').parent();
+			// submodel_block.addClass("_select-disabled");
+			// submodel_block.find(".select__title").attr("disabled", true);
+			// submodel_block.find(".select__content").text("Submodel");
+			// submodel_block.find(".select__options").html("");
+			
+			// //очистка engine
+			// $('[data-filter="engine"]').html('<option value="" data-loading="" selected="">Engine</option>');
+			// let engine_block = $('[data-filter="engine"]').parent();
+			// engine_block.addClass("_select-disabled");
+			// engine_block.find(".select__title").attr("disabled", true);
+			// engine_block.find(".select__content").text("Engine");
+			// engine_block.find(".select__options").html("");
+			
+			// //убираем строку дополнительных параметров
+			// $("#inner1").hide();
+			
+			// //очистка года
+			// $('[data-filter="year"]').val("");
+			// let year_block = $('[data-filter="year"]').parent();
+			// year_block.find(".select__content").text("Year");
+			// year_block.find(".select__option").attr("hidden", false);
+			// searchParams.delete("yr");
+
+			// window.history.pushState({}, '', url.toString());
 			
 			//убираем заголовок
-			$("#catalog_auto_title").html("").hide();
+			// $("#catalog_auto_title").html("").hide();
 			$("#load_catalog").html("");
 			
 			//убираем каталог
 			$("#catalog_row").html("");
-			$("#catalog").hide();
+			// $("#catalog").hide();
 		}
 	});
 	
