@@ -2659,7 +2659,7 @@
           let loadCatalogBlock = document.querySelector("#load_catalog");
           loadCatalogBlock.innerHTML =
             '<div class="catalog_nodata">No data available</div>';
-          $(loadCatalogBlock).fadeIn().css("display", "flex");
+          $(loadCatalogBlock).fadeIn().css("display", "block");
           return;
         }
         const response = JSON.parse(xhr.responseText)[0];
