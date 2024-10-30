@@ -2778,6 +2778,30 @@
                   combinedBrakePads;
               }
 
+              let brakeShoes = null;
+              let brakeShoesIndex = -1;
+              let wheelHubs = null;
+              let wheelHubsIndex = -1;
+
+              res.data.part_applications.forEach((app, index) => {
+                const key = _this.getDynamicKey(app);
+
+                if (key == "Wheel Hubs") {
+                  wheelHubs = JSON.parse(JSON.stringify(app));
+                  wheelHubsIndex = index;
+                }
+                if (key == "Brake Shoes") {
+                  brakeShoes = JSON.parse(JSON.stringify(app));
+                  brakeShoesIndex = index;
+                }
+
+              });
+
+              if (brakeShoes && wheelHubs) {
+                res.data.part_applications[brakeShoesIndex] = wheelHubs;
+                res.data.part_applications[wheelHubsIndex] = brakeShoes;
+              }
+
               _this.$responseData = _this.modifyFilteredData(
                 res.data.part_applications
               );
