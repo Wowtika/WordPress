@@ -1504,7 +1504,7 @@
       this.currentData = JSON.parse(JSON.stringify(data));
       this.resetData();
       this.selectedParts.submodel = this.getSelectedValue("submodel", submodel, this.submodels);
-      this.selectedParts.engine = this.getSelectedValue("engine", engine, this.engines);
+      this.selectedParts.engine = this.getSelectedValue("engine_short", engine, this.engines);
       this.selectedParts.bodyType = this.getSelectedValue("body_type", bodyType, this.bodyTypes);
       this.selectedParts.brake = this.getSelectedValue("brake", brake, this.brakes);
       this.selectedParts.driveType = this.getSelectedValue("drive_type", driveType, this.driveTypes);
@@ -1676,7 +1676,6 @@
         _this.selectedParts.submodel = submodelsObj[0];
       }
       if (enginesObj.length === 1) {
-        console.log("123123");
         _this.selectedParts.engine = enginesObj[0];
       }
       if (transmissionsObj.length === 1) {
@@ -1976,8 +1975,6 @@
       let newData = _this.parent.modifyFilteredData(_this.currentData.part_applications);
 
       newData = _this.getProductsForAdvancedSearch(newData);
-
-      console.log(newData);
 
       _this.rebuildContent();
 
@@ -2428,7 +2425,6 @@
             $("#inner1").hide();
             _this.openAdvanced();
           } else {
-            console.log(_this.$apiResponseData);
             _this.checkoutValueOnSelected();
           }
         })
@@ -2874,21 +2870,39 @@
             switch (key) {
               case "submodel":
                 keyValue = _this.$submodel.val();
+                if (_this.$apiResponseData.vehicles.length === 1) {
+                  keyValue = "true";
+                }
                 break;
               case "engine":
                 keyValue = _this.$engine.val();
+                if (_this.$apiResponseData.engines.length === 1) {
+                  keyValue = "true";
+                }
                 break;
               case "transmission":
                 keyValue = _this.$transmission.val();
+                if (_this.$apiResponseData.transmissions.length === 1) {
+                  keyValue = "true";
+                }
                 break;
               case "body_type":
                 keyValue = _this.$bodyType.val();
+                if (_this.$apiResponseData.body_types.length === 1) {
+                  keyValue = "true";
+                }
                 break;
               case "brake":
                 keyValue = _this.$brake.val();
+                if (_this.$apiResponseData.brake.length === 1) {
+                  keyValue = "true";
+                }
                 break;
               case "drive_type":
                 keyValue = _this.$driveType.val();
+                if (_this.$apiResponseData.drive_types.length === 1) {
+                  keyValue = "true";
+                }
                 break;
             }
             return keyValue !== "" && keyValue !== "I Don't Know";
@@ -2898,11 +2912,11 @@
             allKeysHaveValues = true;
           }
 
-          let checkForExactMatches = _this.checkAllExactMatches();
-          if (checkForExactMatches) {
-            console.log("если все true", _this.checkAllExactMatches());
-            allKeysHaveValues = true;
-          }
+          // let checkForExactMatches = _this.checkAllExactMatches();
+          // if (checkForExactMatches) {
+          //   console.log("если все true", _this.checkAllExactMatches());
+          //   allKeysHaveValues = true;
+          // }
 
           if ($("#advanced-search-checkbox").is(":checked")) {
             allKeysHaveValues = true;
@@ -3134,9 +3148,9 @@
         allIds
       );
 
-      // if (key === "engine") {
-      //   key = "engine_short";
-      // }
+      if (key === "engine") {
+        key = "engine_short";
+      }
 
       this.filterIds(allIds, val, data, key);
 
@@ -3385,13 +3399,6 @@
       let newData = [..._this.$responseData];
 
       if (!data) {
-        try {
-          throw new Error();
-        }
-        catch (e) {
-          console.log(e.stack);
-        }
-        console.log(newData);
         newData = _this.getProductsForValues(newData);
       } else {
         newData = JSON.parse(JSON.stringify(data)); // Клонируем массив
