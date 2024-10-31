@@ -125,7 +125,7 @@ get_header() ?>
 	$numberData = current($partImages);
 	$number = $numberData['number'];
 	$group = $numberData['product_group_name'];
-	$numberType = preg_replace('/[^a-zA-Z]/', '', $number);
+	$onlyType = preg_replace('/[^a-zA-Z]/', '', $number);
 	$onlyNumber = preg_replace('/\D/', '', $number);
 ?>
 
@@ -203,22 +203,24 @@ get_header() ?>
 		//Ищем товары для других позиций (перед, зад, оба)
 		$position = "";
 		foreach ($allItems as $part) {
-			if (isset($part['exact_match'])) {
-				if ($number == $part['part_number']) {
-					$position = $part['position'];
-				}
-				if (!$isFrontLink && $part['position'] === "Front") {
-					$frontLink = setLink($part['part_id']);
-					$isFrontLink = true;
-				}
-				if (!$isRearLink && $part['position'] === "Rear") {
-					$rearLink = setLink($part['part_id']);
-					$isRearLink = true;
-				}
-				if (!$isAllLink && $part['position'] !== "Front" && $part['position'] !== "Rear") {
-					$allLink = setLink($part['part_id']);
-					$isAllLink = true;
-				}
+			$partGroup = substr($part['part_number'], 0, strlen($onlyType));
+			if ($partGroup !== $onlyType) {
+				continue;
+			}
+			if ($number == $part['part_number']) {
+				$position = $part['position'];
+			}
+			if (!$isFrontLink && $part['position'] === "Front") {
+				$frontLink = setLink($part['part_id']);
+				$isFrontLink = true;
+			}
+			if (!$isRearLink && $part['position'] === "Rear") {
+				$rearLink = setLink($part['part_id']);
+				$isRearLink = true;
+			}
+			if (!$isAllLink && $part['position'] !== "Front" && $part['position'] !== "Rear") {
+				$allLink = setLink($part['part_id']);
+				$isAllLink = true;
 			}
 		}
 		//Вставляем ссылку на текущий товар
@@ -343,7 +345,7 @@ get_header() ?>
 										}
 									}
 								}
-								if ($label == $numberType && !$isTypeFound) {
+								if ($label == $onlyType && !$isTypeFound) {
 									$type = get_field('name_product_line');
 									$isTypeFound = true;
 									$opacity = "opacity: 1;";
@@ -359,7 +361,7 @@ get_header() ?>
 										}
 									}
 								}
-								if ($label['label'] == $numberType && !$isTypeFound) {
+								if ($label['label'] == $onlyType && !$isTypeFound) {
 									$type = get_field('name_product_line');
 									$isTypeFound = true;
 									$opacity = "opacity: 1;";
@@ -869,9 +871,9 @@ get_header() ?>
 						</div>
 
 						<?php
-							$numberType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
-							if (isset($imgArray[$numberType])) {
-								$img = $imgArray[$numberType]; //Проверка
+							$onlyType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
+							if (isset($imgArray[$onlyType])) {
+								$img = $imgArray[$onlyType]; //Проверка
 							}
 							else
 							{
@@ -903,9 +905,9 @@ get_header() ?>
 					<?php foreach ($allItems as $item) { ?>
 
 					<?php
-						$numberType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
-						if (isset($imgArray[$numberType])) {
-							$img = $imgArray[$numberType]; //Проверка
+						$onlyType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
+						if (isset($imgArray[$onlyType])) {
+							$img = $imgArray[$onlyType]; //Проверка
 						}
 						else
 						{
