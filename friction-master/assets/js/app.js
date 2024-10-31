@@ -1509,8 +1509,6 @@
       this.selectedParts.brake = this.getSelectedValue("brake", brake, this.brakes);
       this.selectedParts.driveType = this.getSelectedValue("drive_type", driveType, this.driveTypes);
       this.selectedParts.transmission = this.getSelectedValue("transmission", transmission, this.transmissions);
-      console.log(engine);
-      console.log(this.selectedParts.engine);
       this.openAdvancedSearch();
     }
 
@@ -2928,7 +2926,7 @@
                 break;
               case "brake":
                 keyValue = _this.$brake.val();
-                if (_this.$apiResponseData.brake.length === 1) {
+                if (_this.$apiResponseData.brakes.length === 1) {
                   keyValue = "true";
                 }
                 break;
