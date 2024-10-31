@@ -611,26 +611,48 @@ get_header() ?>
 						<div class="card-tabs__header">
 							<?php the_field('suitable_for_vehicles','option');?>
 						</div>
+						<?php foreach ($groupedData as $make => $cars) { ?>
 						<?php 
-						foreach ($groupedData as $make => $cars) { ?>
+							$result = [];
+							foreach ($cars as $item) {
+								$key = $item['part_id'] . '|' . $item['region_id'] . '|' . $item['make'] . '|' . $item['model'] . '|' . $item['submodel'] . '|' . $item['engine'] . '|' . $item['body_type'] . '|' . $item['drive_type'] . '|' . $item['transmission'] . '|' . $item['brake'];
+								
+								if (!isset($result[$key])) {
+									$result[$key] = $item;
+									$result[$key]['year'] = [];
+								}
+								
+								$result[$key]['year'][] = $item['year'];
+							}
+							
+							foreach ($result as &$item) {
+								sort($item['year']);
+								$start_year = $item['year'][0];
+								$end_year = end($item['year']);
+								$item['year'] = ($start_year == $end_year) ? $start_year : $start_year . ' - ' . $end_year;
+							}
+						
+						
+							$result = array_values($result);
+						?>
 						<div data-spollers class="spollers">
 							<div class="spollers__item">
 								<button type="button" data-spoller class="spollers__title"><?php echo $make; ?></button>
 								<div class="spollers__body">
-									<?php foreach ($cars as $car) { ?>
+									<?php foreach ($result as $car) { ?>
 									<div class="card-tabs__row card-tabs__row_cars">
 										<div class="card-tabs__row-inner">
 											<?php 
 												echo 
 												$car["make"] . " " .
 												$car["model"] . " " .
-												$car["year"] . " " .
 												$car["submodel"] . " " .
 												$car["body_type"] . " " .
 												$car["engine"] . " " .
 												$car["drive_type"] . " " .
 												$car["transmission"] . " " .
-												$car["brake"]
+												$car["brake"] . " " .
+												$car["year"]
 											?>
 										</div>
 										<!-- <div class="card-tabs__row-inner"><b><?php echo $car["model"]; ?></b></div>
