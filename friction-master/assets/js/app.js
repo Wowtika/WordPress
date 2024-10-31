@@ -3556,9 +3556,21 @@
             }
 
             if (Object.keys(objWithFilter).length > 0) {
+              const sortedKeys = Object.keys(objWithFilter).sort((a, b) => {
+                if (a.startsWith("Front") && !b.startsWith("Front")) return -1;
+                if (!a.startsWith("Front") && b.startsWith("Front")) return 1;
+                if (a.startsWith("Rear") && !b.startsWith("Rear")) return -1;
+                if (!a.startsWith("Rear") && b.startsWith("Rear")) return 1;
+                return 0;
+              });
+              
+              const sortedObjWithFilter = {};
+              sortedKeys.forEach(key => {
+                  sortedObjWithFilter[key] = objWithFilter[key];
+              });
               result.push({
                 fitment_type: fitmentTypeValue,
-                [dynamicKey]: objWithFilter,
+                [dynamicKey]: sortedObjWithFilter,
               });
             }
           }
