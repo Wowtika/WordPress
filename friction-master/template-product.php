@@ -643,22 +643,37 @@ get_header() ?>
 								<div class="spollers__body">
 									<?php foreach ($result as $car) { ?>
 									<div class="card-tabs__row card-tabs__row_cars">
-										<div class="card-tabs__row-inner">
-											<?php 
-												echo 
-												$car["make"] . " " .
-												$car["model"] . " " .
-												$car["submodel"] . " " .
-												$car["body_type"] . " " .
-												$car["engine"] . " " .
-												$car["drive_type"] . " " .
-												$car["transmission"] . " " .
-												$car["brake"] . " " .
-												$car["year"]
+										<div class="card-tabs__column">
+											<?php echo $car["model"] . " " . $car['submodel'] ?>
+										</div>
+										<div class="card-tabs__column">
+											<?php
+												$isPrev = "";
+												if (isset($car['body_type'])) {
+													echo $isPrev . $car['body_type'];
+													$isPrev = "<br>";
+												}
+												if (isset($car['engine'])) {
+													echo $isPrev . $car['engine'];
+													$isPrev = "<br>";
+												}
+												if (isset($car['drive_type'])) {
+													echo $isPrev . $car['drive_type'];
+													$isPrev = "<br>";
+												}
+												if (isset($car['transmission'])) {
+													echo $isPrev . $car['transmission'];
+													$isPrev = "<br>";
+												}
+												if (isset($car['brake'])) {
+													echo $isPrev . $car['brake'];
+													$isPrev = "<br>";
+												}
 											?>
 										</div>
-										<!-- <div class="card-tabs__row-inner"><b><?php echo $car["model"]; ?></b></div>
-										<div class="card-tabs__row-inner"><b><?php echo $car["engine"]; ?></b></div> -->
+										<div class="card-tabs__column">
+											<?php echo $car["year"] ?>
+										</div>
 									</div>
 									<?php } ?>
 								</div>
