@@ -125,7 +125,7 @@ get_header() ?>
 	$numberData = current($partImages);
 	$number = $numberData['number'];
 	$group = $numberData['product_group_name'];
-	$numberType = preg_replace('/[^a-zA-Z]/', '', $number);
+	$onlyType = preg_replace('/[^a-zA-Z]/', '', $number);
 	$onlyNumber = preg_replace('/\D/', '', $number);
 ?>
 
@@ -203,22 +203,24 @@ get_header() ?>
 		//Ищем товары для других позиций (перед, зад, оба)
 		$position = "";
 		foreach ($allItems as $part) {
-			if (isset($part['exact_match'])) {
-				if ($number == $part['part_number']) {
-					$position = $part['position'];
-				}
-				if (!$isFrontLink && $part['position'] === "Front") {
-					$frontLink = setLink($part['part_id']);
-					$isFrontLink = true;
-				}
-				if (!$isRearLink && $part['position'] === "Rear") {
-					$rearLink = setLink($part['part_id']);
-					$isRearLink = true;
-				}
-				if (!$isAllLink && $part['position'] !== "Front" && $part['position'] !== "Rear") {
-					$allLink = setLink($part['part_id']);
-					$isAllLink = true;
-				}
+			$partGroup = substr($part['part_number'], 0, strlen($onlyType));
+			if ($partGroup !== $onlyType) {
+				continue;
+			}
+			if ($number == $part['part_number']) {
+				$position = $part['position'];
+			}
+			if (!$isFrontLink && $part['position'] === "Front") {
+				$frontLink = setLink($part['part_id']);
+				$isFrontLink = true;
+			}
+			if (!$isRearLink && $part['position'] === "Rear") {
+				$rearLink = setLink($part['part_id']);
+				$isRearLink = true;
+			}
+			if (!$isAllLink && $part['position'] !== "Front" && $part['position'] !== "Rear") {
+				$allLink = setLink($part['part_id']);
+				$isAllLink = true;
 			}
 		}
 		//Вставляем ссылку на текущий товар
@@ -343,7 +345,7 @@ get_header() ?>
 										}
 									}
 								}
-								if ($label == $numberType && !$isTypeFound) {
+								if ($label == $onlyType && !$isTypeFound) {
 									$type = get_field('name_product_line');
 									$isTypeFound = true;
 									$opacity = "opacity: 1;";
@@ -359,7 +361,7 @@ get_header() ?>
 										}
 									}
 								}
-								if ($label['label'] == $numberType && !$isTypeFound) {
+								if ($label['label'] == $onlyType && !$isTypeFound) {
 									$type = get_field('name_product_line');
 									$isTypeFound = true;
 									$opacity = "opacity: 1;";
@@ -611,26 +613,48 @@ get_header() ?>
 						<div class="card-tabs__header">
 							<?php the_field('suitable_for_vehicles','option');?>
 						</div>
+						<?php foreach ($groupedData as $make => $cars) { ?>
 						<?php 
-						foreach ($groupedData as $make => $cars) { ?>
+							$result = [];
+							foreach ($cars as $item) {
+								$key = $item['part_id'] . '|' . $item['region_id'] . '|' . $item['make'] . '|' . $item['model'] . '|' . $item['submodel'] . '|' . $item['engine'] . '|' . $item['body_type'] . '|' . $item['drive_type'] . '|' . $item['transmission'] . '|' . $item['brake'];
+								
+								if (!isset($result[$key])) {
+									$result[$key] = $item;
+									$result[$key]['year'] = [];
+								}
+								
+								$result[$key]['year'][] = $item['year'];
+							}
+							
+							foreach ($result as &$item) {
+								sort($item['year']);
+								$start_year = $item['year'][0];
+								$end_year = end($item['year']);
+								$item['year'] = ($start_year == $end_year) ? $start_year : $start_year . ' - ' . $end_year;
+							}
+						
+						
+							$result = array_values($result);
+						?>
 						<div data-spollers class="spollers">
 							<div class="spollers__item">
 								<button type="button" data-spoller class="spollers__title"><?php echo $make; ?></button>
 								<div class="spollers__body">
-									<?php foreach ($cars as $car) { ?>
+									<?php foreach ($result as $car) { ?>
 									<div class="card-tabs__row card-tabs__row_cars">
 										<div class="card-tabs__row-inner">
 											<?php 
 												echo 
 												$car["make"] . " " .
 												$car["model"] . " " .
-												$car["year"] . " " .
 												$car["submodel"] . " " .
 												$car["body_type"] . " " .
 												$car["engine"] . " " .
 												$car["drive_type"] . " " .
 												$car["transmission"] . " " .
-												$car["brake"]
+												$car["brake"] . " " .
+												$car["year"]
 											?>
 										</div>
 										<!-- <div class="card-tabs__row-inner"><b><?php echo $car["model"]; ?></b></div>
@@ -847,9 +871,9 @@ get_header() ?>
 						</div>
 
 						<?php
-							$numberType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
-							if (isset($imgArray[$numberType])) {
-								$img = $imgArray[$numberType]; //Проверка
+							$onlyType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
+							if (isset($imgArray[$onlyType])) {
+								$img = $imgArray[$onlyType]; //Проверка
 							}
 							else
 							{
@@ -881,9 +905,9 @@ get_header() ?>
 					<?php foreach ($allItems as $item) { ?>
 
 					<?php
-						$numberType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
-						if (isset($imgArray[$numberType])) {
-							$img = $imgArray[$numberType]; //Проверка
+						$onlyType = preg_replace('/[^a-zA-Z]/', '', $item['part_number']);
+						if (isset($imgArray[$onlyType])) {
+							$img = $imgArray[$onlyType]; //Проверка
 						}
 						else
 						{

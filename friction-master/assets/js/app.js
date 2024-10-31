@@ -2002,7 +2002,7 @@
     FilterAdvanced = null;
     carName = "";
     catalogParts;
-    singlePart;
+    isSinglePart;
 
     constructor(block, Select) {
       super(block, Select);
@@ -2290,6 +2290,7 @@
 
         this.$year.on("change", function () {
           $("#advanced-search").hide();
+          $('#load_catalog').hide();
           _this.hideBlocks();
 
           let year = _this.$year.val();
@@ -2300,6 +2301,7 @@
 
         this.$make.on("change", function () {
           $("#advanced-search").hide();
+          $('#load_catalog').hide();
           _this.hideBlocks();
 
           let year = _this.$year.val();
@@ -2311,6 +2313,7 @@
 
         this.$model.on("change", function () {
           $("#advanced-search").hide();
+          $('#load_catalog').hide();
           _this.hideBlocks();
 
           let year = _this.$year.val();
@@ -2396,6 +2399,7 @@
             }
           });
         $("#advanced-search-checkbox").on("click", function () {
+          _this.loadingBlock($('#load_catalog'), false);
           if ($(this).is(":checked")) {
             $("#inner1").hide();
             _this.openAdvanced();
@@ -2413,6 +2417,8 @@
           }
         });
         $("button:contains('Search by Application')").on("click", function () {
+          _this.isSinglePart = false;
+          _this.loadingBlock($('#load_catalog'), false);
           if (_this.catalogParts) {
             _this.$responseData = JSON.parse(JSON.stringify(_this.catalogParts));
             _this.catalogParts = null;
@@ -2429,6 +2435,7 @@
           }
         })
         $("button:contains('Search by Part')").on("click", function () {
+          _this.isSinglePart = true;
           if (!_this.carName)
             _this.carName = $('#catalog_auto_title').text();
           $('#catalog_auto_title').hide();
@@ -2614,6 +2621,7 @@
                   load_catalog.html(
                     '<div class="catalog_nodata">No data available</div>'
                   );
+                  $('#load_catalog').css("width", "300px");
                   catalog.html("");
                 }
               }
@@ -2622,6 +2630,7 @@
                 load_catalog.html(
                   '<div class="catalog_nodata">No data available</div>'
                 );
+                $('#load_catalog').css("width", "300px");
                 catalog.html("");
               }
               // конец if (res.data) {
@@ -2659,7 +2668,8 @@
           let loadCatalogBlock = document.querySelector("#load_catalog");
           loadCatalogBlock.innerHTML =
             '<div class="catalog_nodata">No data available</div>';
-          $(loadCatalogBlock).fadeIn().css("display", "block");
+          $(loadCatalogBlock).show();
+          $(loadCatalogBlock).css("width", "300px");
           return;
         }
         const response = JSON.parse(xhr.responseText)[0];
@@ -2918,7 +2928,7 @@
                 break;
               case "brake":
                 keyValue = _this.$brake.val();
-                if (_this.$apiResponseData.brake.length === 1) {
+                if (_this.$apiResponseData.brakes.length === 1) {
                   keyValue = "true";
                 }
                 break;
@@ -3546,9 +3556,21 @@
             }
 
             if (Object.keys(objWithFilter).length > 0) {
+              const sortedKeys = Object.keys(objWithFilter).sort((a, b) => {
+                if (a.startsWith("Front") && !b.startsWith("Front")) return -1;
+                if (!a.startsWith("Front") && b.startsWith("Front")) return 1;
+                if (a.startsWith("Rear") && !b.startsWith("Rear")) return -1;
+                if (!a.startsWith("Rear") && b.startsWith("Rear")) return 1;
+                return 0;
+              });
+              
+              const sortedObjWithFilter = {};
+              sortedKeys.forEach(key => {
+                  sortedObjWithFilter[key] = objWithFilter[key];
+              });
               result.push({
                 fitment_type: fitmentTypeValue,
-                [dynamicKey]: objWithFilter,
+                [dynamicKey]: sortedObjWithFilter,
               });
             }
           }
@@ -3638,7 +3660,6 @@
         this.renderParts(validfilteredMatches);
       } else {
         this.renderNoData(catalog);
-        this.closeAdvancedSearch();
       }
     }
 
@@ -4000,13 +4021,18 @@
         part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
       }
 
+      let carName =  `${_this.$make.val()}_${_this.$model.val()}_${_this.$year.val()}_${_this.$engine.val()}_${_this.$submodel.val()}`;
+      if (_this.isSinglePart) {
+        carName = '____';
+      }
+
       let part_footer = document.createElement("div");
       part_footer.classList.add("item-catalog__footer");
       part_footer.innerHTML =
         '<a href="/product?part_id=' +
         part.part_id +
         "&car=" +
-        `${_this.$make.val()}_${_this.$model.val()}_${_this.$year.val()}_${_this.$engine.val()}_${_this.$submodel.val()}` +
+        carName +
         "&region_id=" +
         `${_this.$region.val()}` +
         '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
@@ -4034,6 +4060,8 @@
       let catalog_auto_title = $("#catalog_auto_title");
       let loadCatalogBlock = document.querySelector("#load_catalog");
 
+      _this.loadingBlock(loadCatalogBlock, false);
+
       console.log("No data found");
 
       //Чтобы не было такого, что вылазит что детали найдены, а потом сразу пропадает
@@ -4042,15 +4070,15 @@
       $("#catalog_row").html("");
 
       // Установка сообщения
-      loadCatalogBlock.innerHTML =
-        '<div class="catalog_nodata">No data available</div>';
+      // loadCatalogBlock.innerHTML =
+      //   '<div class="catalog_nodata">No data available</div>';
 
-      // Показ блока с данными
-      $(loadCatalogBlock).fadeIn().css("display", "flex");
+        // Показ блока с данными
+      // $(loadCatalogBlock).fadeIn().css("display", "block");
 
-      $("#load_catalog").html(
-        '<div class="catalog_nodata">No data available</div>'
-      );
+      // $("#load_catalog").html(
+      //   '<div class="catalog_nodata">No data available</div>'
+      // );
       // Скрытие заголовка, если существует
       if (catalog_auto_title[0]) {
         catalog_auto_title.fadeOut(); // Изменено на fadeOut
@@ -4060,8 +4088,8 @@
       $("#catalog").html("");
       if ((loadCatalogBlock.textContent = "")) {
         // Установка сообщения
-        loadCatalogBlock.innerHTML =
-          '<div class="catalog_nodata">No data available</div>';
+        // loadCatalogBlock.innerHTML =
+        //   '<div class="catalog_nodata">No data available</div>';
       }
     }
 
@@ -4330,6 +4358,7 @@
 
     loadingBlock($block, load = true) {
       $block = $($block);
+      $block.css("width", "60px");
       let loading =
         `
         <div class="sk-cube sk-cube1"></div>

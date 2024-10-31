@@ -123,7 +123,7 @@ get_header() ?>
 						
 					</div>
 				</div>
-				<div id="load_catalog"></div>
+				<div id="load_catalog" hidden></div>
 			</div>
 
 			<?php /* */ ?>
