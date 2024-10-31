@@ -2002,7 +2002,7 @@
     FilterAdvanced = null;
     carName = "";
     catalogParts;
-    singlePart;
+    isSinglePart;
 
     constructor(block, Select) {
       super(block, Select);
@@ -2417,6 +2417,7 @@
           }
         });
         $("button:contains('Search by Application')").on("click", function () {
+          _this.isSinglePart = false;
           _this.loadingBlock($('#load_catalog'), false);
           if (_this.catalogParts) {
             _this.$responseData = JSON.parse(JSON.stringify(_this.catalogParts));
@@ -2434,6 +2435,7 @@
           }
         })
         $("button:contains('Search by Part')").on("click", function () {
+          _this.isSinglePart = true;
           if (!_this.carName)
             _this.carName = $('#catalog_auto_title').text();
           $('#catalog_auto_title').hide();
@@ -4019,13 +4021,18 @@
         part_img.innerHTML = `<img src="/wp-content/themes/friction-master/assets/img/catalog/catalog-item1.jpg" alt="product image" />`;
       }
 
+      let carName =  `${_this.$make.val()}_${_this.$model.val()}_${_this.$year.val()}_${_this.$engine.val()}_${_this.$submodel.val()}`;
+      if (_this.isSinglePart) {
+        carName = '____';
+      }
+
       let part_footer = document.createElement("div");
       part_footer.classList.add("item-catalog__footer");
       part_footer.innerHTML =
         '<a href="/product?part_id=' +
         part.part_id +
         "&car=" +
-        `${_this.$make.val()}_${_this.$model.val()}_${_this.$year.val()}_${_this.$engine.val()}_${_this.$submodel.val()}` +
+        carName +
         "&region_id=" +
         `${_this.$region.val()}` +
         '">Show more</a><button type="submit" class="item-catalog__footer-button buy-button">BUY</button>';
