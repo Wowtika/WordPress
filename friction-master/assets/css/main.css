@@ -4799,6 +4799,18 @@ p {
 	border-bottom: 1px solid #a9a9a9;
 }
 
+.card-tabs__column:nth-child(1) {
+	width:20%;
+}
+.card-tabs__column:nth-child(2) {
+	width: 60%;
+}
+
+.card-tabs__column:nth-child(3) {
+	width: 20%;
+}
+
+
 .card-tabs__row-inner {
 	width: 50%;
 	/* -webkit-box-flex: 1; */
