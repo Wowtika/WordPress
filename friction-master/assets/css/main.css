@@ -4334,6 +4334,7 @@ p {
     display: flex;
     justify-content: flex-start;
     align-items: center;
+	min-height: 90px;
 }
 
 .icon-arrow-link-back-to-catalog {

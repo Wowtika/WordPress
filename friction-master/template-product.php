@@ -306,7 +306,7 @@ get_header() ?>
 															 $submodelWithParm . 
 															 $engineWithParm . 
 															 '&rg=' . $region ?>"
-		class="item-category__link " 
+		class="item-category__link "
 		style="color: black;
 		font-size: 1rem;
 		margin-right: 5rem;
