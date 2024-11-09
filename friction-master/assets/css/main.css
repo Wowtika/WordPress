@@ -4330,6 +4330,35 @@ p {
 	margin: 0rem -0.625rem 0rem -0.625rem;
 }
 
+.card-category-header-link {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.icon-arrow-link-back-to-catalog {
+	border: solid #ea0303;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 4.5px;
+    -moz-transform: rotate(135deg);
+    -ms-transform: rotate(135deg);
+    -o-transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+    transform: rotate(135deg);
+}
+
+@media (max-width: 597px) {
+    .card-category-header-link {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+	.icon-arrow-link-back-to-catalog {
+		font-size: 0.7rem;
+	}
+}
+
 .card-list {
 	list-style: none;
 }
