@@ -4183,7 +4183,8 @@ p {
 
 .card-category {
 	gap: 20px;
-	padding: 1.5rem 0rem 1.5rem 0rem;
+	/* padding: 1.5rem 0rem 1.5rem 0rem; */
+	padding: 0.7rem 0rem;
 	display: flex;
 	flex-wrap: wrap;
 }
@@ -4334,7 +4335,7 @@ p {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-	min-height: 90px;
+	min-height: 66px;
 }
 
 .icon-arrow-link-back-to-catalog {
@@ -4353,6 +4354,7 @@ p {
     .card-category-header-link {
         flex-direction: column;
         align-items: flex-start;
+		gap: 0.5rem;
     }
 
 	.icon-arrow-link-back-to-catalog {
