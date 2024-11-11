@@ -288,12 +288,7 @@ get_header() ?>
 					$submodelWithParm = '';
 				$region = $_GET['region_id'];
 			?>
-			<a href="<?php echo home_url('/catalog/') . '?tp=1&yr=' . $year .
-															 '&mk=' . $make . 
-															 '&md=' . $model . 
-															 $submodelWithParm . 
-															 $engineWithParm . 
-															 '&rg=' . $region ?>" class="item-category__link" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: #000000"><?php the_field('back_to_catalog', 'option') ?></a>
+			
 			<img class="card-header__image" src="<?=get_template_directory_uri();?>/assets/img/card/card-bg.svg" alt="">
 			<!-- <img class="card-header__image-mobile" src="<?=get_template_directory_uri();?>/assets/img/catalog/header-bg-mobile.svg" alt=""> -->
 		</div>
@@ -303,10 +298,28 @@ get_header() ?>
 
 <main class="page page_card">
 
-	<div class="card-category__container">
+	<div class="card-category__container  card-category-header-link">
 
+		<a href="<?php echo home_url('/catalog/') . '?tp=1&yr=' . $year .
+															 '&mk=' . $make . 
+															 '&md=' . $model . 
+															 $submodelWithParm . 
+															 $engineWithParm . 
+															 '&rg=' . $region ?>"
+		class="item-category__link "
+		style="color: black;
+		font-size: 1rem;
+		margin-right: 5rem;
+		 background: transparent;
+		  padding: 5px 10px;
+		 position: relative;  display: flex;
+    justify-content: space-around;
+    flex-direction: row-reverse;
+	gap: 15px">
+		<?php the_field('back_to_catalog', 'option') ?>
+		<span class="icon-arrow-link-back-to-catalog"></span>
+	</a>
 		<div class="card-category">
-
 			<?php
 				$query = new WP_Query( array(
 					'post_type' => 'product-lines',
