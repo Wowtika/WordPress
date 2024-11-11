@@ -4336,6 +4336,8 @@ p {
     justify-content: flex-start;
     align-items: center;
 	min-height: 66px;
+	width: 100%;
+    max-width: 1840px;
 }
 
 .icon-arrow-link-back-to-catalog {
